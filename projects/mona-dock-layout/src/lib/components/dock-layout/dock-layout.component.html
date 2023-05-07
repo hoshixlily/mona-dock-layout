@@ -1,4 +1,4 @@
-<div class="wrapper xp-dock-layout"
+<div class="wrapper mona-dock-layout"
      [ngClass]="{'resizing': (layoutService.ContainerResizeInProgress$ | async) || (layoutService.PanelResizeInProgress$ | async)}"
      #layoutElementRef>
     <div class="layout-header horizontal top" [ngStyle]="layoutService.headerStyles.top">
@@ -129,7 +129,7 @@
     </div>
 </div>
 
-<div class="xp-panel-template-contents-container" style="display: none !important; width: 0; height: 0;">
+<div class="mona-panel-template-contents-container" style="display: none !important; width: 0; height: 0;">
     <ng-container #panelTemplateContentsContainerRef></ng-container>
     <ng-container *ngFor="let p of layoutService.panels">
         <ng-template monaPanelTemplateReference [panel]="p">
@@ -146,7 +146,7 @@
     <mona-contextmenu [target]="element" trigger="contextmenu">
         <mona-menu-item [disabled]="true">
             <ng-template monaMenuItemTextTemplate>
-                <span style="color: black; font-weight: bold;">Panel Options</span>
+                <span style="color: var(--mona-text); font-weight: bold;">Panel Options</span>
             </ng-template>
         </mona-menu-item>
         <mona-menu-item [divider]="true"></mona-menu-item>

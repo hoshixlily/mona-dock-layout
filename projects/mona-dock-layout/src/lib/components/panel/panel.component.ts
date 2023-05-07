@@ -81,13 +81,13 @@ export class PanelComponent {
             .subscribe((event: Event) => {
                 this.zone.runOutsideAngular(() => {
                     const target = event.target as HTMLElement;
-                    const panelElement = target.closest(`div.xp-panel[data-pid="${this.panel.Uid}"]`);
+                    const panelElement = target.closest(`div.mona-panel[data-pid="${this.panel.Uid}"]`);
                     if (panelElement) {
                         return;
                     }
                     if (
                         target.closest(".layout-header-list > li") ||
-                        target.closest("xp-contextmenu-content") ||
+                        target.closest("mona-contextmenu-content") ||
                         target.closest(".panel-group-resizer") ||
                         target.closest(".container-resizer")
                     ) {

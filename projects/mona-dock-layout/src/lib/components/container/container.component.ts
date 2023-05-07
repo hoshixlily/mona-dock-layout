@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, ElementRef, Input, NgZone, Renderer2, ViewRef } from "@angular/core";
-import { ReplaySubject, takeUntil, tap } from "rxjs";
+import { asyncScheduler, ReplaySubject, takeUntil, tap } from "rxjs";
 import { Position } from "../../data/Position";
 import { LayoutService } from "../../services/layout.service";
 import { Panel } from "../../data/Panel";
@@ -312,7 +312,7 @@ export class ContainerComponent {
                         this.layoutService.saveLayout();
                     }
                     this.layoutService.updateHeaderSizes();
-                    window.setTimeout(() => {
+                    asyncScheduler.schedule(() => {
                         const viewRefIndex = this.layoutService.panelTemplateContentsContainerRef.indexOf(
                             event.panel.viewRef
                         );
@@ -320,7 +320,7 @@ export class ContainerComponent {
                             this.layoutService.panelTemplateContentsContainerRef.detach(viewRefIndex);
                             event.panel.vcr.insert(event.panel.viewRef, 0);
                         }
-                    });
+                    }, 120); // slight delay is needed, otherwise the panel content is not rendered correctly. TODO: find a better solution
                 });
             }
         });

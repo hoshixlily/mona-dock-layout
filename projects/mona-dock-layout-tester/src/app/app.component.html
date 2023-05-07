@@ -11,7 +11,7 @@
         </mona-dock-panel>
         <mona-dock-panel panelId="Grid" position="bottom" priority="primary" title="People">
             <ng-template monaPanelContentTemplate>
-                <mona-grid [data]="gridData" [pageSize]="3">
+                <mona-grid [data]="gridData" [pageSize]="3" style="height: 100%;">
                     <mona-grid-column *ngFor="let column of gridColumns" [field]="column.field"
                                       [title]="column.title"></mona-grid-column>
                 </mona-grid>
