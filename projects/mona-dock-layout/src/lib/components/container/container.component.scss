@@ -1,0 +1,132 @@
+:host {
+    width: 100%;
+    height: 100%;
+}
+
+div.wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: var(--mona-background);
+
+    &.horizontal {
+        & div.panel-group-container {
+            top: 0;
+            bottom: 0;
+
+            &.primary {
+                left: 0;
+
+                &.bordered {
+                    border-right: 1px solid var(--mona-border-color);
+                }
+            }
+
+            &.secondary {
+                right: 0;
+            }
+        }
+
+        & div.panel-group-resizer {
+            width: 8px;
+            height: 100%;
+            top: 0;
+            bottom: 0;
+            cursor: col-resize;
+        }
+
+        &.top {
+            border-bottom: 1px solid var(--mona-border-color);
+        }
+
+        &.bottom {
+            border-top: 1px solid var(--mona-border-color);
+        }
+    }
+
+    &.vertical {
+        & div.panel-group-container {
+            left: 0;
+            right: 0;
+
+            &.primary {
+                top: 0;
+
+                &.bordered {
+                    border-bottom: 1px solid var(--mona-border-color);
+                }
+            }
+
+            &.secondary {
+                bottom: 0;
+            }
+        }
+
+        & div.panel-group-resizer {
+            height: 8px;
+            width: 100%;
+            cursor: row-resize;
+        }
+
+        &.left {
+            border-right: 1px solid var(--mona-border-color);
+        }
+
+        &.right {
+            border-left: 1px solid var(--mona-border-color);
+        }
+    }
+}
+
+div.container-resizer {
+    position: absolute;
+    content: " ";
+    z-index: 10;
+
+    &.horizontal {
+        width: 100%;
+        height: 8px;
+        left: 0;
+        right: 0;
+        cursor: row-resize;
+
+        &.top {
+            bottom: -4px;
+        }
+
+        &.bottom {
+            top: -4px;
+        }
+    }
+
+    &.vertical {
+        width: 8px;
+        height: 100%;
+        top: 0;
+        bottom: 0;
+        cursor: col-resize;
+
+        &.left {
+            right: -4px;
+        }
+
+        &.right {
+            left: -4px;
+        }
+    }
+}
+
+
+div.panel-group-container {
+    position: absolute;
+
+    &.hidden {
+        display: none;
+    }
+}
+
+div.panel-group-resizer {
+    position: absolute;
+    z-index: 1;
+}
+

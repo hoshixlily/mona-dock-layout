@@ -1,0 +1,180 @@
+<div class="wrapper xp-dock-layout"
+     [ngClass]="{'resizing': (layoutService.ContainerResizeInProgress$ | async) || (layoutService.PanelResizeInProgress$ | async)}"
+     #layoutElementRef>
+    <div class="layout-header horizontal top" [ngStyle]="layoutService.headerStyles.top">
+        <ul class="layout-header-list horizontal top primary" cdkDropList cdkDropListOrientation="horizontal"
+            (cdkDropListDropped)="onPanelHeadersReordered($event, 'top', 'primary')">
+            <li *ngFor="let panel of layoutService.panels|panelPositionSelector:'top':'primary'"
+                cdkDragPreviewClass="panel-header-drag"
+                [ngClass]="{'opened': panel.open, 'hidden': !panel.visible}"
+                (click)="onPanelHeaderClicked(panel)"
+                cdkDrag #panelHeaderElement>
+                <span>{{panel.title}}</span>
+                <ng-container [ngTemplateOutlet]="panelHeaderMenuTemplate"
+                              [ngTemplateOutletContext]="{$implicit: panelHeaderElement, panel, position: 'top', priority: 'primary'}"></ng-container>
+            </li>
+        </ul>
+        <ul class="layout-header-list horizontal top secondary" cdkDropList cdkDropListOrientation="horizontal"
+            (cdkDropListDropped)="onPanelHeadersReordered($event, 'top', 'secondary')">
+            <li *ngFor="let panel of layoutService.panels|panelPositionSelector:'top':'secondary'"
+                cdkDragPreviewClass="panel-header-drag"
+                [ngClass]="{'opened': panel.open, 'hidden': !panel.visible}"
+                (click)="onPanelHeaderClicked(panel)"
+                cdkDrag #panelHeaderElement>
+                <span>{{panel.title}}</span>
+                <ng-container [ngTemplateOutlet]="panelHeaderMenuTemplate"
+                              [ngTemplateOutletContext]="{$implicit: panelHeaderElement, panel, position: 'top', priority: 'secondary'}"></ng-container>
+            </li>
+        </ul>
+    </div>
+    <div class="layout-middle">
+        <div class="layout-header vertical left" [ngStyle]="layoutService.headerStyles.left">
+            <ul class="layout-header-list vertical left primary" cdkDropList
+                (cdkDropListDropped)="onPanelHeadersReordered($event, 'left', 'primary')">
+                <li *ngFor="let panel of layoutService.panels|panelPositionSelector:'left':'primary'"
+                    cdkDragPreviewClass="panel-header-drag"
+                    [ngClass]="{'opened': panel.open, 'hidden': !panel.visible}"
+                    (click)="onPanelHeaderClicked(panel)"
+                    cdkDrag #panelHeaderElement>
+                    <span>{{panel.title}}</span>
+                    <ng-container [ngTemplateOutlet]="panelHeaderMenuTemplate"
+                                  [ngTemplateOutletContext]="{$implicit: panelHeaderElement, panel, position: 'left', priority: 'primary'}"></ng-container>
+                </li>
+            </ul>
+            <ul class="layout-header-list vertical left secondary" cdkDropList
+                (cdkDropListDropped)="onPanelHeadersReordered($event, 'left', 'secondary')">
+                <li *ngFor="let panel of layoutService.panels|panelPositionSelector:'left':'secondary'"
+                    cdkDragPreviewClass="panel-header-drag"
+                    [ngClass]="{'opened': panel.open, 'hidden': !panel.visible}"
+                    (click)="onPanelHeaderClicked(panel)"
+                    cdkDrag #panelHeaderElement>
+                    <span>{{panel.title}}</span>
+                    <ng-container [ngTemplateOutlet]="panelHeaderMenuTemplate"
+                                  [ngTemplateOutletContext]="{$implicit: panelHeaderElement, panel, position: 'left', priority: 'secondary'}"></ng-container>
+                </li>
+            </ul>
+        </div>
+        <div class="layout-containers vertical-priority">
+            <div class="layout-container-wrapper vertical left">
+                <mona-container position="left"></mona-container>
+            </div>
+            <div class="layout-containers middle">
+                <div class="layout-container-wrapper horizontal top">
+                    <mona-container position="top"></mona-container>
+                </div>
+                <div class="layout-content">
+                    <ng-container [ngTemplateOutlet]="layoutContentTemplateRef"
+                                  *ngIf="layoutContentTemplateRef"></ng-container>
+                </div>
+                <div class="layout-container-wrapper horizontal bottom">
+                    <mona-container position="bottom"></mona-container>
+                </div>
+            </div>
+            <div class="layout-container-wrapper vertical right">
+                <mona-container position="right"></mona-container>
+            </div>
+        </div>
+        <div class="layout-header vertical right" [ngStyle]="layoutService.headerStyles.right">
+            <ul class="layout-header-list vertical right primary" cdkDropList
+                (cdkDropListDropped)="onPanelHeadersReordered($event, 'right', 'primary')">
+                <li *ngFor="let panel of layoutService.panels|panelPositionSelector:'right':'primary'"
+                    cdkDragPreviewClass="panel-header-drag"
+                    [ngClass]="{'opened': panel.open, 'hidden': !panel.visible}"
+                    (click)="onPanelHeaderClicked(panel)"
+                    cdkDrag #panelHeaderElement>
+                    <span>{{panel.title}}</span>
+                    <ng-container [ngTemplateOutlet]="panelHeaderMenuTemplate"
+                                  [ngTemplateOutletContext]="{$implicit: panelHeaderElement, panel, position: 'right', priority: 'primary'}"></ng-container>
+                </li>
+            </ul>
+            <ul class="layout-header-list vertical right secondary" cdkDropList
+                (cdkDropListDropped)="onPanelHeadersReordered($event, 'right', 'secondary')">
+                <li *ngFor="let panel of layoutService.panels|panelPositionSelector:'right':'secondary'"
+                    cdkDragPreviewClass="panel-header-drag"
+                    [ngClass]="{'opened': panel.open, 'hidden': !panel.visible}"
+                    (click)="onPanelHeaderClicked(panel)"
+                    cdkDrag #panelHeaderElement>
+                    <span>{{panel.title}}</span>
+                    <ng-container [ngTemplateOutlet]="panelHeaderMenuTemplate"
+                                  [ngTemplateOutletContext]="{$implicit: panelHeaderElement, panel, position: 'right', priority: 'secondary'}"></ng-container>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="layout-header horizontal bottom" [ngStyle]="layoutService.headerStyles.bottom">
+        <ul class="layout-header-list horizontal bottom primary" cdkDropList cdkDropListOrientation="horizontal"
+            (cdkDropListDropped)="onPanelHeadersReordered($event, 'bottom', 'primary')">
+            <li *ngFor="let panel of layoutService.panels|panelPositionSelector:'bottom':'primary'"
+                cdkDragPreviewClass="panel-header-drag"
+                [ngClass]="{'opened': panel.open, 'hidden': !panel.visible}"
+                (click)="onPanelHeaderClicked(panel)"
+                cdkDrag #panelHeaderElement>
+                <span>{{panel.title}}</span>
+                <ng-container [ngTemplateOutlet]="panelHeaderMenuTemplate"
+                              [ngTemplateOutletContext]="{$implicit: panelHeaderElement, panel, position: 'bottom', priority: 'primary'}"></ng-container>
+            </li>
+        </ul>
+        <ul class="layout-header-list horizontal bottom secondary" cdkDropList cdkDropListOrientation="horizontal"
+            (cdkDropListDropped)="onPanelHeadersReordered($event, 'bottom', 'secondary')">
+            <li *ngFor="let panel of layoutService.panels|panelPositionSelector:'bottom':'secondary'"
+                cdkDragPreviewClass="panel-header-drag"
+                [ngClass]="{'opened': panel.open, 'hidden': !panel.visible}"
+                (click)="onPanelHeaderClicked(panel)"
+                cdkDrag #panelHeaderElement>
+                <span>{{panel.title}}</span>
+                <ng-container [ngTemplateOutlet]="panelHeaderMenuTemplate"
+                              [ngTemplateOutletContext]="{$implicit: panelHeaderElement, panel, position: 'bottom', priority: 'secondary'}"></ng-container>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="xp-panel-template-contents-container" style="display: none !important; width: 0; height: 0;">
+    <ng-container #panelTemplateContentsContainerRef></ng-container>
+    <ng-container *ngFor="let p of layoutService.panels">
+        <ng-template monaPanelTemplateReference [panel]="p">
+            <div style="width: 100%; height: 100%; overflow: auto;"> <!-- This div is important. Do not delete. -->
+                <ng-container [ngTemplateOutlet]="p.content"
+                              [ngTemplateOutletContext]="{position: p.position, priority: p.priority}"></ng-container>
+            </div>
+        </ng-template>
+    </ng-container>
+</div>
+
+
+<ng-template #panelHeaderMenuTemplate let-element let-panel="panel">
+    <mona-contextmenu [target]="element" trigger="contextmenu">
+        <mona-menu-item [disabled]="true">
+            <ng-template monaMenuItemTextTemplate>
+                <span style="color: black; font-weight: bold;">Panel Options</span>
+            </ng-template>
+        </mona-menu-item>
+        <mona-menu-item [divider]="true"></mona-menu-item>
+        <mona-menu-item text="Move to" [visible]="panel.movable">
+            <mona-menu-item text="Bottom Left" (menuClick)="movePanel(panel,'bottom', 'primary')"
+                            [disabled]="panel.position==='bottom' && panel.priority==='primary'"></mona-menu-item>
+            <mona-menu-item text="Bottom Right" (menuClick)="movePanel(panel,'bottom', 'secondary')"
+                            [disabled]="panel.position==='bottom' && panel.priority==='secondary'"></mona-menu-item>
+            <mona-menu-item text="Top Left" (menuClick)="movePanel(panel,'top', 'primary')"
+                            [disabled]="panel.position==='top' && panel.priority==='primary'"></mona-menu-item>
+            <mona-menu-item text="Top Right" (menuClick)="movePanel(panel,'top', 'secondary')"
+                            [disabled]="panel.position==='top' && panel.priority==='secondary'"></mona-menu-item>
+            <mona-menu-item text="Left Top" (menuClick)="movePanel(panel,'left', 'primary')"
+                            [disabled]="panel.position==='left' && panel.priority==='primary'"></mona-menu-item>
+            <mona-menu-item text="Left Bottom" (menuClick)="movePanel(panel,'left', 'secondary')"
+                            [disabled]="panel.position==='left' && panel.priority==='secondary'"></mona-menu-item>
+            <mona-menu-item text="Right Top" (menuClick)="movePanel(panel,'right', 'primary')"
+                            [disabled]="panel.position==='right' && panel.priority==='primary'"></mona-menu-item>
+            <mona-menu-item text="Right Bottom" (menuClick)="movePanel(panel,'right', 'secondary')"
+                            [disabled]="panel.position==='right' && panel.priority==='secondary'"></mona-menu-item>
+        </mona-menu-item>
+        <mona-menu-item text="View Mode">
+            <mona-menu-item text="Dock Pinned" (menuClick)="setPanelPinned(panel, true)"
+                            [disabled]="panel.pinned"></mona-menu-item>
+            <mona-menu-item text="Dock Unpinned" (menuClick)="setPanelPinned(panel, false)"
+                            [disabled]="!panel.pinned"></mona-menu-item>
+        </mona-menu-item>
+        <mona-menu-item [divider]="true"></mona-menu-item>
+        <mona-menu-item text="Hide Panel" (menuClick)="layoutService.PanelClose$.next(panel)"></mona-menu-item>
+    </mona-contextmenu>
+</ng-template>

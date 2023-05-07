@@ -1,0 +1,6 @@
+<div class="wrapper mona-panel-group">
+    <div class="mona-panel-group-content">
+        <mona-panel *ngFor="let panel of layoutService.panels|panelPositionSelector:position:priority" [panel]="panel"
+                    [ngStyle]="{'display': panel.open ? 'block': 'none'}"></mona-panel>
+    </div>
+</div>

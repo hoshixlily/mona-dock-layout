@@ -1,0 +1,69 @@
+<div class="wrapper">
+    <mona-dock-layout layoutId="TEST_LAYOUT" (ready)="onLayoutReady($event)">
+        <mona-dock-panel panelId="FileTree" position="left" priority="primary" title="Files" [startOpen]="true"
+                         [movable]="false" (panelOpen)="onPanelOpen($event)" (panelClose)="onPanelClose($event)">
+            <ng-template monaPanelContentTemplate>
+                <textarea monaTextArea rows="20">File Tree Text Area</textarea>
+                <button monaButton (click)="movePanel('FileTree', 'top', 'secondary')">MOVE PANEL</button>
+                <button monaButton (click)="closePanel('Properties')">Close Properties Panel</button>
+                <button monaButton (click)="openPanel('Properties')">Open Properties Panel</button>
+            </ng-template>
+        </mona-dock-panel>
+        <mona-dock-panel panelId="Grid" position="bottom" priority="primary" title="People">
+            <ng-template monaPanelContentTemplate>
+                <mona-grid [data]="gridData" [pageSize]="3">
+                    <mona-grid-column *ngFor="let column of gridColumns" [field]="column.field"
+                                      [title]="column.title"></mona-grid-column>
+                </mona-grid>
+            </ng-template>
+        </mona-dock-panel>
+        <mona-dock-panel panelId="JsonViewer" position="right" priority="primary" title="JSON Viewer">
+            <ng-template monaPanelTitleTemplate>
+                <span style="color: mediumvioletred;">JSON Viewer</span>
+            </ng-template>
+            <ng-template monaPanelActionTemplate>
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;"
+                     (click)="print('Export action')">
+                    <fa-icon [icon]="ExportIcon"></fa-icon>
+                </div>
+            </ng-template>
+        </mona-dock-panel>
+        <mona-dock-panel panelId="Notifications" position="right" priority="primary" title="Notifications">
+            <ng-template monaPanelActionTemplate>
+                <fa-icon [icon]="ArrowDownIcon"></fa-icon>
+            </ng-template>
+            <ng-template monaPanelActionTemplate>
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;"
+                     (click)="print('Export action')">
+                    <fa-icon [icon]="ExportIcon"></fa-icon>
+                </div>
+            </ng-template>
+        </mona-dock-panel>
+        <mona-dock-panel panelId="Properties" position="right" priority="primary" title="Properties"
+                         [visible]="propertiesPanelVisible">
+            <ng-template monaPanelContentTemplate>
+                <mona-tab-strip>
+                    <mona-tab title="Tab I">
+                        <ng-template monaTabContentTemplate>
+                            <textarea monaTextArea rows="20">Tab I Text Area</textarea>
+                        </ng-template>
+                    </mona-tab>
+                    <mona-tab title="Tab II">
+                        <ng-template monaTabContentTemplate>
+                            <textarea monaTextArea rows="20">Tab II Text Area</textarea>
+                        </ng-template>
+                    </mona-tab>
+                </mona-tab-strip>
+            </ng-template>
+        </mona-dock-panel>
+        <ng-template monaLayoutContentTemplate>
+            <div style="color: darkblue; font-size: 36px">
+                Content Template
+                <button monaButton (click)="setPanelVisibility('FileTree')">Show/Hide File Tree</button>
+                <button monaButton (click)="openPanel('FileTree')">Open File Tree</button>
+                <button monaButton (click)="closePanel('FileTree')">Close File Tree</button>
+                <button monaButton (click)="movePanel('Grid', 'left', 'secondary')">Move People Panel</button>
+            </div>
+        </ng-template>
+    </mona-dock-layout>
+</div>
