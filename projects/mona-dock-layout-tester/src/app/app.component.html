@@ -11,9 +11,9 @@
         </mona-dock-panel>
         <mona-dock-panel panelId="Grid" position="bottom" priority="primary" title="People">
             <ng-template monaPanelContentTemplate>
-                <mona-grid [data]="gridData" [pageSize]="3" style="height: 100%;">
+                <mona-grid [data]="gridData" [pageSize]="5" style="height: 100%;" [filterable]="true">
                     <mona-grid-column *ngFor="let column of gridColumns" [field]="column.field"
-                                      [title]="column.title"></mona-grid-column>
+                                      [title]="column.title" [filterType]="$any(column.type)"></mona-grid-column>
                 </mona-grid>
             </ng-template>
         </mona-dock-panel>
@@ -48,7 +48,7 @@
                             <textarea monaTextArea rows="20">Tab I Text Area</textarea>
                         </ng-template>
                     </mona-tab>
-                    <mona-tab title="Tab II">
+                    <mona-tab title="Tab II" [selected]="true">
                         <ng-template monaTabContentTemplate>
                             <textarea monaTextArea rows="20">Tab II Text Area</textarea>
                         </ng-template>

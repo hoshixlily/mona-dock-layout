@@ -19,8 +19,12 @@ export class PanelComponent {
     public panelActionStyles: Partial<CSSStyleDeclaration> = {};
     public panelContentStyles: Partial<CSSStyleDeclaration> = {};
     public panelHeaderStyles: Partial<CSSStyleDeclaration> = {};
-    @Input() public panel!: Panel;
-    @ViewChild(PanelContentAnchorDirective) public panelContentAnchor!: PanelContentAnchorDirective;
+
+    @Input({ required: true })
+    public panel!: Panel;
+
+    @ViewChild(PanelContentAnchorDirective)
+    public panelContentAnchor!: PanelContentAnchorDirective;
 
     public constructor(
         private readonly elementRef: ElementRef<HTMLElement>,

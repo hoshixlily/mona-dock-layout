@@ -54,7 +54,7 @@ export class DockLayoutComponent {
     @ContentChild(LayoutContentTemplateDirective, { read: TemplateRef })
     public layoutContentTemplateRef: TemplateRef<void> | null = null;
 
-    @Input()
+    @Input({ required: true })
     public layoutId!: string;
 
     @Output()
@@ -169,6 +169,14 @@ export class DockLayoutComponent {
     public setPanelPinned(panel: Panel, pinned: boolean): void {
         panel.pinned = pinned;
         this.layoutService.saveLayout();
+    }
+
+    public togglePanel(panel: Panel, open: boolean): void {
+        if (open) {
+            this.layoutService.PanelOpen$.next({ panel, viaUser: true });
+        } else {
+            this.layoutService.PanelClose$.next({ panel, viaUser: true });
+        }
     }
 
     private createLayoutApi(): LayoutApi {

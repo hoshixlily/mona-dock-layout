@@ -111,7 +111,7 @@
                 cdkDrag #panelHeaderElement>
                 <span>{{panel.title}}</span>
                 <ng-container [ngTemplateOutlet]="panelHeaderMenuTemplate"
-                              [ngTemplateOutletContext]="{$implicit: panelHeaderElement, panel, position: 'bottom', priority: 'primary'}"></ng-container>
+                              [ngTemplateOutletContext]="{$implicit: panelHeaderElement, panel: panel, position: 'bottom', priority: 'primary'}"></ng-container>
             </li>
         </ul>
         <ul class="layout-header-list horizontal bottom secondary" cdkDropList cdkDropListOrientation="horizontal"
@@ -175,6 +175,9 @@
                             [disabled]="!panel.pinned"></mona-menu-item>
         </mona-menu-item>
         <mona-menu-item [divider]="true"></mona-menu-item>
-        <mona-menu-item text="Hide Panel" (menuClick)="layoutService.PanelClose$.next(panel)"></mona-menu-item>
+        <mona-menu-item text="Hide Panel" [visible]="panel.open"
+                        (menuClick)="togglePanel(panel, false)"></mona-menu-item>
+        <mona-menu-item text="Show Panel" [visible]="!panel.open"
+                        (menuClick)="togglePanel(panel, true)"></mona-menu-item>
     </mona-contextmenu>
 </ng-template>

@@ -18,11 +18,11 @@ import { faArrowTurnDown, faFileExport } from "@fortawesome/free-solid-svg-icons
 export class AppComponent {
     public readonly ArrowDownIcon: IconDefinition = faArrowTurnDown;
     public readonly ExportIcon: IconDefinition = faFileExport;
-    public gridColumns: Array<{ field: string; title: string }> = [
-        { field: "id", title: "ID" },
-        { field: "name", title: "Name" },
-        { field: "age", title: "Age" },
-        { field: "city", title: "City" }
+    public gridColumns: Array<{ field: string; title: string; type: string }> = [
+        { field: "id", title: "ID", type: "number" },
+        { field: "name", title: "Name", type: "string" },
+        { field: "age", title: "Age", type: "number" },
+        { field: "city", title: "City", type: "string" }
     ];
     public gridData: Array<unknown> = [
         { id: 1, name: "John", age: 30, city: "New York" },
