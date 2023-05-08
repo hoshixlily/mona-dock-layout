@@ -1,6 +1,12 @@
 {
     "name": "@mirei/mona-dock-layout",
     "version": "1.0.0",
+    "description": "A dock layout component for Angular",
+    "main": "dist/mona-dock-layout/fesm2022/mona-dock-layout.mjs",
+    "exports": {
+        ".": "./dist/mona-dock-layout/fesm2022/mona-dock-layout.mjs"
+    },
+    "typings": "./dist/mona-dock-layout/index.d.ts",
     "scripts": {
         "ng": "ng",
         "build": "npm run build:prod",
@@ -10,7 +16,30 @@
         "watch": "ng build mona-dock-layout --watch --configuration development",
         "test": "ng test"
     },
-    "private": true,
+    "author": "Lumine",
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/merophise/mona-dock-layout"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "release": {
+        "plugins": [
+            "@semantic-release/commit-analyzer",
+            "@semantic-release/release-notes-generator",
+            "@semantic-release/npm",
+            "@semantic-release/git",
+            "@semantic-release/github"
+        ],
+        "branches": [
+            "main"
+        ]
+    },
     "dependencies": {
         "@angular/animations": "^16.0.0",
         "@angular/cdk": "^16.0.0",
