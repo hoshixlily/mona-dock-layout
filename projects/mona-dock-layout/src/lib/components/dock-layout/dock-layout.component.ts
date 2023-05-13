@@ -1,4 +1,5 @@
 import {
+    ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
     ContentChild,
@@ -31,7 +32,8 @@ import { LayoutApi } from "../../data/LayoutApi";
     selector: "mona-dock-layout",
     templateUrl: "./dock-layout.component.html",
     styleUrls: ["./dock-layout.component.scss"],
-    providers: [LayoutService]
+    providers: [LayoutService],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DockLayoutComponent {
     readonly #destroy$: ReplaySubject<void> = new ReplaySubject<void>();
@@ -252,6 +254,7 @@ export class DockLayoutComponent {
             this.resizing = true;
         });
         this.layoutService.PanelMove$.pipe(takeUntil(this.#destroy$), delay(100)).subscribe(() => {
+            this.cdr.markForCheck();
             this.layoutService.panels = [...this.layoutService.panels];
         });
         this.layoutService.PanelVisibility$.pipe(

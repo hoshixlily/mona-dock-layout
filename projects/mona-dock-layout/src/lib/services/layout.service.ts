@@ -1,11 +1,11 @@
-import { Injectable, ViewContainerRef } from "@angular/core";
+import { Injectable, signal, ViewContainerRef } from "@angular/core";
 import { LayoutConfiguration } from "../data/LayoutConfiguration";
 import { DefaultLayoutConfiguration } from "../data/DefaultLayoutConfiguration";
 import { ReplaySubject, Subject } from "rxjs";
 import { Position } from "../data/Position";
 import { Panel } from "../data/Panel";
 import { PanelMoveEvent } from "../data/PanelMoveEvent";
-import { ContainerSizeData } from "../data/ContainerSizeData";
+import { ContainerSizeData, ContainerSizeSaveData } from "../data/ContainerSizeData";
 import { LayoutSaveData } from "../data/LayoutSaveData";
 import { PanelVisibilityEvent } from "../data/PanelVisibilityEvent";
 import { PanelCloseInternalEvent, PanelOpenInternalEvent } from "../data/PanelEvents";
@@ -23,10 +23,10 @@ export class LayoutService {
     public readonly PanelVisibility$: Subject<PanelVisibilityEvent> = new Subject<PanelVisibilityEvent>();
     public containerSizeDataMap: Record<Position, ContainerSizeData> = {
         left: {
-            styles: {
+            styles: signal({
                 width: "300px",
                 display: "none"
-            },
+            }),
             panelSizeData: {
                 primary: {
                     bottom: "50%"
@@ -41,10 +41,10 @@ export class LayoutService {
             lastPanelGroupResizerPosition: "50%"
         },
         right: {
-            styles: {
+            styles: signal({
                 width: "300px",
                 display: "none"
-            },
+            }),
             panelSizeData: {
                 primary: {
                     bottom: "50%"
@@ -59,10 +59,10 @@ export class LayoutService {
             lastPanelGroupResizerPosition: "50%"
         },
         top: {
-            styles: {
+            styles: signal({
                 height: "300px",
                 display: "none"
-            },
+            }),
             panelSizeData: {
                 primary: {
                     right: "50%"
@@ -77,10 +77,10 @@ export class LayoutService {
             lastPanelGroupResizerPosition: "50%"
         },
         bottom: {
-            styles: {
+            styles: signal({
                 height: "300px",
                 display: "none"
-            },
+            }),
             panelSizeData: {
                 primary: {
                     right: "50%"
@@ -119,7 +119,25 @@ export class LayoutService {
         const savedLayoutDataJson = window.localStorage.getItem(`LAYOUT_${this.layoutId}`);
         if (savedLayoutDataJson) {
             const savedLayoutData: LayoutSaveData = JSON.parse(savedLayoutDataJson);
-            this.containerSizeDataMap = savedLayoutData.sizeData;
+            this.containerSizeDataMap = {
+                ...savedLayoutData.sizeData,
+                top: {
+                    ...savedLayoutData.sizeData.top,
+                    styles: signal(savedLayoutData.sizeData.top.styles)
+                },
+                bottom: {
+                    ...savedLayoutData.sizeData.bottom,
+                    styles: signal(savedLayoutData.sizeData.bottom.styles)
+                },
+                left: {
+                    ...savedLayoutData.sizeData.left,
+                    styles: signal(savedLayoutData.sizeData.left.styles)
+                },
+                right: {
+                    ...savedLayoutData.sizeData.right,
+                    styles: signal(savedLayoutData.sizeData.right.styles)
+                }
+            };
             this.panels.forEach(p => {
                 const panelSaveData = savedLayoutData.panelSaveData.find(p2 => p2.id === p.Id);
                 if (panelSaveData) {
@@ -155,8 +173,28 @@ export class LayoutService {
     }
 
     public saveLayout(): void {
+        const sizeData: Record<Position, ContainerSizeSaveData> = {
+            ...this.containerSizeDataMap,
+            top: {
+                ...this.containerSizeDataMap.top,
+                styles: this.containerSizeDataMap.top.styles()
+            },
+            bottom: {
+                ...this.containerSizeDataMap.bottom,
+                styles: this.containerSizeDataMap.bottom.styles()
+            },
+            left: {
+                ...this.containerSizeDataMap.left,
+                styles: this.containerSizeDataMap.left.styles()
+            },
+            right: {
+                ...this.containerSizeDataMap.right,
+                styles: this.containerSizeDataMap.right.styles()
+            }
+        };
+        sizeData.top.styles;
         const layoutSaveData: LayoutSaveData = {
-            sizeData: this.containerSizeDataMap,
+            sizeData,
             panelSaveData:
                 this.panels.map(panel => ({
                     id: panel.Id,

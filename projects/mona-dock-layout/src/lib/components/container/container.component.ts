@@ -38,9 +38,11 @@ export class ContainerComponent {
         const openPanels = containerPanels.filter(panel => panel.open);
         if (openPanels.length === 0) {
             this.open = false;
-            Object.assign(this.layoutService.containerSizeDataMap[this.position].styles, {
-                display: "none",
-                zIndex: "-10"
+            this.layoutService.containerSizeDataMap[this.position].styles.mutate(value => {
+                Object.assign(value, {
+                    display: "none",
+                    zIndex: "-10"
+                });
             });
         } else {
             this.updatePanelSizes();
@@ -107,9 +109,11 @@ export class ContainerComponent {
             this.closePanel(openPanel);
         }
         this.open = true;
-        Object.assign(this.layoutService.containerSizeDataMap[this.position].styles, {
-            display: "block",
-            zIndex: "0"
+        this.layoutService.containerSizeDataMap[this.position].styles.mutate(value => {
+            Object.assign(value, {
+                display: "block",
+                zIndex: "0"
+            });
         });
         panel.open = true;
         this.updatePanelSizes();
@@ -140,9 +144,9 @@ export class ContainerComponent {
                     this.layoutService.layoutDomRect.width - (width + oppositeContainerSize) > offset &&
                     width > this.layoutService.layoutConfig.minContainerWidth
                 ) {
-                    this.layoutService.containerSizeDataMap[this.position].styles = {
+                    this.layoutService.containerSizeDataMap[this.position].styles.set({
                         width: `${width}px`
-                    };
+                    });
                 }
             } else if (this.position === "right") {
                 const offset =
@@ -158,9 +162,9 @@ export class ContainerComponent {
                     this.layoutService.layoutDomRect.width - (width + oppositeContainerSize) > offset &&
                     width > this.layoutService.layoutConfig.minContainerWidth
                 ) {
-                    this.layoutService.containerSizeDataMap[this.position].styles = {
+                    this.layoutService.containerSizeDataMap[this.position].styles.set({
                         width: `${width}px`
-                    };
+                    });
                 }
             } else if (this.position === "top") {
                 const offset =
@@ -172,9 +176,9 @@ export class ContainerComponent {
                     this.layoutService.layoutDomRect.height - (height + oppositeContainerSize) > offset &&
                     height > this.layoutService.layoutConfig.minContainerHeight
                 ) {
-                    this.layoutService.containerSizeDataMap[this.position].styles = {
+                    this.layoutService.containerSizeDataMap[this.position].styles.set({
                         height: `${height}px`
-                    };
+                    });
                 }
             } else if (this.position === "bottom") {
                 const offset =
@@ -190,9 +194,9 @@ export class ContainerComponent {
                     this.layoutService.layoutDomRect.height - (height + oppositeContainerSize) > offset &&
                     height > this.layoutService.layoutConfig.minContainerHeight
                 ) {
-                    this.layoutService.containerSizeDataMap[this.position].styles = {
+                    this.layoutService.containerSizeDataMap[this.position].styles.set({
                         height: `${height}px`
-                    };
+                    });
                 }
             }
             this.layoutService.saveLayout();

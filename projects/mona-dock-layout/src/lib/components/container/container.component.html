@@ -1,4 +1,4 @@
-<div class="wrapper mona-layout-container" [ngStyle]="layoutService.containerSizeDataMap[position].styles"
+<div class="wrapper mona-layout-container" [ngStyle]="layoutService.containerSizeDataMap[position].styles()"
      [ngClass]="{'horizontal': position==='top' || position==='bottom', 'vertical': position==='left' || position==='right',
                  'top': position==='top', 'bottom': position==='bottom', 'left': position==='left', 'right': position==='right'}">
     <div class="panel-group-container primary"

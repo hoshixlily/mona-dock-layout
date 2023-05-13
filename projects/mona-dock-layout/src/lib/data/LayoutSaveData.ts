@@ -1,10 +1,10 @@
 import { Position } from "./Position";
 import { Priority } from "./Priority";
-import { ContainerSizeData } from "./ContainerSizeData";
+import { ContainerSizeSaveData } from "./ContainerSizeData";
 
 export interface LayoutSaveData {
     panelSaveData: PanelSaveData[];
-    sizeData: Record<Position, ContainerSizeData>;
+    sizeData: Record<Position, ContainerSizeSaveData>;
 }
 
 export interface PanelSaveData {
