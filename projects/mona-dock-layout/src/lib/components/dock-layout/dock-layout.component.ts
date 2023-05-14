@@ -1,5 +1,4 @@
 import {
-    ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
     ContentChild,
@@ -32,8 +31,7 @@ import { LayoutApi } from "../../data/LayoutApi";
     selector: "mona-dock-layout",
     templateUrl: "./dock-layout.component.html",
     styleUrls: ["./dock-layout.component.scss"],
-    providers: [LayoutService],
-    changeDetection: ChangeDetectionStrategy.OnPush
+    providers: [LayoutService]
 })
 export class DockLayoutComponent {
     readonly #destroy$: ReplaySubject<void> = new ReplaySubject<void>();
