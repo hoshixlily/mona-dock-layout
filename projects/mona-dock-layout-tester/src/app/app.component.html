@@ -50,7 +50,9 @@
                     </mona-tab>
                     <mona-tab title="Tab II" [selected]="true">
                         <ng-template monaTabContentTemplate>
-                            <textarea monaTextArea rows="20">Tab II Text Area</textarea>
+                            <div style="width: 100%; height: 100%; padding: 5px;">
+                                <textarea monaTextArea rows="5" style="width: 250px;">Tab II Text Area</textarea>
+                            </div>
                         </ng-template>
                     </mona-tab>
                 </mona-tab-strip>
