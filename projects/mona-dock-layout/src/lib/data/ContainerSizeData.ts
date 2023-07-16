@@ -3,7 +3,7 @@ import { WritableSignal } from "@angular/core";
 
 export interface ContainerSizeData {
     lastPanelGroupResizerPosition: string;
-    panelGroupResizerStyles: Partial<CSSStyleDeclaration>;
+    panelGroupResizerStyles: WritableSignal<Partial<CSSStyleDeclaration>>;
     panelSizeData: Record<Priority, Partial<CSSStyleDeclaration>>;
     styles: WritableSignal<Partial<CSSStyleDeclaration>>;
 }

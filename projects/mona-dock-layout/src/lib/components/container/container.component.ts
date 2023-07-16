@@ -216,7 +216,6 @@ export class ContainerComponent {
                     this.layoutService.containerSizeDataMap[
                         this.position
                     ].lastPanelGroupResizerPosition = `calc(${top}% - 4px)`;
-                    this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles;
                     this.updatePanelSizes();
                 }
             } else {
@@ -361,15 +360,23 @@ export class ContainerComponent {
         if (this.position === "left" || this.position === "right") {
             if (openPanels.length === 1) {
                 if (openPanels[0].priority === "primary") {
-                    this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.top = "100%";
+                    this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.set({
+                        ...this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles,
+                        top: "100%"
+                    });
                     this.layoutService.containerSizeDataMap[this.position].panelSizeData.primary.bottom = "0%";
                 } else if (openPanels[0].priority === "secondary") {
-                    this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.top = "0%";
+                    this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.set({
+                        ...this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles,
+                        top: "0%"
+                    });
                     this.layoutService.containerSizeDataMap[this.position].panelSizeData.secondary.top = "0%";
                 }
             } else if (openPanels.length === 2) {
-                this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.top =
-                    this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition;
+                this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.set({
+                    ...this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles,
+                    top: this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition
+                });
                 this.layoutService.containerSizeDataMap[this.position].panelSizeData.primary.bottom = `calc(100% - ${
                     this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition
                 }`;
@@ -379,15 +386,23 @@ export class ContainerComponent {
         } else {
             if (openPanels.length === 1) {
                 if (openPanels[0].priority === "primary") {
-                    this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.left = "100%";
+                    this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.set({
+                        ...this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles,
+                        left: "100%"
+                    });
                     this.layoutService.containerSizeDataMap[this.position].panelSizeData.primary.right = "0%";
                 } else if (openPanels[0].priority === "secondary") {
-                    this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.left = "0%";
+                    this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.set({
+                        ...this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles,
+                        left: "0%"
+                    });
                     this.layoutService.containerSizeDataMap[this.position].panelSizeData.secondary.left = "0%";
                 }
             } else if (openPanels.length === 2) {
-                this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.left =
-                    this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition;
+                this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.set({
+                    ...this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles,
+                    left: this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition
+                });
                 this.layoutService.containerSizeDataMap[this.position].panelSizeData.primary.right = `calc(100% - ${
                     this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition
                 }`;

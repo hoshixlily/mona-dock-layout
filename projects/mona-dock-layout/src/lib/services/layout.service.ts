@@ -35,9 +35,9 @@ export class LayoutService {
                     top: "50%"
                 }
             },
-            panelGroupResizerStyles: {
+            panelGroupResizerStyles: signal({
                 top: "50%"
-            },
+            }),
             lastPanelGroupResizerPosition: "50%"
         },
         right: {
@@ -53,9 +53,9 @@ export class LayoutService {
                     top: "50%"
                 }
             },
-            panelGroupResizerStyles: {
+            panelGroupResizerStyles: signal({
                 top: "50%"
-            },
+            }),
             lastPanelGroupResizerPosition: "50%"
         },
         top: {
@@ -71,9 +71,9 @@ export class LayoutService {
                     left: "50%"
                 }
             },
-            panelGroupResizerStyles: {
+            panelGroupResizerStyles: signal({
                 left: "50%"
-            },
+            }),
             lastPanelGroupResizerPosition: "50%"
         },
         bottom: {
@@ -89,9 +89,9 @@ export class LayoutService {
                     left: "50%"
                 }
             },
-            panelGroupResizerStyles: {
+            panelGroupResizerStyles: signal({
                 left: "50%"
-            },
+            }),
             lastPanelGroupResizerPosition: "50%"
         }
     };
@@ -123,18 +123,22 @@ export class LayoutService {
                 ...savedLayoutData.sizeData,
                 top: {
                     ...savedLayoutData.sizeData.top,
+                    panelGroupResizerStyles: signal(savedLayoutData.sizeData.top.panelGroupResizerStyles),
                     styles: signal(savedLayoutData.sizeData.top.styles)
                 },
                 bottom: {
                     ...savedLayoutData.sizeData.bottom,
+                    panelGroupResizerStyles: signal(savedLayoutData.sizeData.bottom.panelGroupResizerStyles),
                     styles: signal(savedLayoutData.sizeData.bottom.styles)
                 },
                 left: {
                     ...savedLayoutData.sizeData.left,
+                    panelGroupResizerStyles: signal(savedLayoutData.sizeData.left.panelGroupResizerStyles),
                     styles: signal(savedLayoutData.sizeData.left.styles)
                 },
                 right: {
                     ...savedLayoutData.sizeData.right,
+                    panelGroupResizerStyles: signal(savedLayoutData.sizeData.right.panelGroupResizerStyles),
                     styles: signal(savedLayoutData.sizeData.right.styles)
                 }
             };
@@ -177,18 +181,22 @@ export class LayoutService {
             ...this.containerSizeDataMap,
             top: {
                 ...this.containerSizeDataMap.top,
+                panelGroupResizerStyles: this.containerSizeDataMap.top.panelGroupResizerStyles(),
                 styles: this.containerSizeDataMap.top.styles()
             },
             bottom: {
                 ...this.containerSizeDataMap.bottom,
+                panelGroupResizerStyles: this.containerSizeDataMap.bottom.panelGroupResizerStyles(),
                 styles: this.containerSizeDataMap.bottom.styles()
             },
             left: {
                 ...this.containerSizeDataMap.left,
+                panelGroupResizerStyles: this.containerSizeDataMap.left.panelGroupResizerStyles(),
                 styles: this.containerSizeDataMap.left.styles()
             },
             right: {
                 ...this.containerSizeDataMap.right,
+                panelGroupResizerStyles: this.containerSizeDataMap.right.panelGroupResizerStyles(),
                 styles: this.containerSizeDataMap.right.styles()
             }
         };

@@ -7,7 +7,7 @@
         <mona-panel-group [position]="position" priority="primary"></mona-panel-group>
     </div>
     <div class="panel-group-resizer"
-         [ngStyle]="layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles"
+         [ngStyle]="layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles()"
          (mousedown)="startPanelResize()" *ngIf="panelGroupResizerVisible"></div>
     <div class="panel-group-container secondary"
          [ngStyle]="layoutService.containerSizeDataMap[position].panelSizeData.secondary"
