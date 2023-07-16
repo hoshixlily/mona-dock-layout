@@ -13,7 +13,7 @@
             <ng-template monaPanelContentTemplate>
                 <mona-grid [data]="gridData" [pageSize]="5" style="height: 100%;" [filterable]="true">
                     <mona-grid-column *ngFor="let column of gridColumns" [field]="column.field"
-                                      [title]="column.title" [filterType]="$any(column.type)"></mona-grid-column>
+                                      [title]="column.title" [type]="$any(column.type)"></mona-grid-column>
                 </mona-grid>
             </ng-template>
         </mona-dock-panel>
