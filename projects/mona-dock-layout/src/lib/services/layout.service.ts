@@ -38,7 +38,7 @@ export class LayoutService {
             panelGroupResizerStyles: signal({
                 top: "50%"
             }),
-            lastPanelGroupResizerPosition: "50%"
+            lastPanelGroupResizerPosition: signal("50%")
         },
         right: {
             styles: signal({
@@ -56,7 +56,7 @@ export class LayoutService {
             panelGroupResizerStyles: signal({
                 top: "50%"
             }),
-            lastPanelGroupResizerPosition: "50%"
+            lastPanelGroupResizerPosition: signal("50%")
         },
         top: {
             styles: signal({
@@ -74,7 +74,7 @@ export class LayoutService {
             panelGroupResizerStyles: signal({
                 left: "50%"
             }),
-            lastPanelGroupResizerPosition: "50%"
+            lastPanelGroupResizerPosition: signal("50%")
         },
         bottom: {
             styles: signal({
@@ -92,7 +92,7 @@ export class LayoutService {
             panelGroupResizerStyles: signal({
                 left: "50%"
             }),
-            lastPanelGroupResizerPosition: "50%"
+            lastPanelGroupResizerPosition: signal("50%")
         }
     };
     public headerStyles: Record<Position, Partial<CSSStyleDeclaration>> = {
@@ -123,21 +123,27 @@ export class LayoutService {
                 ...savedLayoutData.sizeData,
                 top: {
                     ...savedLayoutData.sizeData.top,
+                    lastPanelGroupResizerPosition: signal(savedLayoutData.sizeData.top.lastPanelGroupResizerPosition),
                     panelGroupResizerStyles: signal(savedLayoutData.sizeData.top.panelGroupResizerStyles),
                     styles: signal(savedLayoutData.sizeData.top.styles)
                 },
                 bottom: {
                     ...savedLayoutData.sizeData.bottom,
+                    lastPanelGroupResizerPosition: signal(
+                        savedLayoutData.sizeData.bottom.lastPanelGroupResizerPosition
+                    ),
                     panelGroupResizerStyles: signal(savedLayoutData.sizeData.bottom.panelGroupResizerStyles),
                     styles: signal(savedLayoutData.sizeData.bottom.styles)
                 },
                 left: {
                     ...savedLayoutData.sizeData.left,
+                    lastPanelGroupResizerPosition: signal(savedLayoutData.sizeData.left.lastPanelGroupResizerPosition),
                     panelGroupResizerStyles: signal(savedLayoutData.sizeData.left.panelGroupResizerStyles),
                     styles: signal(savedLayoutData.sizeData.left.styles)
                 },
                 right: {
                     ...savedLayoutData.sizeData.right,
+                    lastPanelGroupResizerPosition: signal(savedLayoutData.sizeData.right.lastPanelGroupResizerPosition),
                     panelGroupResizerStyles: signal(savedLayoutData.sizeData.right.panelGroupResizerStyles),
                     styles: signal(savedLayoutData.sizeData.right.styles)
                 }
@@ -181,21 +187,25 @@ export class LayoutService {
             ...this.containerSizeDataMap,
             top: {
                 ...this.containerSizeDataMap.top,
+                lastPanelGroupResizerPosition: this.containerSizeDataMap.top.lastPanelGroupResizerPosition(),
                 panelGroupResizerStyles: this.containerSizeDataMap.top.panelGroupResizerStyles(),
                 styles: this.containerSizeDataMap.top.styles()
             },
             bottom: {
                 ...this.containerSizeDataMap.bottom,
+                lastPanelGroupResizerPosition: this.containerSizeDataMap.bottom.lastPanelGroupResizerPosition(),
                 panelGroupResizerStyles: this.containerSizeDataMap.bottom.panelGroupResizerStyles(),
                 styles: this.containerSizeDataMap.bottom.styles()
             },
             left: {
                 ...this.containerSizeDataMap.left,
+                lastPanelGroupResizerPosition: this.containerSizeDataMap.left.lastPanelGroupResizerPosition(),
                 panelGroupResizerStyles: this.containerSizeDataMap.left.panelGroupResizerStyles(),
                 styles: this.containerSizeDataMap.left.styles()
             },
             right: {
                 ...this.containerSizeDataMap.right,
+                lastPanelGroupResizerPosition: this.containerSizeDataMap.right.lastPanelGroupResizerPosition(),
                 panelGroupResizerStyles: this.containerSizeDataMap.right.panelGroupResizerStyles(),
                 styles: this.containerSizeDataMap.right.styles()
             }

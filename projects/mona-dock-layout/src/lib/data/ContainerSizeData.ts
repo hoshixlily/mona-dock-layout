@@ -2,7 +2,7 @@ import { Priority } from "./Priority";
 import { WritableSignal } from "@angular/core";
 
 export interface ContainerSizeData {
-    lastPanelGroupResizerPosition: string;
+    lastPanelGroupResizerPosition: WritableSignal<string>;
     panelGroupResizerStyles: WritableSignal<Partial<CSSStyleDeclaration>>;
     panelSizeData: Record<Priority, Partial<CSSStyleDeclaration>>;
     styles: WritableSignal<Partial<CSSStyleDeclaration>>;
