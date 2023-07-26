@@ -5,11 +5,13 @@ import { AppComponent } from "./app.component";
 import { DockLayoutModule } from "mona-dock-layout";
 import { FontAwesomeModule } from "@fortawesome/angular-fontawesome";
 import { ButtonModule, GridModule, TabStripModule, TextAreaModule } from "@mirei/mona-ui";
+import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 
 @NgModule({
     declarations: [AppComponent],
     imports: [
         BrowserModule,
+        BrowserAnimationsModule,
         DockLayoutModule,
         FontAwesomeModule,
         ButtonModule,
