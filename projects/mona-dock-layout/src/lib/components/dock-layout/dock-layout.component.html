@@ -1,10 +1,10 @@
 <div class="wrapper mona-dock-layout"
-     [ngClass]="{'resizing': (layoutService.ContainerResizeInProgress$ | async) || (layoutService.PanelResizeInProgress$ | async)}"
+     [ngClass]="{'resizing': (layoutService.containerResizeInProgress$ | async) || (layoutService.panelResizeInProgress$ | async)}"
      #layoutElementRef>
     <div class="layout-header horizontal top" [ngStyle]="layoutService.headerStyles.top">
         <ul class="layout-header-list horizontal top primary" cdkDropList cdkDropListOrientation="horizontal"
             (cdkDropListDropped)="onPanelHeadersReordered($event, 'top', 'primary')">
-            <li *ngFor="let panel of layoutService.panels|panelPositionSelector:'top':'primary'"
+            <li *ngFor="let panel of layoutService.panels()|panelPositionSelector:'top':'primary'"
                 cdkDragPreviewClass="panel-header-drag"
                 [ngClass]="{'opened': panel.open, 'hidden': !panel.visible}"
                 (click)="onPanelHeaderClicked(panel)"
@@ -16,7 +16,7 @@
         </ul>
         <ul class="layout-header-list horizontal top secondary" cdkDropList cdkDropListOrientation="horizontal"
             (cdkDropListDropped)="onPanelHeadersReordered($event, 'top', 'secondary')">
-            <li *ngFor="let panel of layoutService.panels|panelPositionSelector:'top':'secondary'"
+            <li *ngFor="let panel of layoutService.panels()|panelPositionSelector:'top':'secondary'"
                 cdkDragPreviewClass="panel-header-drag"
                 [ngClass]="{'opened': panel.open, 'hidden': !panel.visible}"
                 (click)="onPanelHeaderClicked(panel)"
@@ -31,7 +31,7 @@
         <div class="layout-header vertical left" [ngStyle]="layoutService.headerStyles.left">
             <ul class="layout-header-list vertical left primary" cdkDropList
                 (cdkDropListDropped)="onPanelHeadersReordered($event, 'left', 'primary')">
-                <li *ngFor="let panel of layoutService.panels|panelPositionSelector:'left':'primary'"
+                <li *ngFor="let panel of layoutService.panels()|panelPositionSelector:'left':'primary'"
                     cdkDragPreviewClass="panel-header-drag"
                     [ngClass]="{'opened': panel.open, 'hidden': !panel.visible}"
                     (click)="onPanelHeaderClicked(panel)"
@@ -43,7 +43,7 @@
             </ul>
             <ul class="layout-header-list vertical left secondary" cdkDropList
                 (cdkDropListDropped)="onPanelHeadersReordered($event, 'left', 'secondary')">
-                <li *ngFor="let panel of layoutService.panels|panelPositionSelector:'left':'secondary'"
+                <li *ngFor="let panel of layoutService.panels()|panelPositionSelector:'left':'secondary'"
                     cdkDragPreviewClass="panel-header-drag"
                     [ngClass]="{'opened': panel.open, 'hidden': !panel.visible}"
                     (click)="onPanelHeaderClicked(panel)"
@@ -77,7 +77,7 @@
         <div class="layout-header vertical right" [ngStyle]="layoutService.headerStyles.right">
             <ul class="layout-header-list vertical right primary" cdkDropList
                 (cdkDropListDropped)="onPanelHeadersReordered($event, 'right', 'primary')">
-                <li *ngFor="let panel of layoutService.panels|panelPositionSelector:'right':'primary'"
+                <li *ngFor="let panel of layoutService.panels()|panelPositionSelector:'right':'primary'"
                     cdkDragPreviewClass="panel-header-drag"
                     [ngClass]="{'opened': panel.open, 'hidden': !panel.visible}"
                     (click)="onPanelHeaderClicked(panel)"
@@ -89,7 +89,7 @@
             </ul>
             <ul class="layout-header-list vertical right secondary" cdkDropList
                 (cdkDropListDropped)="onPanelHeadersReordered($event, 'right', 'secondary')">
-                <li *ngFor="let panel of layoutService.panels|panelPositionSelector:'right':'secondary'"
+                <li *ngFor="let panel of layoutService.panels()|panelPositionSelector:'right':'secondary'"
                     cdkDragPreviewClass="panel-header-drag"
                     [ngClass]="{'opened': panel.open, 'hidden': !panel.visible}"
                     (click)="onPanelHeaderClicked(panel)"
@@ -104,7 +104,7 @@
     <div class="layout-header horizontal bottom" [ngStyle]="layoutService.headerStyles.bottom">
         <ul class="layout-header-list horizontal bottom primary" cdkDropList cdkDropListOrientation="horizontal"
             (cdkDropListDropped)="onPanelHeadersReordered($event, 'bottom', 'primary')">
-            <li *ngFor="let panel of layoutService.panels|panelPositionSelector:'bottom':'primary'"
+            <li *ngFor="let panel of layoutService.panels()|panelPositionSelector:'bottom':'primary'"
                 cdkDragPreviewClass="panel-header-drag"
                 [ngClass]="{'opened': panel.open, 'hidden': !panel.visible}"
                 (click)="onPanelHeaderClicked(panel)"
@@ -116,7 +116,7 @@
         </ul>
         <ul class="layout-header-list horizontal bottom secondary" cdkDropList cdkDropListOrientation="horizontal"
             (cdkDropListDropped)="onPanelHeadersReordered($event, 'bottom', 'secondary')">
-            <li *ngFor="let panel of layoutService.panels|panelPositionSelector:'bottom':'secondary'"
+            <li *ngFor="let panel of layoutService.panels()|panelPositionSelector:'bottom':'secondary'"
                 cdkDragPreviewClass="panel-header-drag"
                 [ngClass]="{'opened': panel.open, 'hidden': !panel.visible}"
                 (click)="onPanelHeaderClicked(panel)"
@@ -131,7 +131,7 @@
 
 <div class="mona-panel-template-contents-container" style="display: none !important; width: 0; height: 0;">
     <ng-container #panelTemplateContentsContainerRef></ng-container>
-    <ng-container *ngFor="let p of layoutService.panels">
+    <ng-container *ngFor="let p of layoutService.panels()">
         <ng-template monaPanelTemplateReference [panel]="p">
             <div style="width: 100%; height: 100%; overflow: auto;"> <!-- This div is important. Do not delete. -->
                 <ng-container [ngTemplateOutlet]="p.content"

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, inject, Injectable, signal, ViewContainerRef } from "@angular/core";
+import { ChangeDetectorRef, inject, Injectable, signal, ViewContainerRef, WritableSignal } from "@angular/core";
 import { LayoutConfiguration } from "../data/LayoutConfiguration";
 import { DefaultLayoutConfiguration } from "../data/DefaultLayoutConfiguration";
 import { asyncScheduler, ReplaySubject, Subject } from "rxjs";
@@ -14,15 +14,15 @@ import { PanelCloseInternalEvent, PanelOpenInternalEvent } from "../data/PanelEv
 export class LayoutService {
     readonly #cdr: ChangeDetectorRef = inject(ChangeDetectorRef);
     private layoutId: string = "";
-    public readonly ContainerResizeInProgress$: Subject<boolean> = new Subject<boolean>();
-    public readonly ContainerResizeStart$: Subject<Position> = new Subject<Position>();
-    public readonly LayoutReady$: ReplaySubject<void> = new ReplaySubject<void>(1);
-    public readonly PanelClose$: Subject<PanelCloseInternalEvent> = new Subject<PanelCloseInternalEvent>();
-    public readonly PanelMove$: Subject<PanelMoveEvent> = new Subject<PanelMoveEvent>();
-    public readonly PanelMoveEnd$: Subject<Panel> = new Subject<Panel>();
-    public readonly PanelOpen$: Subject<PanelOpenInternalEvent> = new Subject<PanelOpenInternalEvent>();
-    public readonly PanelResizeInProgress$: Subject<boolean> = new Subject<boolean>();
-    public readonly PanelVisibility$: Subject<PanelVisibilityEvent> = new Subject<PanelVisibilityEvent>();
+    public readonly containerResizeInProgress$: Subject<boolean> = new Subject<boolean>();
+    public readonly containerResizeStart$: Subject<Position> = new Subject<Position>();
+    public readonly layoutReady$: ReplaySubject<void> = new ReplaySubject<void>(1);
+    public readonly panelClose$: Subject<PanelCloseInternalEvent> = new Subject<PanelCloseInternalEvent>();
+    public readonly panelMove$: Subject<PanelMoveEvent> = new Subject<PanelMoveEvent>();
+    public readonly panelMoveEnd$: Subject<Panel> = new Subject<Panel>();
+    public readonly panelOpen$: Subject<PanelOpenInternalEvent> = new Subject<PanelOpenInternalEvent>();
+    public readonly panelResizeInProgress$: Subject<boolean> = new Subject<boolean>();
+    public readonly panelVisibility$: Subject<PanelVisibilityEvent> = new Subject<PanelVisibilityEvent>();
     public containerSizeDataMap: Record<Position, ContainerSizeData> = {
         left: {
             styles: signal({
@@ -106,7 +106,7 @@ export class LayoutService {
     public layoutConfig: LayoutConfiguration = { ...DefaultLayoutConfiguration };
     public layoutDomRect!: DOMRect;
     public panelTemplateContentsContainerRef!: ViewContainerRef;
-    public panels: Panel[] = [];
+    public panels: WritableSignal<Panel[]> = signal([]);
 
     public constructor() {
         this.initialize();
@@ -159,16 +159,16 @@ export class LayoutService {
                     styles: signal(savedLayoutData.sizeData.right.styles)
                 }
             };
-            this.panels.forEach(p => {
+            this.panels().forEach(p => {
                 const panelSaveData = savedLayoutData.panelSaveData.find(p2 => p2.id === p.Id);
                 if (panelSaveData) {
                     p.index = panelSaveData.index;
                     p.pinned = panelSaveData.pinned ?? true;
                     if (panelSaveData.position !== p.position || panelSaveData.priority !== p.priority) {
-                        this.PanelClose$.next({ panel: p, viaMove: true, viaUser: false });
+                        this.panelClose$.next({ panel: p, viaMove: true, viaUser: false });
                         this.detachPanelContent(p);
                         window.setTimeout(() => {
-                            this.PanelMove$.next({
+                            this.panelMove$.next({
                                 panel: p,
                                 oldPosition: p.position,
                                 newPosition: panelSaveData.position,
@@ -178,10 +178,10 @@ export class LayoutService {
                             });
                         });
                     } else if (panelSaveData.open && p.visible) {
-                        this.PanelOpen$.next({ panel: p, viaUser: false, viaMove: false });
+                        this.panelOpen$.next({ panel: p, viaUser: false, viaMove: false });
                     }
                 } else if (p.startOpen && p.visible) {
-                    this.PanelOpen$.next({ panel: p, viaUser: false, viaMove: false });
+                    this.panelOpen$.next({ panel: p, viaUser: false, viaMove: false });
                 }
             });
 
@@ -197,7 +197,7 @@ export class LayoutService {
             const reattach = (): void => {
                 panel.vcr.insert(panel.viewRef, viewRefIndex);
                 this.#cdr.detectChanges();
-                this.PanelMoveEnd$.next(panel);
+                this.panelMoveEnd$.next(panel);
             };
             if (timeout != null) {
                 asyncScheduler.schedule(() => reattach(), timeout);
@@ -238,7 +238,7 @@ export class LayoutService {
         const layoutSaveData: LayoutSaveData = {
             sizeData,
             panelSaveData:
-                this.panels.map(panel => ({
+                this.panels().map(panel => ({
                     id: panel.Id,
                     index: panel.index,
                     pinned: panel.pinned,
@@ -263,7 +263,7 @@ export class LayoutService {
     public updateHeaderSizes(): void {
         const positions = ["left", "right", "top", "bottom"] as Position[];
         for (const position of positions) {
-            const panels = this.panels.filter(p => p.position === position);
+            const panels = this.panels().filter(p => p.position === position);
             const styleText = position === "left" || position === "right" ? "width" : "height";
             const headerStyleText = position === "left" || position === "right" ? "headerWidth" : "headerHeight";
             this.headerStyles[position][styleText] =

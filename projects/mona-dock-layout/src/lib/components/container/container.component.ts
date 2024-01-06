@@ -32,7 +32,7 @@ export class ContainerComponent implements OnInit, OnDestroy {
 
     public closePanel(panel: Panel): void {
         panel.open = false;
-        const containerPanels = this.layoutService.panels.filter(panel => panel.position === this.position);
+        const containerPanels = this.layoutService.panels().filter(panel => panel.position === this.position);
         const openPanels = containerPanels.filter(panel => panel.open);
         if (openPanels.length === 0) {
             this.open = false;
@@ -48,12 +48,12 @@ export class ContainerComponent implements OnInit, OnDestroy {
     }
 
     public endPanelResize(): void {
-        this.layoutService.PanelResizeInProgress$.next(false);
+        this.layoutService.panelResizeInProgress$.next(false);
         this.resizingPanel = false;
     }
 
     public endResize(): void {
-        this.layoutService.ContainerResizeInProgress$.next(false);
+        this.layoutService.containerResizeInProgress$.next(false);
         this.resizing = false;
     }
 
@@ -69,13 +69,13 @@ export class ContainerComponent implements OnInit, OnDestroy {
     }
 
     public startPanelResize(): void {
-        this.layoutService.PanelResizeInProgress$.next(true);
+        this.layoutService.panelResizeInProgress$.next(true);
         this.resizingPanel = true;
     }
 
     public startResize(): void {
-        this.layoutService.ContainerResizeStart$.next(this.position);
-        this.layoutService.ContainerResizeInProgress$.next(true);
+        this.layoutService.containerResizeStart$.next(this.position);
+        this.layoutService.containerResizeInProgress$.next(true);
         this.resizing = true;
     }
 
@@ -100,9 +100,9 @@ export class ContainerComponent implements OnInit, OnDestroy {
     }
 
     private openPanel(panel: Panel): void {
-        const openPanel = this.layoutService.panels.find(
-            p => p.position === panel.position && p.priority === panel.priority && p.open
-        );
+        const openPanel = this.layoutService
+            .panels()
+            .find(p => p.position === panel.position && p.priority === panel.priority && p.open);
         if (openPanel) {
             this.closePanel(openPanel);
         }
@@ -260,24 +260,24 @@ export class ContainerComponent implements OnInit, OnDestroy {
     }
 
     private setSubscriptions(): void {
-        this.layoutService.PanelOpen$.pipe(takeUntil(this.#destroy$)).subscribe(event => {
+        this.layoutService.panelOpen$.pipe(takeUntil(this.#destroy$)).subscribe(event => {
             if (event.panel.position === this.position) {
                 this.openPanel(event.panel);
                 this.layoutService.saveLayout();
             }
         });
-        this.layoutService.PanelClose$.pipe(takeUntil(this.#destroy$)).subscribe(event => {
+        this.layoutService.panelClose$.pipe(takeUntil(this.#destroy$)).subscribe(event => {
             if (event.panel.position === this.position) {
                 this.closePanel(event.panel);
                 this.layoutService.saveLayout();
             }
         });
-        this.layoutService.PanelMove$.pipe(takeUntil(this.#destroy$)).subscribe(event => {
-            const panels = this.layoutService.panels.filter(
-                panel => panel.position === event.newPosition && panel.priority === event.newPriority
-            );
+        this.layoutService.panelMove$.pipe(takeUntil(this.#destroy$)).subscribe(event => {
+            const panels = this.layoutService
+                .panels()
+                .filter(panel => panel.position === event.newPosition && panel.priority === event.newPriority);
             if (event.newPosition === this.position) {
-                this.layoutService.PanelClose$.next({
+                this.layoutService.panelClose$.next({
                     panel: event.panel,
                     viaMove: true
                 });
@@ -285,14 +285,14 @@ export class ContainerComponent implements OnInit, OnDestroy {
                     event.panel.position = event.newPosition;
                     event.panel.priority = event.newPriority;
                     event.panel.index = panels.length;
-                    const updatedPanels = this.layoutService.panels.filter(
-                        panel => panel.position === event.newPosition && panel.priority === event.newPriority
-                    );
+                    const updatedPanels = this.layoutService
+                        .panels()
+                        .filter(panel => panel.position === event.newPosition && panel.priority === event.newPriority);
                     updatedPanels.sort((p1, p2) => p1.index - p2.index).forEach((p, px) => (p.index = px));
                     if (event.wasOpenBefore) {
-                        const containerPanels = this.layoutService.panels.filter(
-                            panel => panel.position === this.position
-                        );
+                        const containerPanels = this.layoutService
+                            .panels()
+                            .filter(panel => panel.position === this.position);
                         const priorityPanels = containerPanels.filter(panel => panel.priority === event.newPriority);
                         const openPanels = priorityPanels.filter(panel => panel.open);
                         if (openPanels.length === 0) {
@@ -360,7 +360,7 @@ export class ContainerComponent implements OnInit, OnDestroy {
     }
 
     private updatePanelSizes(): void {
-        const containerPanels = this.layoutService.panels.filter(panel => panel.position === this.position);
+        const containerPanels = this.layoutService.panels().filter(panel => panel.position === this.position);
         const openPanels = containerPanels.filter(panel => panel.open);
         if (this.position === "left" || this.position === "right") {
             this.updateHorizontalPanelSizes(openPanels);

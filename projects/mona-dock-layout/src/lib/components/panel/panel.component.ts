@@ -46,12 +46,12 @@ export class PanelComponent implements OnInit, AfterViewInit {
     ) {}
 
     public close(): void {
-        this.layoutService.PanelClose$.next({ panel: this.panel, viaUser: true });
+        this.layoutService.panelClose$.next({ panel: this.panel, viaUser: true });
     }
 
     public movePanel(position: Position, priority: Priority): void {
         this.layoutService.detachPanelContent(this.panel);
-        this.layoutService.PanelMove$.next({
+        this.layoutService.panelMove$.next({
             panel: this.panel,
             oldPosition: this.panel.position,
             newPosition: position,
@@ -76,8 +76,11 @@ export class PanelComponent implements OnInit, AfterViewInit {
     }
 
     private setStyles(): void {
+        const hasHeaderTopBorder = this.panel.position === "left" || this.panel.position === "right";
+        const headerHeightOffset = hasHeaderTopBorder ? 1 : 0;
         this.panelHeaderStyles = {
-            height: `${this.layoutService.layoutConfig.panelHeaderHeight}px`
+            height: `${this.layoutService.layoutConfig.panelHeaderHeight + headerHeightOffset}px`,
+            borderTop: hasHeaderTopBorder ? "1px solid var(--mona-border-color)" : undefined
         };
         this.panelActionStyles = {
             width: `${this.layoutService.layoutConfig.panelHeaderHeight}px`
@@ -111,7 +114,7 @@ export class PanelComponent implements OnInit, AfterViewInit {
                         }
                         if (!this.panel.pinned) {
                             this.zone.run(() => {
-                                this.layoutService.PanelClose$.next({ panel: this.panel, viaUser: true });
+                                this.layoutService.panelClose$.next({ panel: this.panel, viaUser: true });
                             });
                         }
                     });

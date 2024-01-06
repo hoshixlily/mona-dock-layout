@@ -64,7 +64,7 @@ export class DockPanelComponent {
     @Input()
     public set visible(visible: boolean) {
         this.panelVisible = visible;
-        this.layoutService.PanelVisibility$.next({ panelId: this.panelId, visible });
+        this.layoutService.panelVisibility$.next({ panelId: this.panelId, visible });
     }
 
     public constructor(private readonly layoutService: LayoutService) {}
@@ -99,8 +99,8 @@ export class DockPanelComponent {
     }
 
     private setSubscriptions(): void {
-        this.layoutService.LayoutReady$.pipe(takeUntil(this.#destroy$)).subscribe(() => {
-            this.layoutService.PanelClose$.subscribe(event => {
+        this.layoutService.layoutReady$.pipe(takeUntil(this.#destroy$)).subscribe(() => {
+            this.layoutService.panelClose$.subscribe(event => {
                 if (event.panel.Id === this.panelId && (event.viaApi || event.viaUser)) {
                     this.panelClose.emit({
                         panelId: this.panelId,
@@ -109,7 +109,7 @@ export class DockPanelComponent {
                     });
                 }
             });
-            this.layoutService.PanelOpen$.subscribe(event => {
+            this.layoutService.panelOpen$.subscribe(event => {
                 if (event.panel.Id === this.panelId && (event.viaApi || event.viaUser)) {
                     this.panelOpen.emit({
                         panelId: this.panelId,
