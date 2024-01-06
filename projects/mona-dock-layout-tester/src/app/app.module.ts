@@ -6,7 +6,7 @@ import {
     ButtonDirective,
     GridColumnComponent,
     GridComponent,
-    TabComponent,
+    TabComponent, TabContentTemplateDirective,
     TabStripComponent,
     TextAreaDirective
 } from "@mirei/mona-ui";
@@ -26,10 +26,10 @@ import {AppComponent} from "./app.component";
         GridColumnComponent,
         TabStripComponent,
         TabComponent,
-        TextAreaDirective
+        TextAreaDirective,
+        TabContentTemplateDirective
     ],
     providers: [],
     bootstrap: [AppComponent]
 })
-export class AppModule {
-}
+export class AppModule {}

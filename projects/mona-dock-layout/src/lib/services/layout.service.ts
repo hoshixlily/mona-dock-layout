@@ -1,7 +1,7 @@
-import { Injectable, signal, ViewContainerRef } from "@angular/core";
+import { ChangeDetectorRef, inject, Injectable, signal, ViewContainerRef } from "@angular/core";
 import { LayoutConfiguration } from "../data/LayoutConfiguration";
 import { DefaultLayoutConfiguration } from "../data/DefaultLayoutConfiguration";
-import { ReplaySubject, Subject } from "rxjs";
+import { asyncScheduler, ReplaySubject, Subject } from "rxjs";
 import { Position } from "../data/Position";
 import { Panel } from "../data/Panel";
 import { PanelMoveEvent } from "../data/PanelMoveEvent";
@@ -12,12 +12,14 @@ import { PanelCloseInternalEvent, PanelOpenInternalEvent } from "../data/PanelEv
 
 @Injectable()
 export class LayoutService {
+    readonly #cdr: ChangeDetectorRef = inject(ChangeDetectorRef);
     private layoutId: string = "";
     public readonly ContainerResizeInProgress$: Subject<boolean> = new Subject<boolean>();
     public readonly ContainerResizeStart$: Subject<Position> = new Subject<Position>();
     public readonly LayoutReady$: ReplaySubject<void> = new ReplaySubject<void>(1);
     public readonly PanelClose$: Subject<PanelCloseInternalEvent> = new Subject<PanelCloseInternalEvent>();
     public readonly PanelMove$: Subject<PanelMoveEvent> = new Subject<PanelMoveEvent>();
+    public readonly PanelMoveEnd$: Subject<Panel> = new Subject<Panel>();
     public readonly PanelOpen$: Subject<PanelOpenInternalEvent> = new Subject<PanelOpenInternalEvent>();
     public readonly PanelResizeInProgress$: Subject<boolean> = new Subject<boolean>();
     public readonly PanelVisibility$: Subject<PanelVisibilityEvent> = new Subject<PanelVisibilityEvent>();
@@ -110,6 +112,15 @@ export class LayoutService {
         this.initialize();
     }
 
+    public detachPanelContent(panel: Panel): void {
+        const viewRef = panel.viewRef;
+        const viewRefIndex = panel.vcr.indexOf(viewRef);
+        if (viewRefIndex !== -1) {
+            panel.vcr.detach(viewRefIndex);
+            this.panelTemplateContentsContainerRef.insert(viewRef);
+        }
+    }
+
     public getHeaderSize(position: Position): number {
         const headerElement = document.querySelector(`div.layout-header.${position}`) as HTMLElement;
         return position === "left" || position === "right" ? headerElement.offsetWidth : headerElement.offsetHeight;
@@ -155,6 +166,7 @@ export class LayoutService {
                     p.pinned = panelSaveData.pinned ?? true;
                     if (panelSaveData.position !== p.position || panelSaveData.priority !== p.priority) {
                         this.PanelClose$.next({ panel: p, viaMove: true, viaUser: false });
+                        this.detachPanelContent(p);
                         window.setTimeout(() => {
                             this.PanelMove$.next({
                                 panel: p,
@@ -165,21 +177,34 @@ export class LayoutService {
                                 wasOpenBefore: panelSaveData.open && p.visible && p.pinned
                             });
                         });
-                    } else {
-                        if (panelSaveData.open && p.visible) {
-                            this.PanelOpen$.next({ panel: p, viaUser: false, viaMove: false });
-                        }
-                    }
-                } else {
-                    if (p.startOpen && p.visible) {
+                    } else if (panelSaveData.open && p.visible) {
                         this.PanelOpen$.next({ panel: p, viaUser: false, viaMove: false });
                     }
+                } else if (p.startOpen && p.visible) {
+                    this.PanelOpen$.next({ panel: p, viaUser: false, viaMove: false });
                 }
             });
 
             return true;
         }
         return false;
+    }
+
+    public reattachPanelContent(panel: Panel, timeout?: number): void {
+        const viewRefIndex = this.panelTemplateContentsContainerRef.indexOf(panel.viewRef);
+        if (viewRefIndex !== -1) {
+            this.panelTemplateContentsContainerRef.detach(viewRefIndex);
+            const reattach = (): void => {
+                panel.vcr.insert(panel.viewRef, viewRefIndex);
+                this.#cdr.detectChanges();
+                this.PanelMoveEnd$.next(panel);
+            };
+            if (timeout != null) {
+                asyncScheduler.schedule(() => reattach(), timeout);
+            } else {
+                reattach();
+            }
+        }
     }
 
     public saveLayout(): void {
@@ -210,7 +235,6 @@ export class LayoutService {
                 styles: this.containerSizeDataMap.right.styles()
             }
         };
-        sizeData.top.styles;
         const layoutSaveData: LayoutSaveData = {
             sizeData,
             panelSaveData:

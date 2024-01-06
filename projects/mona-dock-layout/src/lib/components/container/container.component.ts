@@ -1,19 +1,18 @@
-import { ChangeDetectorRef, Component, ElementRef, Input, NgZone, Renderer2, ViewRef } from "@angular/core";
-import { asyncScheduler, ReplaySubject, takeUntil, tap } from "rxjs";
+import { Component, ElementRef, Input, NgZone, OnDestroy, OnInit, Renderer2 } from "@angular/core";
+import { ReplaySubject, takeUntil } from "rxjs";
+import { Panel } from "../../data/Panel";
 import { Position } from "../../data/Position";
 import { LayoutService } from "../../services/layout.service";
-import { Panel } from "../../data/Panel";
 
 @Component({
     selector: "mona-container",
     templateUrl: "./container.component.html",
     styleUrls: ["./container.component.scss"]
 })
-export class ContainerComponent {
+export class ContainerComponent implements OnInit, OnDestroy {
     readonly #destroy$: ReplaySubject<void> = new ReplaySubject<void>(1);
     private mouseMoveListener: (() => void) | null = null;
     private mouseUpListener: (() => void) | null = null;
-    private movedPanelViewRef: ViewRef | null = null;
     public anyPrimaryPanelOpen: boolean = false;
     public anySecondaryPanelOpen: boolean = false;
     public open: boolean = false;
@@ -25,7 +24,6 @@ export class ContainerComponent {
     public position: Position = "left";
 
     public constructor(
-        private readonly cdr: ChangeDetectorRef,
         private readonly hostElementRef: ElementRef<HTMLElement>,
         public readonly layoutService: LayoutService,
         private readonly renderer: Renderer2,
@@ -38,8 +36,8 @@ export class ContainerComponent {
         const openPanels = containerPanels.filter(panel => panel.open);
         if (openPanels.length === 0) {
             this.open = false;
-            this.layoutService.containerSizeDataMap[this.position].styles.mutate(value => {
-                Object.assign(value, {
+            this.layoutService.containerSizeDataMap[this.position].styles.update(value => {
+                return Object.assign(value, {
                     display: "none",
                     zIndex: "-10"
                 });
@@ -90,10 +88,10 @@ export class ContainerComponent {
             this.position === "left"
                 ? "right"
                 : this.position === "right"
-                ? "left"
-                : this.position === "top"
-                ? "bottom"
-                : "top";
+                  ? "left"
+                  : this.position === "top"
+                    ? "bottom"
+                    : "top";
         const oppositeOrientation = this.position === "left" || this.position === "right" ? "vertical" : "horizontal";
         const oppositeContainer = document.querySelector(
             `div.layout-container-wrapper.${oppositeOrientation}.${oppositePosition}`
@@ -109,8 +107,8 @@ export class ContainerComponent {
             this.closePanel(openPanel);
         }
         this.open = true;
-        this.layoutService.containerSizeDataMap[this.position].styles.mutate(value => {
-            Object.assign(value, {
+        this.layoutService.containerSizeDataMap[this.position].styles.update(value => {
+            return Object.assign(value, {
                 display: "block",
                 zIndex: "0"
             });
@@ -132,8 +130,8 @@ export class ContainerComponent {
                 oppositeContainerElement.style.display === "none"
                     ? 0
                     : this.position === "left" || this.position === "right"
-                    ? oppositeContainerElement.clientWidth
-                    : oppositeContainerElement.clientHeight;
+                      ? oppositeContainerElement.clientWidth
+                      : oppositeContainerElement.clientHeight;
             if (this.position === "left") {
                 const offset =
                     this.layoutService.layoutConfig.containerResizeOffset +
@@ -274,19 +272,7 @@ export class ContainerComponent {
                 this.layoutService.saveLayout();
             }
         });
-        this.layoutService.PanelMove$.pipe(
-            takeUntil(this.#destroy$),
-            tap(event => {
-                if (event.oldPosition === this.position) {
-                    this.movedPanelViewRef = event.panel.viewRef;
-                    const viewRefIndex = event.panel.vcr.indexOf(event.panel.viewRef);
-                    if (viewRefIndex > -1) {
-                        event.panel.vcr.detach(event.panel.vcr.indexOf(event.panel.viewRef));
-                        this.layoutService.panelTemplateContentsContainerRef.insert(event.panel.viewRef, 0);
-                    }
-                }
-            })
-        ).subscribe(event => {
+        this.layoutService.PanelMove$.pipe(takeUntil(this.#destroy$)).subscribe(event => {
             const panels = this.layoutService.panels.filter(
                 panel => panel.position === event.newPosition && panel.priority === event.newPriority
             );
@@ -315,18 +301,37 @@ export class ContainerComponent {
                         this.layoutService.saveLayout();
                     }
                     this.layoutService.updateHeaderSizes();
-                    asyncScheduler.schedule(() => {
-                        const viewRefIndex = this.layoutService.panelTemplateContentsContainerRef.indexOf(
-                            event.panel.viewRef
-                        );
-                        if (viewRefIndex > -1) {
-                            this.layoutService.panelTemplateContentsContainerRef.detach(viewRefIndex);
-                            event.panel.vcr.insert(event.panel.viewRef, 0);
-                        }
-                    }, 120); // slight delay is needed, otherwise the panel content is not rendered correctly. TODO: find a better solution
+                    this.layoutService.reattachPanelContent(event.panel, 120); // slight delay is needed, otherwise the panel content is not rendered correctly. TODO: find a better solution
                 });
             }
         });
+    }
+
+    private updateHorizontalPanelSizes(openPanels: Panel[]): void {
+        if (openPanels.length === 1) {
+            if (openPanels[0].priority === "primary") {
+                this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.set({
+                    ...this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles,
+                    top: "100%"
+                });
+                this.layoutService.containerSizeDataMap[this.position].panelSizeData.primary.bottom = "0%";
+            } else if (openPanels[0].priority === "secondary") {
+                this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.set({
+                    ...this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles,
+                    top: "0%"
+                });
+                this.layoutService.containerSizeDataMap[this.position].panelSizeData.secondary.top = "0%";
+            }
+        } else if (openPanels.length === 2) {
+            this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.set({
+                ...this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles,
+                top: this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition()
+            });
+            this.layoutService.containerSizeDataMap[this.position].panelSizeData.primary.bottom =
+                `calc(100% - ${this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition()}`;
+            this.layoutService.containerSizeDataMap[this.position].panelSizeData.secondary.top =
+                this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition();
+        }
     }
 
     private updateOppositeContainerSize(): void {
@@ -358,66 +363,41 @@ export class ContainerComponent {
         const containerPanels = this.layoutService.panels.filter(panel => panel.position === this.position);
         const openPanels = containerPanels.filter(panel => panel.open);
         if (this.position === "left" || this.position === "right") {
-            if (openPanels.length === 1) {
-                if (openPanels[0].priority === "primary") {
-                    this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.set({
-                        ...this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles,
-                        top: "100%"
-                    });
-                    this.layoutService.containerSizeDataMap[this.position].panelSizeData.primary.bottom = "0%";
-                } else if (openPanels[0].priority === "secondary") {
-                    this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.set({
-                        ...this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles,
-                        top: "0%"
-                    });
-                    this.layoutService.containerSizeDataMap[this.position].panelSizeData.secondary.top = "0%";
-                }
-            } else if (openPanels.length === 2) {
-                this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.set({
-                    ...this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles,
-                    top: this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition()
-                });
-                this.layoutService.containerSizeDataMap[
-                    this.position
-                ].panelSizeData.primary.bottom = `calc(100% - ${this.layoutService.containerSizeDataMap[
-                    this.position
-                ].lastPanelGroupResizerPosition()}`;
-                this.layoutService.containerSizeDataMap[this.position].panelSizeData.secondary.top =
-                    this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition();
-            }
+            this.updateHorizontalPanelSizes(openPanels);
         } else {
-            if (openPanels.length === 1) {
-                if (openPanels[0].priority === "primary") {
-                    this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.set({
-                        ...this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles,
-                        left: "100%"
-                    });
-                    this.layoutService.containerSizeDataMap[this.position].panelSizeData.primary.right = "0%";
-                } else if (openPanels[0].priority === "secondary") {
-                    this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.set({
-                        ...this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles,
-                        left: "0%"
-                    });
-                    this.layoutService.containerSizeDataMap[this.position].panelSizeData.secondary.left = "0%";
-                }
-            } else if (openPanels.length === 2) {
-                this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.set({
-                    ...this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles,
-                    left: this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition()
-                });
-                this.layoutService.containerSizeDataMap[
-                    this.position
-                ].panelSizeData.primary.right = `calc(100% - ${this.layoutService.containerSizeDataMap[
-                    this.position
-                ].lastPanelGroupResizerPosition()}`;
-                this.layoutService.containerSizeDataMap[this.position].panelSizeData.secondary.left =
-                    this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition();
-            }
+            this.updateVerticalPanelSizes(openPanels);
         }
         this.anyPrimaryPanelOpen =
             containerPanels.filter(panel => panel.priority === "primary" && panel.open).length > 0;
         this.anySecondaryPanelOpen =
             containerPanels.filter(panel => panel.priority === "secondary" && panel.open).length > 0;
         this.panelGroupResizerVisible = openPanels.length > 1;
+    }
+
+    private updateVerticalPanelSizes(openPanels: Panel[]): void {
+        if (openPanels.length === 1) {
+            if (openPanels[0].priority === "primary") {
+                this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.set({
+                    ...this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles,
+                    left: "100%"
+                });
+                this.layoutService.containerSizeDataMap[this.position].panelSizeData.primary.right = "0%";
+            } else if (openPanels[0].priority === "secondary") {
+                this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.set({
+                    ...this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles,
+                    left: "0%"
+                });
+                this.layoutService.containerSizeDataMap[this.position].panelSizeData.secondary.left = "0%";
+            }
+        } else if (openPanels.length === 2) {
+            this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles.set({
+                ...this.layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles,
+                left: this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition()
+            });
+            this.layoutService.containerSizeDataMap[this.position].panelSizeData.primary.right =
+                `calc(100% - ${this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition()}`;
+            this.layoutService.containerSizeDataMap[this.position].panelSizeData.secondary.left =
+                this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition();
+        }
     }
 }

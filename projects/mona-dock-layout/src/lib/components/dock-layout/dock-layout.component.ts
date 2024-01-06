@@ -1,12 +1,19 @@
+import { CdkDragDrop } from "@angular/cdk/drag-drop";
 import {
+    AfterContentInit,
+    AfterViewInit,
     ChangeDetectorRef,
     Component,
     ContentChild,
     ContentChildren,
+    DestroyRef,
     ElementRef,
     EventEmitter,
+    inject,
     Input,
     NgZone,
+    OnDestroy,
+    OnInit,
     Output,
     QueryList,
     Renderer2,
@@ -15,17 +22,17 @@ import {
     ViewChildren,
     ViewContainerRef
 } from "@angular/core";
-import { debounceTime, delay, delayWhen, ReplaySubject, takeUntil, tap } from "rxjs";
-import { DockPanelComponent } from "../dock-panel/dock-panel.component";
-import { PanelTemplateReferenceDirective } from "../../directives/panel-template-reference.directive";
-import { LayoutContentTemplateDirective } from "../../directives/layout-content-template.directive";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { debounceTime, delay, delayWhen, tap } from "rxjs";
+import { LayoutApi } from "../../data/LayoutApi";
 import { LayoutReadyEvent } from "../../data/LayoutReadyEvent";
-import { LayoutService } from "../../services/layout.service";
 import { Panel } from "../../data/Panel";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
-import { CdkDragDrop } from "@angular/cdk/drag-drop";
-import { LayoutApi } from "../../data/LayoutApi";
+import { LayoutContentTemplateDirective } from "../../directives/layout-content-template.directive";
+import { PanelTemplateReferenceDirective } from "../../directives/panel-template-reference.directive";
+import { LayoutService } from "../../services/layout.service";
+import { DockPanelComponent } from "../dock-panel/dock-panel.component";
 
 @Component({
     selector: "mona-dock-layout",
@@ -33,8 +40,8 @@ import { LayoutApi } from "../../data/LayoutApi";
     styleUrls: ["./dock-layout.component.scss"],
     providers: [LayoutService]
 })
-export class DockLayoutComponent {
-    readonly #destroy$: ReplaySubject<void> = new ReplaySubject<void>();
+export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, AfterContentInit {
+    readonly #destroyRef: DestroyRef = inject(DestroyRef);
     private layoutResizeObserver!: ResizeObserver;
     public layoutMiddleStyles: Partial<CSSStyleDeclaration> = {};
     public resizing: boolean = false;
@@ -70,6 +77,7 @@ export class DockLayoutComponent {
     ) {}
 
     public movePanel(panel: Panel, position: Position, priority: Priority): void {
+        this.layoutService.detachPanelContent(panel);
         this.layoutService.PanelMove$.next({
             panel: panel,
             oldPosition: panel.position,
@@ -105,12 +113,7 @@ export class DockLayoutComponent {
             }
         }
         for (const panel of this.layoutService.panels) {
-            const viewRefIndex = this.panelTemplateContentsContainerRef.indexOf(panel.viewRef);
-            if (viewRefIndex > -1) {
-                this.panelTemplateContentsContainerRef.detach(viewRefIndex);
-                panel.vcr.insert(panel.viewRef);
-                this.cdr.detectChanges();
-            }
+            this.layoutService.reattachPanelContent(panel);
         }
         window.setTimeout(() => {
             const loaded = this.layoutService.loadLayout();
@@ -128,14 +131,13 @@ export class DockLayoutComponent {
                 api: this.createLayoutApi()
             });
             this.layoutService.LayoutReady$.next();
+            this.layoutService.LayoutReady$.complete();
         });
         this.layoutService.updateHeaderSizes();
     }
 
     public ngOnDestroy(): void {
-        this.#destroy$.next();
-        this.#destroy$.complete();
-        this.layoutService.LayoutReady$.complete();
+        // this.layoutService.LayoutReady$.complete();
         this.layoutResizeObserver.disconnect();
     }
 
@@ -194,6 +196,7 @@ export class DockLayoutComponent {
                     if (panel.position === position && panel.priority === priority) {
                         return;
                     }
+                    service.detachPanelContent(panel);
                     service.PanelMove$.next({
                         panel: panel,
                         oldPosition: panel.position,
@@ -248,15 +251,15 @@ export class DockLayoutComponent {
     }
 
     private setSubscriptions(): void {
-        this.layoutService.ContainerResizeStart$.pipe(takeUntil(this.#destroy$)).subscribe(() => {
+        this.layoutService.ContainerResizeStart$.pipe(takeUntilDestroyed(this.#destroyRef)).subscribe(() => {
             this.resizing = true;
         });
-        this.layoutService.PanelMove$.pipe(takeUntil(this.#destroy$), delay(100)).subscribe(() => {
+        this.layoutService.PanelMove$.pipe(takeUntilDestroyed(this.#destroyRef), delay(100)).subscribe(() => {
             this.cdr.markForCheck();
             this.layoutService.panels = [...this.layoutService.panels];
         });
         this.layoutService.PanelVisibility$.pipe(
-            takeUntil(this.#destroy$),
+            takeUntilDestroyed(this.#destroyRef),
             delayWhen(() => this.layoutService.LayoutReady$),
             tap(event => {
                 if (!event.visible) {
@@ -285,10 +288,9 @@ export class DockLayoutComponent {
                 panel.visible = event.visible;
             }
         });
-        this.layoutService.PanelMove$.pipe(
-            takeUntil(this.#destroy$),
-            delayWhen(() => this.layoutService.LayoutReady$),
-            debounceTime(1000)
+        this.layoutService.PanelMoveEnd$.pipe(
+            takeUntilDestroyed(this.#destroyRef),
+            delayWhen(() => this.layoutService.LayoutReady$)
         ).subscribe(() => this.updateStyles());
     }
 
