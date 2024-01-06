@@ -104,10 +104,10 @@
                     "builder": "@angular-devkit/build-angular:dev-server",
                     "configurations": {
                         "production": {
-                            "browserTarget": "mona-dock-layout-tester:build:production"
+                            "buildTarget": "mona-dock-layout-tester:build:production"
                         },
                         "development": {
-                            "browserTarget": "mona-dock-layout-tester:build:development"
+                            "buildTarget": "mona-dock-layout-tester:build:development"
                         }
                     },
                     "defaultConfiguration": "development"
@@ -115,7 +115,7 @@
                 "extract-i18n": {
                     "builder": "@angular-devkit/build-angular:extract-i18n",
                     "options": {
-                        "browserTarget": "mona-dock-layout-tester:build"
+                        "buildTarget": "mona-dock-layout-tester:build"
                     }
                 },
                 "test": {
