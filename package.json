@@ -23,7 +23,7 @@
     ],
     "repository": {
         "type": "git",
-        "url": "https://github.com/merophise/mona-dock-layout"
+        "url": "https://github.com/hoshixlily/mona-dock-layout"
     },
     "publishConfig": {
         "access": "public"
