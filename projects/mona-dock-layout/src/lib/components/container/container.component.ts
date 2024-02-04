@@ -328,9 +328,9 @@ export class ContainerComponent implements OnInit, OnDestroy {
                 top: this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition()
             });
             this.layoutService.containerSizeDataMap[this.position].panelSizeData.primary.bottom =
-                `calc(100% - ${this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition()}`;
+                `calc(100% - 4px - ${this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition()}`;
             this.layoutService.containerSizeDataMap[this.position].panelSizeData.secondary.top =
-                this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition();
+                `calc(4px + ${this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition()})`;
         }
     }
 
@@ -395,9 +395,9 @@ export class ContainerComponent implements OnInit, OnDestroy {
                 left: this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition()
             });
             this.layoutService.containerSizeDataMap[this.position].panelSizeData.primary.right =
-                `calc(100% - ${this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition()}`;
+                `calc(100% - 4px - ${this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition()}`;
             this.layoutService.containerSizeDataMap[this.position].panelSizeData.secondary.left =
-                this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition();
+                `calc(4px + ${this.layoutService.containerSizeDataMap[this.position].lastPanelGroupResizerPosition()})`;
         }
     }
 }

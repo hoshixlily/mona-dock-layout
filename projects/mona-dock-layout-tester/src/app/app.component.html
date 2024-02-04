@@ -42,7 +42,7 @@
         <mona-dock-panel panelId="Properties" position="right" priority="primary" title="Properties"
                          [visible]="propertiesPanelVisible">
             <ng-template monaPanelContentTemplate>
-                <mona-tab-strip>
+                <mona-tab-strip [keepTabContent]="true">
                     <mona-tab title="Tab I">
                         <ng-template monaTabContentTemplate>
                             <textarea monaTextArea rows="20">Tab I Text Area</textarea>

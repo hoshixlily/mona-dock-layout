@@ -3,7 +3,7 @@
                  'top': position==='top', 'bottom': position==='bottom', 'left': position==='left', 'right': position==='right'}">
     <div class="panel-group-container primary"
          [ngStyle]="layoutService.containerSizeDataMap[position].panelSizeData.primary"
-         [ngClass]="{'bordered': panelGroupResizerVisible, 'hidden': !anyPrimaryPanelOpen}">
+         [ngClass]="{'bordered': anySecondaryPanelOpen, 'hidden': !anyPrimaryPanelOpen}">
         <mona-panel-group [position]="position" priority="primary"></mona-panel-group>
     </div>
     <div class="panel-group-resizer"

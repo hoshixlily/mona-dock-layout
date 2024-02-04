@@ -76,11 +76,8 @@ export class PanelComponent implements OnInit, AfterViewInit {
     }
 
     private setStyles(): void {
-        const hasHeaderTopBorder = this.panel.position === "left" || this.panel.position === "right";
-        const headerHeightOffset = hasHeaderTopBorder ? 1 : 0;
         this.panelHeaderStyles = {
-            height: `${this.layoutService.layoutConfig.panelHeaderHeight + headerHeightOffset}px`,
-            borderTop: hasHeaderTopBorder ? "1px solid var(--mona-border-color)" : undefined
+            height: `${this.layoutService.layoutConfig.panelHeaderHeight}px`
         };
         this.panelActionStyles = {
             width: `${this.layoutService.layoutConfig.panelHeaderHeight}px`
