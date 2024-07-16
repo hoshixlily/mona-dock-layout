@@ -53,11 +53,12 @@
             "prefix": "app",
             "architect": {
                 "build": {
-                    "builder": "@angular-devkit/build-angular:browser",
+                    "builder": "@angular-devkit/build-angular:application",
                     "options": {
-                        "outputPath": "dist/mona-dock-layout-tester",
+                        "outputPath": {
+                          "base": "dist/mona-dock-layout-tester"
+                        },
                         "index": "projects/mona-dock-layout-tester/src/index.html",
-                        "main": "projects/mona-dock-layout-tester/src/main.ts",
                         "polyfills": [
                             "zone.js"
                         ],
@@ -71,7 +72,8 @@
                             "node_modules/@mirei/mona-ui/dist/mona-ui/styles/mona.scss",
                             "projects/mona-dock-layout-tester/src/styles.scss"
                         ],
-                        "scripts": []
+                        "scripts": [],
+                        "browser": "projects/mona-dock-layout-tester/src/main.ts"
                     },
                     "configurations": {
                         "production": {
@@ -90,9 +92,7 @@
                             "outputHashing": "all"
                         },
                         "development": {
-                            "buildOptimizer": false,
-                            "optimization": false,
-                            "vendorChunk": true,
+                          "optimization": false,
                             "extractLicenses": false,
                             "sourceMap": true,
                             "namedChunks": true
