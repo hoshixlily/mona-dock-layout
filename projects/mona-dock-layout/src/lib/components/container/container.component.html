@@ -6,9 +6,11 @@
          [ngClass]="{'bordered': anySecondaryPanelOpen, 'hidden': !anyPrimaryPanelOpen}">
         <mona-panel-group [position]="position" priority="primary"></mona-panel-group>
     </div>
-    <div class="panel-group-resizer"
-         [ngStyle]="layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles()"
-         (mousedown)="startPanelResize()" *ngIf="panelGroupResizerVisible"></div>
+    @if (panelGroupResizerVisible) {
+        <div class="panel-group-resizer"
+             [ngStyle]="layoutService.containerSizeDataMap[this.position].panelGroupResizerStyles()"
+             (mousedown)="startPanelResize()"></div>
+    }
     <div class="panel-group-container secondary"
          [ngStyle]="layoutService.containerSizeDataMap[position].panelSizeData.secondary"
          [ngClass]="{'hidden': !anySecondaryPanelOpen}">

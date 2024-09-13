@@ -1,7 +1,5 @@
-<div class="wrapper mona-dock-layout"
-     [ngClass]="{'resizing': (layoutService.containerResizeInProgress$ | async) || (layoutService.panelResizeInProgress$ | async)}"
-     #layoutElementRef>
-    <div class="layout-header horizontal top" [ngStyle]="layoutService.headerStyles.top">
+<div class="mona-dock-layout" [class.resizing]="resizing()" #layoutElementRef>
+    <div class="layout-header horizontal top" [ngStyle]="topHeaderStyles()">
         <ul class="layout-header-list horizontal top primary" cdkDropList cdkDropListOrientation="horizontal"
             (cdkDropListDropped)="onPanelHeadersReordered($event, 'top', 'primary')">
             <li *ngFor="let panel of layoutService.panels()|panelPositionSelector:'top':'primary'"
@@ -28,7 +26,7 @@
         </ul>
     </div>
     <div class="layout-middle">
-        <div class="layout-header vertical left" [ngStyle]="layoutService.headerStyles.left">
+        <div class="layout-header vertical left" [ngStyle]="leftHeaderStyles()">
             <ul class="layout-header-list vertical left primary" cdkDropList
                 (cdkDropListDropped)="onPanelHeadersReordered($event, 'left', 'primary')">
                 <li *ngFor="let panel of layoutService.panels()|panelPositionSelector:'left':'primary'"
@@ -63,8 +61,9 @@
                     <mona-container position="top"></mona-container>
                 </div>
                 <div class="layout-content">
-                    <ng-container [ngTemplateOutlet]="layoutContentTemplateRef"
-                                  *ngIf="layoutContentTemplateRef"></ng-container>
+                    @if (layoutContentTemplateRef()) {
+                        <ng-container [ngTemplateOutlet]="layoutContentTemplateRef()??null"></ng-container>
+                    }
                 </div>
                 <div class="layout-container-wrapper horizontal bottom">
                     <mona-container position="bottom"></mona-container>
@@ -74,7 +73,7 @@
                 <mona-container position="right"></mona-container>
             </div>
         </div>
-        <div class="layout-header vertical right" [ngStyle]="layoutService.headerStyles.right">
+        <div class="layout-header vertical right" [ngStyle]="rightHeaderStyles()">
             <ul class="layout-header-list vertical right primary" cdkDropList
                 (cdkDropListDropped)="onPanelHeadersReordered($event, 'right', 'primary')">
                 <li *ngFor="let panel of layoutService.panels()|panelPositionSelector:'right':'primary'"
@@ -101,7 +100,7 @@
             </ul>
         </div>
     </div>
-    <div class="layout-header horizontal bottom" [ngStyle]="layoutService.headerStyles.bottom">
+    <div class="layout-header horizontal bottom" [ngStyle]="bottomHeaderStyles()">
         <ul class="layout-header-list horizontal bottom primary" cdkDropList cdkDropListOrientation="horizontal"
             (cdkDropListDropped)="onPanelHeadersReordered($event, 'bottom', 'primary')">
             <li *ngFor="let panel of layoutService.panels()|panelPositionSelector:'bottom':'primary'"

@@ -1,5 +1,5 @@
 <div class="wrapper">
-    <mona-dock-layout layoutId="TEST_LAYOUT" (ready)="onLayoutReady($event)">
+    <mona-dock-layout [layoutId]="'TEST_LAYOUT'" (ready)="onLayoutReady($event)">
         <mona-dock-panel panelId="FileTree" position="left" priority="primary" title="Files" [startOpen]="true"
                          [movable]="false" (panelOpen)="onPanelOpen($event)" (panelClose)="onPanelClose($event)">
             <ng-template monaPanelContentTemplate>

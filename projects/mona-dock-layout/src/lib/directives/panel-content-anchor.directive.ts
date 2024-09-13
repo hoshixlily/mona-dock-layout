@@ -1,4 +1,4 @@
-import { Directive, ViewContainerRef } from "@angular/core";
+import { Directive, inject, ViewContainerRef } from "@angular/core";
 
 /**
  * Internal usage only. Do not export.
@@ -7,5 +7,5 @@ import { Directive, ViewContainerRef } from "@angular/core";
     selector: "[monaPanelContentAnchor]"
 })
 export class PanelContentAnchorDirective {
-    public constructor(public readonly viewContainerRef: ViewContainerRef) {}
+    public readonly viewContainerRef = inject(ViewContainerRef);
 }

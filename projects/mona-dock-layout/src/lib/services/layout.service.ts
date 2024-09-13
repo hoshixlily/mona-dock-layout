@@ -1,28 +1,72 @@
-import { ChangeDetectorRef, inject, Injectable, signal, ViewContainerRef, WritableSignal } from "@angular/core";
-import { LayoutConfiguration } from "../data/LayoutConfiguration";
-import { DefaultLayoutConfiguration } from "../data/DefaultLayoutConfiguration";
-import { asyncScheduler, ReplaySubject, Subject } from "rxjs";
-import { Position } from "../data/Position";
-import { Panel } from "../data/Panel";
-import { PanelMoveEvent } from "../data/PanelMoveEvent";
+import { ChangeDetectorRef, inject, Injectable, signal, ViewContainerRef } from "@angular/core";
+import { ImmutableDictionary, ImmutableSet } from "@mirei/ts-collections";
+import { asyncScheduler, BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 import { ContainerSizeData, ContainerSizeSaveData } from "../data/ContainerSizeData";
+import { LayoutConfiguration } from "../data/LayoutConfiguration";
 import { LayoutSaveData } from "../data/LayoutSaveData";
-import { PanelVisibilityEvent } from "../data/PanelVisibilityEvent";
+import { Panel } from "../data/Panel";
 import { PanelCloseInternalEvent, PanelOpenInternalEvent } from "../data/PanelEvents";
+import { PanelMoveEvent } from "../data/PanelMoveEvent";
+import { PanelVisibilityEvent } from "../data/PanelVisibilityEvent";
+import { Position } from "../data/Position";
 
 @Injectable()
 export class LayoutService {
     readonly #cdr: ChangeDetectorRef = inject(ChangeDetectorRef);
+    readonly #layoutConfig = signal<LayoutConfiguration>({
+        containerResizeOffset: signal(120),
+        headerHeight: signal(25),
+        headerWidth: signal(25),
+        maxPanelSize: signal(95),
+        minContainerHeight: signal(60),
+        minContainerWidth: signal(60),
+        minPanelSize: signal(5),
+        panelHeaderHeight: signal(25),
+        panelResizeOffset: signal(60)
+    });
     private layoutId: string = "";
-    public readonly containerResizeInProgress$: Subject<boolean> = new Subject<boolean>();
-    public readonly containerResizeStart$: Subject<Position> = new Subject<Position>();
-    public readonly layoutReady$: ReplaySubject<void> = new ReplaySubject<void>(1);
-    public readonly panelClose$: Subject<PanelCloseInternalEvent> = new Subject<PanelCloseInternalEvent>();
-    public readonly panelMove$: Subject<PanelMoveEvent> = new Subject<PanelMoveEvent>();
-    public readonly panelMoveEnd$: Subject<Panel> = new Subject<Panel>();
-    public readonly panelOpen$: Subject<PanelOpenInternalEvent> = new Subject<PanelOpenInternalEvent>();
-    public readonly panelResizeInProgress$: Subject<boolean> = new Subject<boolean>();
-    public readonly panelVisibility$: Subject<PanelVisibilityEvent> = new Subject<PanelVisibilityEvent>();
+    public readonly containerResizeInProgress$ = new BehaviorSubject<boolean>(false);
+    public readonly containerResizeStart$ = new Subject<Position>();
+    public readonly headerStyles = signal(
+        ImmutableDictionary.create<Position, Partial<CSSStyleDeclaration>>([
+            [
+                "left",
+                {
+                    width: `${this.#layoutConfig().headerWidth()}px`
+                }
+            ],
+            [
+                "right",
+                {
+                    width: `${this.#layoutConfig().headerWidth()}px`
+                }
+            ],
+            [
+                "top",
+                {
+                    height: `${this.#layoutConfig().headerHeight()}px`,
+                    paddingLeft: `${this.#layoutConfig().headerWidth()}px`,
+                    paddingRight: `${this.#layoutConfig().headerWidth()}px`
+                }
+            ],
+            [
+                "bottom",
+                {
+                    height: `${this.#layoutConfig().headerHeight()}px`,
+                    paddingLeft: `${this.#layoutConfig().headerWidth()}px`,
+                    paddingRight: `${this.#layoutConfig().headerWidth()}px`
+                }
+            ]
+        ])
+    );
+    public readonly layoutConfig = this.#layoutConfig.asReadonly();
+    public readonly layoutReady$ = new ReplaySubject<void>(1);
+    public readonly panelClose$ = new Subject<PanelCloseInternalEvent>();
+    public readonly panelMove$ = new Subject<PanelMoveEvent>();
+    public readonly panelMoveEnd$ = new Subject<Panel>();
+    public readonly panelOpen$ = new Subject<PanelOpenInternalEvent>();
+    public readonly panelResizeInProgress$ = new BehaviorSubject<boolean>(false);
+    public readonly panelVisibility$ = new Subject<PanelVisibilityEvent>();
     public containerSizeDataMap: Record<Position, ContainerSizeData> = {
         left: {
             styles: signal({
@@ -97,20 +141,9 @@ export class LayoutService {
             lastPanelGroupResizerPosition: signal("50%")
         }
     };
-    public headerStyles: Record<Position, Partial<CSSStyleDeclaration>> = {
-        left: {},
-        right: {},
-        top: {},
-        bottom: {}
-    };
-    public layoutConfig: LayoutConfiguration = { ...DefaultLayoutConfiguration };
     public layoutDomRect!: DOMRect;
     public panelTemplateContentsContainerRef!: ViewContainerRef;
-    public panels: WritableSignal<Panel[]> = signal([]);
-
-    public constructor() {
-        this.initialize();
-    }
+    public panels = signal(ImmutableSet.create<Panel>());
 
     public detachPanelContent(panel: Panel): void {
         const viewRef = panel.viewRef;
@@ -238,14 +271,16 @@ export class LayoutService {
         const layoutSaveData: LayoutSaveData = {
             sizeData,
             panelSaveData:
-                this.panels().map(panel => ({
-                    id: panel.Id,
-                    index: panel.index,
-                    pinned: panel.pinned,
-                    position: panel.position,
-                    priority: panel.priority,
-                    open: panel.open
-                })) ?? []
+                this.panels()
+                    .select(panel => ({
+                        id: panel.Id,
+                        index: panel.index,
+                        pinned: panel.pinned,
+                        position: panel.position,
+                        priority: panel.priority,
+                        open: panel.open
+                    }))
+                    .toArray() ?? []
         };
         window.localStorage.setItem(`LAYOUT_${this.layoutId}`, JSON.stringify(layoutSaveData));
     }
@@ -263,30 +298,13 @@ export class LayoutService {
     public updateHeaderSizes(): void {
         const positions = ["left", "right", "top", "bottom"] as Position[];
         for (const position of positions) {
-            const panels = this.panels().filter(p => p.position === position);
+            const panels = this.panels().where(p => p.position === position);
             const styleText = position === "left" || position === "right" ? "width" : "height";
             const headerStyleText = position === "left" || position === "right" ? "headerWidth" : "headerHeight";
-            this.headerStyles[position][styleText] =
-                panels.length === 0 ? "0" : `${this.layoutConfig[headerStyleText]}px`;
+            this.headerStyles.update(dict => {
+                const style = panels.any() ? `${this.#layoutConfig()[headerStyleText]}px` : "0";
+                return dict.set(position, { [styleText]: style });
+            });
         }
-    }
-
-    private initialize(): void {
-        this.headerStyles.left = {
-            width: `${this.layoutConfig.headerWidth}px`
-        };
-        this.headerStyles.right = {
-            width: `${this.layoutConfig.headerWidth}px`
-        };
-        this.headerStyles.top = {
-            height: `${this.layoutConfig.headerHeight}px`,
-            paddingLeft: `${this.layoutConfig.headerWidth}px`,
-            paddingRight: `${this.layoutConfig.headerWidth}px`
-        };
-        this.headerStyles.bottom = {
-            height: `${this.layoutConfig.headerHeight}px`,
-            paddingLeft: `${this.layoutConfig.headerWidth}px`,
-            paddingRight: `${this.layoutConfig.headerWidth}px`
-        };
     }
 }

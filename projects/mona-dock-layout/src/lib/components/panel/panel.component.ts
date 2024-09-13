@@ -9,12 +9,11 @@ import {
     input,
     NgZone,
     OnInit,
-    signal,
     viewChild
 } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { faEllipsisV, faMinus } from "@fortawesome/free-solid-svg-icons";
-import { delay, fromEvent, of, switchMap } from "rxjs";
+import { debounceTime, fromEvent, of, switchMap } from "rxjs";
 import { Panel } from "../../data/Panel";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
@@ -34,12 +33,16 @@ export class PanelComponent implements OnInit, AfterViewInit {
     protected readonly hideIcon = faMinus;
     protected readonly layoutService = inject(LayoutService);
     protected readonly menuIcon = faEllipsisV;
-    protected readonly panelActionStyles = signal<Partial<CSSStyleDeclaration>>({});
+    protected readonly panelActionStyles = computed<Partial<CSSStyleDeclaration>>(() => ({
+        width: `${this.layoutService.layoutConfig().panelHeaderHeight()}px`
+    }));
     protected readonly panelContentAnchor = viewChild.required(PanelContentAnchorDirective);
-    protected readonly panelContentStyles = computed(() => ({
+    protected readonly panelContentStyles = computed<Partial<CSSStyleDeclaration>>(() => ({
         height: `calc(100% - ${this.panelHeaderStyles().height})`
     }));
-    protected readonly panelHeaderStyles = signal<Partial<CSSStyleDeclaration>>({});
+    protected readonly panelHeaderStyles = computed<Partial<CSSStyleDeclaration>>(() => ({
+        height: `${this.layoutService.layoutConfig().panelHeaderHeight()}px`
+    }));
 
     public panel = input.required<Panel>();
 
@@ -64,7 +67,6 @@ export class PanelComponent implements OnInit, AfterViewInit {
     }
 
     public ngOnInit(): void {
-        this.setStyles();
         this.setSubscriptions();
     }
 
@@ -73,20 +75,11 @@ export class PanelComponent implements OnInit, AfterViewInit {
         this.layoutService.saveLayout();
     }
 
-    private setStyles(): void {
-        this.panelHeaderStyles.set({
-            height: `${this.layoutService.layoutConfig.panelHeaderHeight}px`
-        });
-        this.panelActionStyles.set({
-            width: `${this.layoutService.layoutConfig.panelHeaderHeight}px`
-        });
-    }
-
     private setSubscriptions(): void {
         this.#zone.runOutsideAngular(() => {
             fromEvent(document, "click")
                 .pipe(
-                    delay(100),
+                    debounceTime(100),
                     takeUntilDestroyed(this.#destroyRef),
                     switchMap(event => {
                         this.#zone.runOutsideAngular(() => {

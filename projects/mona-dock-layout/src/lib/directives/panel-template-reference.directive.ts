@@ -1,4 +1,4 @@
-import { Directive, Input, TemplateRef, ViewContainerRef } from "@angular/core";
+import { Directive, inject, input, Input, TemplateRef, ViewContainerRef } from "@angular/core";
 import { Panel } from "../data/Panel";
 
 /**
@@ -8,10 +8,6 @@ import { Panel } from "../data/Panel";
     selector: "[monaPanelTemplateReference]"
 })
 export class PanelTemplateReferenceDirective {
-    @Input() panel!: Panel;
-
-    public constructor(
-        public readonly templateRef: TemplateRef<void>,
-        public readonly viewContainerRef: ViewContainerRef
-    ) {}
+    public readonly panel = input.required<Panel>();
+    public readonly templateRef = inject(TemplateRef<void>);
 }

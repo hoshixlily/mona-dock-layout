@@ -4,26 +4,26 @@ import {
     AfterViewInit,
     ChangeDetectorRef,
     Component,
-    ContentChild,
-    ContentChildren,
+    computed,
+    contentChild,
+    contentChildren,
     DestroyRef,
+    effect,
     ElementRef,
-    EventEmitter,
     inject,
-    Input,
+    input,
     NgZone,
     OnDestroy,
     OnInit,
-    Output,
-    QueryList,
-    Renderer2,
+    output,
+    signal,
     TemplateRef,
-    ViewChild,
-    ViewChildren,
+    viewChild,
+    viewChildren,
     ViewContainerRef
 } from "@angular/core";
-import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { delay, delayWhen, tap } from "rxjs";
+import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
+import { combineLatestWith, delay, delayWhen, map, tap } from "rxjs";
 import { LayoutApi } from "../../data/LayoutApi";
 import { LayoutReadyEvent } from "../../data/LayoutReadyEvent";
 import { Panel } from "../../data/Panel";
@@ -41,40 +41,51 @@ import { DockPanelComponent } from "../dock-panel/dock-panel.component";
     providers: [LayoutService]
 })
 export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, AfterContentInit {
+    readonly #cdr = inject(ChangeDetectorRef);
     readonly #destroyRef: DestroyRef = inject(DestroyRef);
-    private layoutResizeObserver!: ResizeObserver;
-    public layoutMiddleStyles: Partial<CSSStyleDeclaration> = {};
-    public resizing: boolean = false;
+    readonly #zone = inject(NgZone);
+    #layoutResizeObserver!: ResizeObserver;
+    private readonly dockPanelComponents = contentChildren(DockPanelComponent);
+    private readonly layoutElementRef = viewChild.required<ElementRef<HTMLDivElement>>("layoutElementRef");
+    private readonly panelTemplateContentsContainerRef = viewChild.required("panelTemplateContentsContainerRef", {
+        read: ViewContainerRef
+    });
+    private readonly panelTemplateReferences = viewChildren(PanelTemplateReferenceDirective);
+    protected readonly bottomHeaderStyles = computed(() => {
+        return this.layoutService.headerStyles().get("bottom") ?? {};
+    });
+    protected readonly layoutContentTemplateRef = contentChild(LayoutContentTemplateDirective, {
+        read: TemplateRef
+    });
+    protected readonly layoutMiddleStyles = signal<Partial<CSSStyleDeclaration>>({});
+    protected readonly layoutService = inject(LayoutService);
+    protected readonly leftHeaderStyles = computed(() => {
+        return this.layoutService.headerStyles().get("left") ?? {};
+    });
+    protected readonly rightHeaderStyles = computed(() => {
+        return this.layoutService.headerStyles().get("right") ?? {};
+    });
+    protected readonly resizing = toSignal(
+        this.layoutService.containerResizeInProgress$.pipe(
+            combineLatestWith(this.layoutService.panelResizeInProgress$),
+            map(([container, panel]) => container || panel)
+        )
+    );
+    protected readonly topHeaderStyles = computed(() => {
+        return this.layoutService.headerStyles().get("top") ?? {};
+    });
+    public readonly layoutId = input.required<string>();
+    public readonly ready = output<LayoutReadyEvent>();
 
-    @ContentChildren(DockPanelComponent)
-    private dockPanelComponents: QueryList<DockPanelComponent> = new QueryList<DockPanelComponent>();
-
-    @ViewChild("layoutElementRef")
-    private layoutElementRef!: ElementRef<HTMLDivElement>;
-
-    @ViewChild("panelTemplateContentsContainerRef", { read: ViewContainerRef })
-    private panelTemplateContentsContainerRef!: ViewContainerRef;
-
-    @ViewChildren(PanelTemplateReferenceDirective)
-    private panelTemplateReferences = new QueryList<PanelTemplateReferenceDirective>();
-
-    @ContentChild(LayoutContentTemplateDirective, { read: TemplateRef })
-    public layoutContentTemplateRef: TemplateRef<void> | null = null;
-
-    @Input({ required: true })
-    public layoutId!: string;
-
-    @Output()
-    public ready: EventEmitter<LayoutReadyEvent> = new EventEmitter<LayoutReadyEvent>();
-
-    public constructor(
-        private readonly cdr: ChangeDetectorRef,
-        private readonly hostElementRef: ElementRef<HTMLElement>,
-        public readonly layoutService: LayoutService,
-        private readonly renderer: Renderer2,
-        private readonly viewContainerRef: ViewContainerRef,
-        private readonly zone: NgZone
-    ) {}
+    public constructor() {
+        const e = effect(() => {
+            const id = this.layoutId();
+            if (id) {
+                this.layoutService.setLayoutId(id);
+            }
+            e.destroy();
+        });
+    }
 
     public movePanel(panel: Panel, position: Position, priority: Priority): void {
         this.layoutService.detachPanelContent(panel);
@@ -89,7 +100,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
     }
 
     public ngAfterContentInit(): void {
-        const panelIds = this.dockPanelComponents.map(p => p.panelId);
+        const panelIds = this.dockPanelComponents().map(p => p.panelId);
         const idSet = new Set(panelIds);
         if (panelIds.length !== idSet.size) {
             throw new Error("Panel IDs must be unique.");
@@ -98,18 +109,20 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
     }
 
     public ngAfterViewInit(): void {
-        this.layoutService.panelTemplateContentsContainerRef = this.panelTemplateContentsContainerRef;
-        this.zone.runOutsideAngular(() => {
-            this.layoutResizeObserver = new ResizeObserver(() => {
-                this.layoutService.layoutDomRect = this.layoutElementRef.nativeElement.getBoundingClientRect();
+        this.layoutService.panelTemplateContentsContainerRef = this.panelTemplateContentsContainerRef();
+        this.#zone.runOutsideAngular(() => {
+            this.#layoutResizeObserver = new ResizeObserver(() => {
+                this.layoutService.layoutDomRect = this.layoutElementRef().nativeElement.getBoundingClientRect();
             });
-            this.layoutResizeObserver.observe(this.layoutElementRef.nativeElement);
+            this.#layoutResizeObserver.observe(this.layoutElementRef().nativeElement);
         });
         for (const panel of this.layoutService.panels()) {
-            this.cdr.detectChanges();
-            const panelTemplateRef = this.panelTemplateReferences.find(p => p.panel.Uid === panel.Uid);
+            this.#cdr.detectChanges();
+            const panelTemplateRef = this.panelTemplateReferences().find(p => p.panel().Uid === panel.Uid);
             if (panelTemplateRef) {
-                panel.viewRef = this.panelTemplateContentsContainerRef.createEmbeddedView(panelTemplateRef.templateRef);
+                panel.viewRef = this.panelTemplateContentsContainerRef().createEmbeddedView(
+                    panelTemplateRef.templateRef
+                );
             }
         }
         for (const panel of this.layoutService.panels()) {
@@ -137,12 +150,10 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
     }
 
     public ngOnDestroy(): void {
-        // this.layoutService.LayoutReady$.complete();
-        this.layoutResizeObserver.disconnect();
+        this.#layoutResizeObserver.disconnect();
     }
 
     public ngOnInit(): void {
-        this.layoutService.setLayoutId(this.layoutId);
         this.updateStyles();
         this.setSubscriptions();
     }
@@ -156,7 +167,10 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
     }
 
     public onPanelHeadersReordered(event: CdkDragDrop<string>, position: Position, priority: Priority): void {
-        const panels = this.layoutService.panels().filter(p => p.position === position && p.priority === priority);
+        const panels = this.layoutService
+            .panels()
+            .where(p => p.position === position && p.priority === priority)
+            .toArray();
         const panel = panels.find(p => p.index === event.previousIndex);
         if (panel) {
             panels.splice(event.previousIndex, 1);
@@ -185,13 +199,13 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
         const service = this.layoutService;
         return {
             closePanel(panelId: string): void {
-                const panel = service.panels().find(p => p.Id === panelId);
+                const panel = service.panels().firstOrDefault(p => p.Id === panelId);
                 if (panel) {
                     service.panelClose$.next({ panel, viaApi: true });
                 }
             },
             movePanel(panelId: string, position: Position, priority: Priority): void {
-                const panel = service.panels().find(p => p.Id === panelId);
+                const panel = service.panels().firstOrDefault(p => p.Id === panelId);
                 if (panel) {
                     if (panel.position === position && panel.priority === priority) {
                         return;
@@ -208,13 +222,13 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
                 }
             },
             openPanel(panelId: string): void {
-                const panel = service.panels().find(p => p.Id === panelId);
+                const panel = service.panels().firstOrDefault(p => p.Id === panelId);
                 if (panel && panel.visible) {
                     service.panelOpen$.next({ panel, viaApi: true });
                 }
             },
             setPanelVisible(panelId: string, visible: boolean): void {
-                const panel = service.panels().find(p => p.Id === panelId);
+                const panel = service.panels().firstOrDefault(p => p.Id === panelId);
                 if (panel) {
                     service.panelVisibility$.next({ panelId: panel.Id, visible: visible });
                 }
@@ -242,21 +256,18 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
                 secondary: 0
             }
         };
-        for (const dpc of this.dockPanelComponents) {
+        for (const dpc of this.dockPanelComponents()) {
             const panel = new Panel(dpc.getPanelOptions());
             panel.index = panelIndexMap[panel.position][panel.priority]++;
             panels = [...panels, panel];
         }
-        this.layoutService.panels.set(panels);
+        this.layoutService.panels.update(set => set.clear().addAll(panels));
     }
 
     private setSubscriptions(): void {
-        this.layoutService.containerResizeStart$.pipe(takeUntilDestroyed(this.#destroyRef)).subscribe(() => {
-            this.resizing = true;
-        });
         this.layoutService.panelMove$.pipe(takeUntilDestroyed(this.#destroyRef), delay(100)).subscribe(() => {
-            this.cdr.detectChanges();
-            this.layoutService.panels.update(panels => [...panels]);
+            this.#cdr.detectChanges();
+            this.layoutService.panels.update(set => set.toImmutableSet());
         });
         this.layoutService.panelVisibility$
             .pipe(
@@ -264,18 +275,20 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
                 delayWhen(() => this.layoutService.layoutReady$),
                 tap(event => {
                     if (!event.visible) {
-                        const panel = this.layoutService.panels().find(p => p.Id === event.panelId);
+                        const panel = this.layoutService.panels().firstOrDefault(p => p.Id === event.panelId);
                         if (panel) {
                             panel.wasOpenBeforeHidden = panel.open;
                             this.layoutService.panelClose$.next({ panel, viaVisibilityChange: true });
                         }
                     } else {
-                        const panel = this.layoutService.panels().find(p => p.Id === event.panelId);
+                        const panel = this.layoutService.panels().firstOrDefault(p => p.Id === event.panelId);
                         if (panel) {
                             const panels = this.layoutService
                                 .panels()
-                                .filter(p => p.position === panel.position && p.priority === panel.priority);
-                            panels.sort((p1, p2) => p1.index - p2.index).forEach((p, px) => (p.index = px));
+                                .where(p => p.position === panel.position && p.priority === panel.priority)
+                                .orderBy(p => p.index)
+                                .toArray();
+                            panels.forEach((p, px) => (p.index = px));
                             const openPanel = panels.find(p => p.open);
                             if (!openPanel && panel.wasOpenBeforeHidden) {
                                 this.layoutService.panelOpen$.next({ panel, viaVisibilityChange: true });
@@ -285,7 +298,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
                 })
             )
             .subscribe(event => {
-                const panel = this.layoutService.panels().find(p => p.Id === event.panelId);
+                const panel = this.layoutService.panels().firstOrDefault(p => p.Id === event.panelId);
                 if (panel) {
                     panel.visible = event.visible;
                 }
@@ -299,10 +312,11 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
     }
 
     private updateStyles(): void {
-        this.layoutMiddleStyles = {
-            height: `calc(100% - ${
-                this.layoutService.getHeaderSize("top") + this.layoutService.getHeaderSize("bottom")
-            }px)`
-        };
+        this.layoutMiddleStyles.update(style => {
+            const totalHeaderHeight =
+                this.layoutService.getHeaderSize("top") + this.layoutService.getHeaderSize("bottom");
+            const height = `calc(100% - ${totalHeaderHeight}px)`;
+            return { ...style, height };
+        });
     }
 }

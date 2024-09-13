@@ -10,7 +10,7 @@ import { LayoutService } from "../../services/layout.service";
     styleUrls: ["./container.component.scss"]
 })
 export class ContainerComponent implements OnInit, OnDestroy {
-    readonly #destroy$: ReplaySubject<void> = new ReplaySubject<void>(1);
+    readonly #destroy$ = new ReplaySubject<void>(1);
     private mouseMoveListener: (() => void) | null = null;
     private mouseUpListener: (() => void) | null = null;
     public anyPrimaryPanelOpen: boolean = false;
@@ -32,9 +32,9 @@ export class ContainerComponent implements OnInit, OnDestroy {
 
     public closePanel(panel: Panel): void {
         panel.open = false;
-        const containerPanels = this.layoutService.panels().filter(panel => panel.position === this.position);
-        const openPanels = containerPanels.filter(panel => panel.open);
-        if (openPanels.length === 0) {
+        const containerPanels = this.layoutService.panels().where(panel => panel.position === this.position);
+        const openPanels = containerPanels.where(panel => panel.open);
+        if (!openPanels.any()) {
             this.open = false;
             this.layoutService.containerSizeDataMap[this.position].styles.update(value => {
                 return Object.assign(value, {
@@ -102,7 +102,7 @@ export class ContainerComponent implements OnInit, OnDestroy {
     private openPanel(panel: Panel): void {
         const openPanel = this.layoutService
             .panels()
-            .find(p => p.position === panel.position && p.priority === panel.priority && p.open);
+            .firstOrDefault(p => p.position === panel.position && p.priority === panel.priority && p.open);
         if (openPanel) {
             this.closePanel(openPanel);
         }
@@ -134,13 +134,13 @@ export class ContainerComponent implements OnInit, OnDestroy {
                       : oppositeContainerElement.clientHeight;
             if (this.position === "left") {
                 const offset =
-                    this.layoutService.layoutConfig.containerResizeOffset +
+                    this.layoutService.layoutConfig().containerResizeOffset() +
                     this.layoutService.getHeaderSize(this.position) +
                     this.layoutService.getHeaderSize("right");
-                const width = event.clientX - this.hostElementRef.nativeElement.getBoundingClientRect().left + 4; //this.layoutService.layoutConfig.headerWidth;
+                const width = event.clientX - this.hostElementRef.nativeElement.getBoundingClientRect().left + 4; //this.layoutService.layoutConfig().headerWidth;
                 if (
                     this.layoutService.layoutDomRect.width - (width + oppositeContainerSize) > offset &&
-                    width > this.layoutService.layoutConfig.minContainerWidth
+                    width > this.layoutService.layoutConfig().minContainerWidth()
                 ) {
                     this.layoutService.containerSizeDataMap[this.position].styles.set({
                         width: `${width}px`
@@ -148,7 +148,7 @@ export class ContainerComponent implements OnInit, OnDestroy {
                 }
             } else if (this.position === "right") {
                 const offset =
-                    this.layoutService.layoutConfig.containerResizeOffset +
+                    this.layoutService.layoutConfig().containerResizeOffset() +
                     this.layoutService.getHeaderSize(this.position) +
                     this.layoutService.getHeaderSize("left");
                 const width =
@@ -158,7 +158,7 @@ export class ContainerComponent implements OnInit, OnDestroy {
                     this.layoutService.getHeaderSize(this.position);
                 if (
                     this.layoutService.layoutDomRect.width - (width + oppositeContainerSize) > offset &&
-                    width > this.layoutService.layoutConfig.minContainerWidth
+                    width > this.layoutService.layoutConfig().minContainerWidth()
                 ) {
                     this.layoutService.containerSizeDataMap[this.position].styles.set({
                         width: `${width}px`
@@ -166,13 +166,13 @@ export class ContainerComponent implements OnInit, OnDestroy {
                 }
             } else if (this.position === "top") {
                 const offset =
-                    this.layoutService.layoutConfig.containerResizeOffset +
+                    this.layoutService.layoutConfig().containerResizeOffset() +
                     this.layoutService.getHeaderSize(this.position) +
                     this.layoutService.getHeaderSize("bottom");
-                const height = event.clientY - this.hostElementRef.nativeElement.getBoundingClientRect().top + 4; //this.layoutService.layoutConfig.headerHeight;
+                const height = event.clientY - this.hostElementRef.nativeElement.getBoundingClientRect().top + 4; //this.layoutService.layoutConfig().headerHeight;
                 if (
                     this.layoutService.layoutDomRect.height - (height + oppositeContainerSize) > offset &&
-                    height > this.layoutService.layoutConfig.minContainerHeight
+                    height > this.layoutService.layoutConfig().minContainerHeight()
                 ) {
                     this.layoutService.containerSizeDataMap[this.position].styles.set({
                         height: `${height}px`
@@ -180,7 +180,7 @@ export class ContainerComponent implements OnInit, OnDestroy {
                 }
             } else if (this.position === "bottom") {
                 const offset =
-                    this.layoutService.layoutConfig.containerResizeOffset +
+                    this.layoutService.layoutConfig().containerResizeOffset() +
                     this.layoutService.getHeaderSize(this.position) +
                     this.layoutService.getHeaderSize("top");
                 const height =
@@ -190,7 +190,7 @@ export class ContainerComponent implements OnInit, OnDestroy {
                     this.layoutService.getHeaderSize(this.position);
                 if (
                     this.layoutService.layoutDomRect.height - (height + oppositeContainerSize) > offset &&
-                    height > this.layoutService.layoutConfig.minContainerHeight
+                    height > this.layoutService.layoutConfig().minContainerHeight()
                 ) {
                     this.layoutService.containerSizeDataMap[this.position].styles.set({
                         height: `${height}px`
@@ -203,9 +203,9 @@ export class ContainerComponent implements OnInit, OnDestroy {
 
     private resizePanel(event: MouseEvent): void {
         if (this.resizingPanel) {
-            const max = this.layoutService.layoutConfig.maxPanelSize;
-            const min = this.layoutService.layoutConfig.minPanelSize;
-            const offset = this.layoutService.layoutConfig.panelResizeOffset;
+            const max = this.layoutService.layoutConfig().maxPanelSize();
+            const min = this.layoutService.layoutConfig().minPanelSize();
+            const offset = this.layoutService.layoutConfig().panelResizeOffset();
             const rectangle = this.hostElementRef.nativeElement.getBoundingClientRect();
             if (this.position === "left" || this.position === "right") {
                 let top = ((event.clientY - rectangle.top - 2) * 100.0) / rectangle.height;
@@ -275,7 +275,7 @@ export class ContainerComponent implements OnInit, OnDestroy {
         this.layoutService.panelMove$.pipe(takeUntil(this.#destroy$)).subscribe(event => {
             const panels = this.layoutService
                 .panels()
-                .filter(panel => panel.position === event.newPosition && panel.priority === event.newPriority);
+                .where(panel => panel.position === event.newPosition && panel.priority === event.newPriority);
             if (event.newPosition === this.position) {
                 this.layoutService.panelClose$.next({
                     panel: event.panel,
@@ -284,18 +284,20 @@ export class ContainerComponent implements OnInit, OnDestroy {
                 window.setTimeout(() => {
                     event.panel.position = event.newPosition;
                     event.panel.priority = event.newPriority;
-                    event.panel.index = panels.length;
-                    const updatedPanels = this.layoutService
+                    event.panel.index = panels.count();
+                    this.layoutService
                         .panels()
-                        .filter(panel => panel.position === event.newPosition && panel.priority === event.newPriority);
-                    updatedPanels.sort((p1, p2) => p1.index - p2.index).forEach((p, px) => (p.index = px));
+                        .where(panel => panel.position === event.newPosition && panel.priority === event.newPriority)
+                        .orderBy(p => p.index)
+                        .forEach((p, px) => (p.index = px));
+                    this.layoutService.panels.update(set => set.toImmutableSet());
                     if (event.wasOpenBefore) {
                         const containerPanels = this.layoutService
                             .panels()
-                            .filter(panel => panel.position === this.position);
-                        const priorityPanels = containerPanels.filter(panel => panel.priority === event.newPriority);
-                        const openPanels = priorityPanels.filter(panel => panel.open);
-                        if (openPanels.length === 0) {
+                            .where(panel => panel.position === this.position);
+                        const priorityPanels = containerPanels.where(panel => panel.priority === event.newPriority);
+                        const openPanels = priorityPanels.where(panel => panel.open);
+                        if (!openPanels.any()) {
                             this.openPanel(event.panel);
                         }
                         this.layoutService.saveLayout();
@@ -352,7 +354,7 @@ export class ContainerComponent implements OnInit, OnDestroy {
             const headerSize = this.layoutService.getHeaderSize(this.position);
             if (layoutSize - oppositeContainerSize < size) {
                 const newSize =
-                    layoutSize - size - this.layoutService.layoutConfig.containerResizeOffset - headerSize * 2;
+                    layoutSize - size - this.layoutService.layoutConfig().containerResizeOffset() - headerSize * 2;
                 const property = this.position === "left" || this.position === "right" ? "width" : "height";
                 oppositeContainerElement.style.setProperty(property, `${newSize}px`);
             }
@@ -360,17 +362,15 @@ export class ContainerComponent implements OnInit, OnDestroy {
     }
 
     private updatePanelSizes(): void {
-        const containerPanels = this.layoutService.panels().filter(panel => panel.position === this.position);
-        const openPanels = containerPanels.filter(panel => panel.open);
+        const containerPanels = this.layoutService.panels().where(panel => panel.position === this.position);
+        const openPanels = containerPanels.where(panel => panel.open).toArray();
         if (this.position === "left" || this.position === "right") {
             this.updateHorizontalPanelSizes(openPanels);
         } else {
             this.updateVerticalPanelSizes(openPanels);
         }
-        this.anyPrimaryPanelOpen =
-            containerPanels.filter(panel => panel.priority === "primary" && panel.open).length > 0;
-        this.anySecondaryPanelOpen =
-            containerPanels.filter(panel => panel.priority === "secondary" && panel.open).length > 0;
+        this.anyPrimaryPanelOpen = containerPanels.where(panel => panel.priority === "primary" && panel.open).any();
+        this.anySecondaryPanelOpen = containerPanels.where(panel => panel.priority === "secondary" && panel.open).any();
         this.panelGroupResizerVisible = openPanels.length > 1;
     }
 
