@@ -1,18 +1,20 @@
 import {
     AfterViewInit,
+    ChangeDetectionStrategy,
     Component,
+    computed,
     DestroyRef,
     ElementRef,
     inject,
-    Input,
+    input,
     NgZone,
     OnInit,
-    Renderer2,
-    ViewChild
+    signal,
+    viewChild
 } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { faEllipsisV, faMinus, IconDefinition } from "@fortawesome/free-solid-svg-icons";
-import { delay, fromEvent } from "rxjs";
+import { faEllipsisV, faMinus } from "@fortawesome/free-solid-svg-icons";
+import { delay, fromEvent, of, switchMap } from "rxjs";
 import { Panel } from "../../data/Panel";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
@@ -22,47 +24,43 @@ import { LayoutService } from "../../services/layout.service";
 @Component({
     selector: "mona-panel",
     templateUrl: "./panel.component.html",
-    styleUrls: ["./panel.component.scss"]
+    styleUrls: ["./panel.component.scss"],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PanelComponent implements OnInit, AfterViewInit {
-    readonly #destroyRef: DestroyRef = inject(DestroyRef);
-    public readonly HideIcon: IconDefinition = faMinus;
-    public readonly MenuIcon: IconDefinition = faEllipsisV;
-    public panelActionStyles: Partial<CSSStyleDeclaration> = {};
-    public panelContentStyles: Partial<CSSStyleDeclaration> = {};
-    public panelHeaderStyles: Partial<CSSStyleDeclaration> = {};
+    readonly #destroyRef = inject(DestroyRef);
+    readonly #hostElementRef = inject(ElementRef<HTMLElement>);
+    readonly #zone = inject(NgZone);
+    protected readonly hideIcon = faMinus;
+    protected readonly layoutService = inject(LayoutService);
+    protected readonly menuIcon = faEllipsisV;
+    protected readonly panelActionStyles = signal<Partial<CSSStyleDeclaration>>({});
+    protected readonly panelContentAnchor = viewChild.required(PanelContentAnchorDirective);
+    protected readonly panelContentStyles = computed(() => ({
+        height: `calc(100% - ${this.panelHeaderStyles().height})`
+    }));
+    protected readonly panelHeaderStyles = signal<Partial<CSSStyleDeclaration>>({});
 
-    @Input({ required: true })
-    public panel!: Panel;
-
-    @ViewChild(PanelContentAnchorDirective)
-    public panelContentAnchor!: PanelContentAnchorDirective;
-
-    public constructor(
-        private readonly elementRef: ElementRef<HTMLElement>,
-        public readonly layoutService: LayoutService,
-        private readonly renderer: Renderer2,
-        private readonly zone: NgZone
-    ) {}
+    public panel = input.required<Panel>();
 
     public close(): void {
-        this.layoutService.panelClose$.next({ panel: this.panel, viaUser: true });
+        this.layoutService.panelClose$.next({ panel: this.panel(), viaUser: true });
     }
 
     public movePanel(position: Position, priority: Priority): void {
-        this.layoutService.detachPanelContent(this.panel);
+        this.layoutService.detachPanelContent(this.panel());
         this.layoutService.panelMove$.next({
-            panel: this.panel,
-            oldPosition: this.panel.position,
+            panel: this.panel(),
+            oldPosition: this.panel().position,
             newPosition: position,
-            oldPriority: this.panel.priority,
+            oldPriority: this.panel().priority,
             newPriority: priority,
-            wasOpenBefore: this.panel.open
+            wasOpenBefore: this.panel().open
         });
     }
 
     public ngAfterViewInit(): void {
-        this.panel.vcr = this.panelContentAnchor.viewContainerRef;
+        this.panel().vcr = this.panelContentAnchor().viewContainerRef;
     }
 
     public ngOnInit(): void {
@@ -71,51 +69,53 @@ export class PanelComponent implements OnInit, AfterViewInit {
     }
 
     public setPanelPinned(pinned: boolean): void {
-        this.panel.pinned = pinned;
+        this.panel().pinned = pinned;
         this.layoutService.saveLayout();
     }
 
     private setStyles(): void {
-        this.panelHeaderStyles = {
+        this.panelHeaderStyles.set({
             height: `${this.layoutService.layoutConfig.panelHeaderHeight}px`
-        };
-        this.panelActionStyles = {
+        });
+        this.panelActionStyles.set({
             width: `${this.layoutService.layoutConfig.panelHeaderHeight}px`
-        };
-        this.panelContentStyles = {
-            height: `calc(100% - ${this.panelHeaderStyles.height})`
-        };
+        });
     }
 
     private setSubscriptions(): void {
-        this.zone.runOutsideAngular(() => {
+        this.#zone.runOutsideAngular(() => {
             fromEvent(document, "click")
-                .pipe(delay(100), takeUntilDestroyed(this.#destroyRef))
-                .subscribe((event: Event) => {
-                    this.zone.runOutsideAngular(() => {
-                        const target = event.target as HTMLElement;
-                        const panelElement = target.closest(`div.mona-panel[data-pid="${this.panel.Uid}"]`);
-                        if (panelElement) {
-                            return;
-                        }
-                        if (
-                            target.closest(".layout-header-list > li") ||
-                            target.closest("mona-contextmenu-content") ||
-                            target.closest(".panel-group-resizer") ||
-                            target.closest(".container-resizer")
-                        ) {
-                            return;
-                        }
-                        if (this.elementRef.nativeElement.contains(event.target as HTMLElement)) {
-                            return;
-                        }
-                        if (!this.panel.pinned) {
-                            this.zone.run(() => {
-                                this.layoutService.panelClose$.next({ panel: this.panel, viaUser: true });
-                            });
-                        }
-                    });
-                });
+                .pipe(
+                    delay(100),
+                    takeUntilDestroyed(this.#destroyRef),
+                    switchMap(event => {
+                        this.#zone.runOutsideAngular(() => {
+                            const target = event.target as HTMLElement;
+                            const panelElement = target.closest(`div.mona-panel[data-pid="${this.panel().Uid}"]`);
+                            if (panelElement) {
+                                return;
+                            }
+                            if (
+                                target.closest(".layout-header-list > li") ||
+                                target.closest("mona-contextmenu-content") ||
+                                target.closest(".panel-group-resizer") ||
+                                target.closest(".container-resizer")
+                            ) {
+                                return;
+                            }
+                            if (this.#hostElementRef.nativeElement.contains(event.target as HTMLElement)) {
+                                return;
+                            }
+                            if (!this.panel().pinned) {
+                                this.#zone.run(() => {
+                                    this.layoutService.panelClose$.next({ panel: this.panel(), viaUser: true });
+                                });
+                            }
+                        });
+                        return of(event);
+                    })
+                )
+                .subscribe();
         });
     }
 }

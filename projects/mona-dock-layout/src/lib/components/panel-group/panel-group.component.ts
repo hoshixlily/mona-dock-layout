@@ -1,5 +1,5 @@
-import { Component, computed, Input, Signal, signal, WritableSignal } from "@angular/core";
-import { Panel } from "../../data/Panel";
+import { ChangeDetectionStrategy, Component, computed, inject, input } from "@angular/core";
+import { orderBy } from "@mirei/ts-collections";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
 import { LayoutService } from "../../services/layout.service";
@@ -7,26 +7,20 @@ import { LayoutService } from "../../services/layout.service";
 @Component({
     selector: "mona-panel-group",
     templateUrl: "./panel-group.component.html",
-    styleUrls: ["./panel-group.component.scss"]
+    styleUrls: ["./panel-group.component.scss"],
+    changeDetection: ChangeDetectionStrategy.Default
 })
 export class PanelGroupComponent {
-    readonly #position: WritableSignal<Position> = signal("left");
-    readonly #priority: WritableSignal<Priority> = signal("primary");
-    protected readonly groupPanels: Signal<Panel[]> = computed(() => {
+    protected readonly groupPanels = computed(() => {
         const panels = this.layoutService.panels();
-        const sortedPanels = [...panels].sort((p1, p2) => p1.index - p2.index);
-        return sortedPanels.filter(panel => panel.position === this.#position() && panel.priority === this.#priority());
+        const position = this.position();
+        const priority = this.priority();
+        return orderBy(panels, p => p.index)
+            .where(p => p.position === position && p.priority === priority)
+            .toImmutableSet();
     });
+    protected readonly layoutService = inject(LayoutService);
 
-    @Input()
-    public set position(value: Position) {
-        this.#position.set(value);
-    }
-
-    @Input()
-    public set priority(value: Priority) {
-        this.#priority.set(value);
-    }
-
-    public constructor(public readonly layoutService: LayoutService) {}
+    public position = input.required<Position>();
+    public priority = input.required<Priority>();
 }
