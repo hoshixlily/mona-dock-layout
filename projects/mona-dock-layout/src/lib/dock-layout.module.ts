@@ -7,6 +7,7 @@ import { ContainerComponent } from "./components/container/container.component";
 import { DockLayoutComponent } from "./components/dock-layout/dock-layout.component";
 import { DockPanelComponent } from "./components/dock-panel/dock-panel.component";
 import { PanelGroupComponent } from "./components/panel-group/panel-group.component";
+import { PanelHeaderListComponent } from "./components/panel-header-list/panel-header-list.component";
 import { PanelComponent } from "./components/panel/panel.component";
 import { LayoutContentTemplateDirective } from "./directives/layout-content-template.directive";
 import { PanelActionTemplateDirective } from "./directives/panel-action-template.directive";
@@ -14,7 +15,6 @@ import { PanelContentAnchorDirective } from "./directives/panel-content-anchor.d
 import { PanelContentTemplateDirective } from "./directives/panel-content-template.directive";
 import { PanelTemplateReferenceDirective } from "./directives/panel-template-reference.directive";
 import { PanelTitleTemplateDirective } from "./directives/panel-title-template.directive";
-import { PanelPositionSelectorPipe } from "./pipes/panel-position-selector.pipe";
 
 @NgModule({
     declarations: [
@@ -24,7 +24,6 @@ import { PanelPositionSelectorPipe } from "./pipes/panel-position-selector.pipe"
         LayoutContentTemplateDirective,
         PanelTitleTemplateDirective,
         PanelActionTemplateDirective,
-        PanelPositionSelectorPipe,
         PanelComponent,
         PanelGroupComponent,
         DockPanelComponent,
@@ -37,7 +36,8 @@ import { PanelPositionSelectorPipe } from "./pipes/panel-position-selector.pipe"
         FontAwesomeModule,
         ContextMenuComponent,
         MenuItemComponent,
-        MenuItemTextTemplateDirective
+        MenuItemTextTemplateDirective,
+        PanelHeaderListComponent
     ],
     exports: [
         DockLayoutComponent,

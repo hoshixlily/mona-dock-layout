@@ -71,70 +71,6 @@ div.layout-containers {
     }
 }
 
-ul.layout-header-list {
-    list-style-type: none;
-    user-select: none;
-    display: flex;
-
-    &.horizontal {
-        flex-direction: row;
-
-        &.secondary {
-            justify-content: flex-end;
-        }
-
-        & li {
-            padding: 0 10px;
-        }
-    }
-
-    &.vertical {
-        flex-direction: column;
-
-        &.secondary {
-            justify-content: flex-end;
-        }
-
-        & li {
-            padding: 10px 0;
-            writing-mode: vertical-lr;
-        }
-
-        &.left li > span {
-            transform-origin: center;
-            transform: rotate(180deg);
-        }
-    }
-
-    & li {
-        font-size: 12px;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        list-style: none;
-        color: var(--mona-text);
-
-        &:hover {
-            background: var(--mona-background-hover);
-        }
-
-        &.opened {
-            background: var(--mona-background-light);
-        }
-
-        &.hidden {
-            padding: 0 !important;
-            height: 0;
-            width: 0;
-
-            & > span {
-                display: none;
-            }
-        }
-    }
-}
-
 .layout-container-wrapper {
     &.horizontal {
         width: 100%;
@@ -151,18 +87,7 @@ div.layout-content {
     overflow: auto;
 }
 
-.cdk-drop-list-dragging .cdk-drag {
-    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1) !important;
-}
 
-/* Animate an item that has been dropped. */
-.cdk-drag-animating {
-    transition: transform 300ms cubic-bezier(0, 0, 0.2, 1) !important;
-}
-
-li.cdk-drag-preview.panel-header-drag {
-    display: none;
-}
 
 mona-container {
     width: 100px;

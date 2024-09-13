@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, inject, Injectable, signal, ViewContainerRef } from "@angular/core";
+import { ChangeDetectorRef, inject, Injectable, signal, ViewContainerRef, WritableSignal } from "@angular/core";
 import { ImmutableDictionary, ImmutableSet } from "@mirei/ts-collections";
 import { asyncScheduler, BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 import { ContainerSizeData, ContainerSizeSaveData } from "../data/ContainerSizeData";
@@ -28,34 +28,34 @@ export class LayoutService {
     public readonly containerResizeInProgress$ = new BehaviorSubject<boolean>(false);
     public readonly containerResizeStart$ = new Subject<Position>();
     public readonly headerStyles = signal(
-        ImmutableDictionary.create<Position, Partial<CSSStyleDeclaration>>([
+        ImmutableDictionary.create<Position, WritableSignal<Partial<CSSStyleDeclaration>>>([
             [
                 "left",
-                {
+                signal({
                     width: `${this.#layoutConfig().headerWidth()}px`
-                }
+                })
             ],
             [
                 "right",
-                {
+                signal({
                     width: `${this.#layoutConfig().headerWidth()}px`
-                }
+                })
             ],
             [
                 "top",
-                {
+                signal({
                     height: `${this.#layoutConfig().headerHeight()}px`,
                     paddingLeft: `${this.#layoutConfig().headerWidth()}px`,
                     paddingRight: `${this.#layoutConfig().headerWidth()}px`
-                }
+                })
             ],
             [
                 "bottom",
-                {
+                signal({
                     height: `${this.#layoutConfig().headerHeight()}px`,
                     paddingLeft: `${this.#layoutConfig().headerWidth()}px`,
                     paddingRight: `${this.#layoutConfig().headerWidth()}px`
-                }
+                })
             ]
         ])
     );
@@ -302,8 +302,15 @@ export class LayoutService {
             const styleText = position === "left" || position === "right" ? "width" : "height";
             const headerStyleText = position === "left" || position === "right" ? "headerWidth" : "headerHeight";
             this.headerStyles.update(dict => {
-                const style = panels.any() ? `${this.#layoutConfig()[headerStyleText]}px` : "0";
-                return dict.set(position, { [styleText]: style });
+                const defaultHeaderSize = this.layoutConfig()[headerStyleText]();
+                const style = panels.any() ? `${defaultHeaderSize}px` : "0";
+                const headerStyle = dict.get(position);
+                if (headerStyle) {
+                    headerStyle.update(styles => ({ ...styles, [styleText]: style }));
+                    return dict.put(position, headerStyle);
+                } else {
+                    return dict.put(position, signal({ [styleText]: style }));
+                }
             });
         }
     }

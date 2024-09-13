@@ -1,4 +1,3 @@
-import { CdkDragDrop } from "@angular/cdk/drag-drop";
 import {
     AfterContentInit,
     AfterViewInit,
@@ -52,7 +51,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
     });
     private readonly panelTemplateReferences = viewChildren(PanelTemplateReferenceDirective);
     protected readonly bottomHeaderStyles = computed(() => {
-        return this.layoutService.headerStyles().get("bottom") ?? {};
+        return this.layoutService.headerStyles().get("bottom")?.() ?? {};
     });
     protected readonly layoutContentTemplateRef = contentChild(LayoutContentTemplateDirective, {
         read: TemplateRef
@@ -60,10 +59,10 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
     protected readonly layoutMiddleStyles = signal<Partial<CSSStyleDeclaration>>({});
     protected readonly layoutService = inject(LayoutService);
     protected readonly leftHeaderStyles = computed(() => {
-        return this.layoutService.headerStyles().get("left") ?? {};
+        return this.layoutService.headerStyles().get("left")?.() ?? {};
     });
     protected readonly rightHeaderStyles = computed(() => {
-        return this.layoutService.headerStyles().get("right") ?? {};
+        return this.layoutService.headerStyles().get("right")?.() ?? {};
     });
     protected readonly resizing = toSignal(
         this.layoutService.containerResizeInProgress$.pipe(
@@ -72,7 +71,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
         )
     );
     protected readonly topHeaderStyles = computed(() => {
-        return this.layoutService.headerStyles().get("top") ?? {};
+        return this.layoutService.headerStyles().get("top")?.() ?? {};
     });
     public readonly layoutId = input.required<string>();
     public readonly ready = output<LayoutReadyEvent>();
@@ -84,18 +83,6 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
                 this.layoutService.setLayoutId(id);
             }
             e.destroy();
-        });
-    }
-
-    public movePanel(panel: Panel, position: Position, priority: Priority): void {
-        this.layoutService.detachPanelContent(panel);
-        this.layoutService.panelMove$.next({
-            panel: panel,
-            oldPosition: panel.position,
-            newPosition: position,
-            oldPriority: panel.priority,
-            newPriority: priority,
-            wasOpenBefore: panel.open
         });
     }
 
@@ -156,43 +143,6 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
     public ngOnInit(): void {
         this.updateStyles();
         this.setSubscriptions();
-    }
-
-    public onPanelHeaderClicked(panel: Panel): void {
-        if (panel.open) {
-            this.layoutService.panelClose$.next({ panel, viaUser: true });
-        } else {
-            this.layoutService.panelOpen$.next({ panel, viaUser: true });
-        }
-    }
-
-    public onPanelHeadersReordered(event: CdkDragDrop<string>, position: Position, priority: Priority): void {
-        const panels = this.layoutService
-            .panels()
-            .where(p => p.position === position && p.priority === priority)
-            .toArray();
-        const panel = panels.find(p => p.index === event.previousIndex);
-        if (panel) {
-            panels.splice(event.previousIndex, 1);
-            panels.splice(event.currentIndex, 0, panel);
-            panels.forEach((p, i) => {
-                p.index = i;
-            });
-            this.layoutService.saveLayout();
-        }
-    }
-
-    public setPanelPinned(panel: Panel, pinned: boolean): void {
-        panel.pinned = pinned;
-        this.layoutService.saveLayout();
-    }
-
-    public togglePanel(panel: Panel, open: boolean): void {
-        if (open) {
-            this.layoutService.panelOpen$.next({ panel, viaUser: true });
-        } else {
-            this.layoutService.panelClose$.next({ panel, viaUser: true });
-        }
     }
 
     private createLayoutApi(): LayoutApi {
