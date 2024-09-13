@@ -44,7 +44,13 @@ export class ContainerComponent implements OnInit, AfterViewInit {
     protected readonly layoutService = inject(LayoutService);
     protected readonly open = signal(false);
     protected readonly panelGroupResizerStyles = computed<ResizerStyles>(() => {
-        return this.layoutService.panelGroupResizerStyles().get(this.position()) ?? {};
+        const visible = this.panelGroupResizerVisible();
+        return {
+            ...this.layoutService.panelGroupResizerStyles().get(this.position()),
+            display: visible ? "block" : "none",
+            zIndex: visible ? "1" : "-1",
+            pointerEvents: visible ? "auto" : "none"
+        };
     });
     protected readonly panelGroupResizerVisible = signal(false);
     protected readonly primaryPanelStyles = computed(() => {
@@ -123,6 +129,14 @@ export class ContainerComponent implements OnInit, AfterViewInit {
             window.setTimeout(() => {
                 this.updateOppositeContainerSize();
             });
+        }
+        const openPanels = this.layoutService
+            .panels()
+            .where(panel => panel.position === this.position())
+            .where(panel => panel.open)
+            .toArray();
+        if (openPanels.length === 2 && !this.panelGroupResizerVisible()) {
+            this.setPanelGroupResizerEvent();
         }
     }
 
@@ -311,7 +325,6 @@ export class ContainerComponent implements OnInit, AfterViewInit {
                             })
                         )
                     ),
-                    debounceTime(0, asyncScheduler),
                     switchMap(event => {
                         if (this.resizingPanel()) {
                             this.resizePanel(event);
@@ -409,21 +422,16 @@ export class ContainerComponent implements OnInit, AfterViewInit {
 
     private updatePanelSizeStyles(openPanels: Panel[], isHorizontal: boolean): void {
         if (openPanels.length === 1) {
-            const primaryPanelStyle = isHorizontal ? { right: "0%" } : { bottom: "0%" };
-            const secondaryPanelStyle = isHorizontal ? { left: "0%" } : { top: "0%" };
-            const primaryResizerStyle: ResizerStyles = isHorizontal ? { top: "100%" } : { left: "100%" };
-            const secondaryResizerStyle: ResizerStyles = isHorizontal ? { top: "0%" } : { left: "0%" };
-
             if (openPanels[0].priority === "primary") {
                 this.layoutService.panelGroupResizerStyles.update(dict => {
-                    return dict.put(this.position(), primaryResizerStyle);
+                    return dict.put(this.position(), { top: "100%" });
                 });
-                this.updatePanelStyles("primary", primaryPanelStyle);
+                this.updatePanelStyles("primary", isHorizontal ? { bottom: "0%" } : { right: "0%" });
             } else if (openPanels[0].priority === "secondary") {
                 this.layoutService.panelGroupResizerStyles.update(dict => {
-                    return dict.put(this.position(), secondaryResizerStyle);
+                    return dict.put(this.position(), { top: "0%" });
                 });
-                this.updatePanelStyles("secondary", secondaryPanelStyle);
+                this.updatePanelStyles("secondary", isHorizontal ? { top: "0%" } : { left: "0%" });
             }
         } else if (openPanels.length === 2) {
             const resizerPosition = this.layoutService.panelGroupResizerPositions().get(this.position());
@@ -431,7 +439,7 @@ export class ContainerComponent implements OnInit, AfterViewInit {
             const secondaryPanelStyle = `calc(4px + ${resizerPosition})`;
             this.layoutService.panelGroupResizerStyles.update(dict => {
                 return dict.put(this.position(), {
-                    [isHorizontal ? "top" : "left"]: resizerPosition
+                    [isHorizontal ? "top" : "left"]: resizerPosition ?? undefined
                 });
             });
             this.updatePanelStyles("primary", {

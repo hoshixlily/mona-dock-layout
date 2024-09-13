@@ -117,45 +117,98 @@ export class LayoutService {
         return position === "left" || position === "right" ? headerElement.offsetWidth : headerElement.offsetHeight;
     }
 
+    private loadContainerStyles(savedLayoutData: LayoutSaveData): void {
+        this.containerStyles.update(dict => {
+            return dict
+                .put("top", { ...dict.get("top"), ...savedLayoutData.sizeData.top.styles })
+                .put("bottom", { ...dict.get("bottom"), ...savedLayoutData.sizeData.bottom.styles })
+                .put("left", { ...dict.get("left"), ...savedLayoutData.sizeData.left.styles })
+                .put("right", { ...dict.get("right"), ...savedLayoutData.sizeData.right.styles });
+        });
+    }
+
     public loadLayout(): boolean {
         const savedLayoutDataJson = window.localStorage.getItem(`LAYOUT_${this.layoutId}`);
         if (savedLayoutDataJson) {
             const savedLayoutData: LayoutSaveData = JSON.parse(savedLayoutDataJson);
-            this.containerStyles.update(dict => {
-                return dict
-                    .put("top", { ...dict.get("top"), ...savedLayoutData.sizeData.top.styles })
-                    .put("bottom", { ...dict.get("bottom"), ...savedLayoutData.sizeData.bottom.styles })
-                    .put("left", { ...dict.get("left"), ...savedLayoutData.sizeData.left.styles })
-                    .put("right", { ...dict.get("right"), ...savedLayoutData.sizeData.right.styles });
-            });
-            this.panels().forEach(p => {
-                const panelSaveData = savedLayoutData.panelSaveData.find(p2 => p2.id === p.Id);
-                if (panelSaveData) {
-                    p.index = panelSaveData.index;
-                    p.pinned = panelSaveData.pinned ?? true;
-                    if (panelSaveData.position !== p.position || panelSaveData.priority !== p.priority) {
-                        this.panelClose$.next({ panel: p, viaMove: true, viaUser: false });
-                        this.detachPanelContent(p);
-                        window.setTimeout(() => {
-                            this.panelMove$.next({
-                                panel: p,
-                                oldPosition: p.position,
-                                newPosition: panelSaveData.position,
-                                oldPriority: p.priority,
-                                newPriority: panelSaveData.priority,
-                                wasOpenBefore: panelSaveData.open && p.visible && p.pinned
-                            });
-                        });
-                    } else if (panelSaveData.open && p.visible) {
-                        this.panelOpen$.next({ panel: p, viaUser: false, viaMove: false });
-                    }
-                } else if (p.startOpen && p.visible) {
-                    this.panelOpen$.next({ panel: p, viaUser: false, viaMove: false });
-                }
-            });
+            this.loadContainerStyles(savedLayoutData);
+            this.loadPanelSizeStyles(savedLayoutData);
+            this.loadPanelGroupResizerPositions(savedLayoutData);
+            this.loadPanelGroupResizerStyles(savedLayoutData);
+            this.loadPanels(savedLayoutData);
             return true;
         }
         return false;
+    }
+
+    private loadPanelGroupResizerPositions(savedLayoutData: LayoutSaveData): void {
+        this.panelGroupResizerPositions.update(dict => {
+            return dict
+                .put("top", savedLayoutData.sizeData.top.lastPanelGroupResizerPosition)
+                .put("bottom", savedLayoutData.sizeData.bottom.lastPanelGroupResizerPosition)
+                .put("left", savedLayoutData.sizeData.left.lastPanelGroupResizerPosition)
+                .put("right", savedLayoutData.sizeData.right.lastPanelGroupResizerPosition);
+        });
+    }
+
+    private loadPanelGroupResizerStyles(savedLayoutData: LayoutSaveData): void {
+        this.panelGroupResizerStyles.update(dict => {
+            return dict
+                .put("top", savedLayoutData.sizeData.top.panelGroupResizerStyles)
+                .put("bottom", savedLayoutData.sizeData.bottom.panelGroupResizerStyles)
+                .put("left", savedLayoutData.sizeData.left.panelGroupResizerStyles)
+                .put("right", savedLayoutData.sizeData.right.panelGroupResizerStyles);
+        });
+    }
+
+    private loadPanelSizeStyles(savedLayoutData: LayoutSaveData): void {
+        this.panelSizeStyles.update(dict => {
+            return dict
+                .put("top", {
+                    ...dict.get("top"),
+                    ...savedLayoutData.sizeData.top.panelSizeData
+                })
+                .put("bottom", {
+                    ...dict.get("bottom"),
+                    ...savedLayoutData.sizeData.bottom.panelSizeData
+                })
+                .put("left", {
+                    ...dict.get("left"),
+                    ...savedLayoutData.sizeData.left.panelSizeData
+                })
+                .put("right", {
+                    ...dict.get("right"),
+                    ...savedLayoutData.sizeData.right.panelSizeData
+                });
+        });
+    }
+
+    private loadPanels(savedLayoutData: LayoutSaveData): void {
+        this.panels().forEach(p => {
+            const panelSaveData = savedLayoutData.panelSaveData.find(p2 => p2.id === p.Id);
+            if (panelSaveData) {
+                p.index = panelSaveData.index;
+                p.pinned = panelSaveData.pinned ?? true;
+                if (panelSaveData.position !== p.position || panelSaveData.priority !== p.priority) {
+                    this.panelClose$.next({ panel: p, viaMove: true, viaUser: false });
+                    this.detachPanelContent(p);
+                    window.setTimeout(() => {
+                        this.panelMove$.next({
+                            panel: p,
+                            oldPosition: p.position,
+                            newPosition: panelSaveData.position,
+                            oldPriority: p.priority,
+                            newPriority: panelSaveData.priority,
+                            wasOpenBefore: panelSaveData.open && p.visible && p.pinned
+                        });
+                    });
+                } else if (panelSaveData.open && p.visible) {
+                    this.panelOpen$.next({ panel: p, viaUser: false, viaMove: false });
+                }
+            } else if (p.startOpen && p.visible) {
+                this.panelOpen$.next({ panel: p, viaUser: false, viaMove: false });
+            }
+        });
     }
 
     public reattachPanelContent(panel: Panel, timeout?: number): void {

@@ -8,4 +8,4 @@ export interface ContainerSizeSaveData {
     styles: Partial<CSSStyleDeclaration>;
 }
 
-export type ResizerStyles = Partial<Pick<CSSStyleDeclaration, "top" | "left">>;
+export type ResizerStyles = Partial<CSSStyleDeclaration>;
