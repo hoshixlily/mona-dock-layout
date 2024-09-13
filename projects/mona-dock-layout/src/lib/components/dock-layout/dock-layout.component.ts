@@ -1,6 +1,7 @@
 import {
     AfterContentInit,
     AfterViewInit,
+    ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
     computed,
@@ -37,6 +38,7 @@ import { DockPanelComponent } from "../dock-panel/dock-panel.component";
     selector: "mona-dock-layout",
     templateUrl: "./dock-layout.component.html",
     styleUrls: ["./dock-layout.component.scss"],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [LayoutService]
 })
 export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, AfterContentInit {

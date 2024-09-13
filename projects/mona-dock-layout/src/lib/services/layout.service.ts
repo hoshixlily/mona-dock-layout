@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, inject, Injectable, signal, ViewContainerRef, WritableSignal } from "@angular/core";
 import { ImmutableDictionary, ImmutableSet } from "@mirei/ts-collections";
 import { asyncScheduler, BehaviorSubject, ReplaySubject, Subject } from "rxjs";
-import { ContainerSizeData, ContainerSizeSaveData } from "../data/ContainerSizeData";
+import { ContainerSizeSaveData, ResizerStyles } from "../data/ContainerSizeData";
 import { LayoutConfiguration } from "../data/LayoutConfiguration";
 import { LayoutSaveData } from "../data/LayoutSaveData";
 import { Panel } from "../data/Panel";
@@ -73,6 +73,22 @@ export class LayoutService {
     public readonly panelMove$ = new Subject<PanelMoveEvent>();
     public readonly panelMoveEnd$ = new Subject<Panel>();
     public readonly panelOpen$ = new Subject<PanelOpenInternalEvent>();
+    public readonly panelGroupResizerPositions = signal(
+        ImmutableDictionary.create<Position, string>([
+            ["left", "50%"],
+            ["right", "50%"],
+            ["top", "50%"],
+            ["bottom", "50%"]
+        ])
+    );
+    public readonly panelGroupResizerStyles = signal(
+        ImmutableDictionary.create<Position, ResizerStyles>([
+            ["left", { top: "50%" }],
+            ["right", { top: "50%" }],
+            ["top", { left: "50%" }],
+            ["bottom", { left: "50%" }]
+        ])
+    );
     public readonly panelResizeInProgress$ = new BehaviorSubject<boolean>(false);
     public readonly panelSizeStyles = signal(
         ImmutableDictionary.create<Position, Record<Priority, Partial<CSSStyleDeclaration>>>([
@@ -83,32 +99,6 @@ export class LayoutService {
         ])
     );
     public readonly panelVisibility$ = new Subject<PanelVisibilityEvent>();
-    public containerSizeDataMap: Record<Position, ContainerSizeData> = {
-        left: {
-            panelGroupResizerStyles: signal({
-                top: "50%"
-            }),
-            lastPanelGroupResizerPosition: signal("50%")
-        },
-        right: {
-            panelGroupResizerStyles: signal({
-                top: "50%"
-            }),
-            lastPanelGroupResizerPosition: signal("50%")
-        },
-        top: {
-            panelGroupResizerStyles: signal({
-                left: "50%"
-            }),
-            lastPanelGroupResizerPosition: signal("50%")
-        },
-        bottom: {
-            panelGroupResizerStyles: signal({
-                left: "50%"
-            }),
-            lastPanelGroupResizerPosition: signal("50%")
-        }
-    };
     public layoutDomRect!: DOMRect;
     public panelTemplateContentsContainerRef!: ViewContainerRef;
     public panels = signal(ImmutableSet.create<Panel>());
@@ -131,31 +121,6 @@ export class LayoutService {
         const savedLayoutDataJson = window.localStorage.getItem(`LAYOUT_${this.layoutId}`);
         if (savedLayoutDataJson) {
             const savedLayoutData: LayoutSaveData = JSON.parse(savedLayoutDataJson);
-            this.containerSizeDataMap = {
-                ...savedLayoutData.sizeData,
-                top: {
-                    ...savedLayoutData.sizeData.top,
-                    lastPanelGroupResizerPosition: signal(savedLayoutData.sizeData.top.lastPanelGroupResizerPosition),
-                    panelGroupResizerStyles: signal(savedLayoutData.sizeData.top.panelGroupResizerStyles)
-                },
-                bottom: {
-                    ...savedLayoutData.sizeData.bottom,
-                    lastPanelGroupResizerPosition: signal(
-                        savedLayoutData.sizeData.bottom.lastPanelGroupResizerPosition
-                    ),
-                    panelGroupResizerStyles: signal(savedLayoutData.sizeData.bottom.panelGroupResizerStyles)
-                },
-                left: {
-                    ...savedLayoutData.sizeData.left,
-                    lastPanelGroupResizerPosition: signal(savedLayoutData.sizeData.left.lastPanelGroupResizerPosition),
-                    panelGroupResizerStyles: signal(savedLayoutData.sizeData.left.panelGroupResizerStyles)
-                },
-                right: {
-                    ...savedLayoutData.sizeData.right,
-                    lastPanelGroupResizerPosition: signal(savedLayoutData.sizeData.right.lastPanelGroupResizerPosition),
-                    panelGroupResizerStyles: signal(savedLayoutData.sizeData.right.panelGroupResizerStyles)
-                }
-            };
             this.containerStyles.update(dict => {
                 return dict
                     .put("top", { ...dict.get("top"), ...savedLayoutData.sizeData.top.styles })
@@ -212,32 +177,27 @@ export class LayoutService {
 
     public saveLayout(): void {
         const sizeData: Record<Position, ContainerSizeSaveData> = {
-            ...this.containerSizeDataMap,
             top: {
-                ...this.containerSizeDataMap.top,
-                lastPanelGroupResizerPosition: this.containerSizeDataMap.top.lastPanelGroupResizerPosition(),
-                panelGroupResizerStyles: this.containerSizeDataMap.top.panelGroupResizerStyles(),
+                lastPanelGroupResizerPosition: this.panelGroupResizerPositions().get("top") ?? "50%",
+                panelGroupResizerStyles: this.panelGroupResizerStyles().get("top") ?? { top: "50%" },
                 panelSizeData: this.panelSizeStyles().get("top") ?? { primary: {}, secondary: {} },
                 styles: this.containerStyles().get("top") ?? {}
             },
             bottom: {
-                ...this.containerSizeDataMap.bottom,
-                lastPanelGroupResizerPosition: this.containerSizeDataMap.bottom.lastPanelGroupResizerPosition(),
-                panelGroupResizerStyles: this.containerSizeDataMap.bottom.panelGroupResizerStyles(),
+                lastPanelGroupResizerPosition: this.panelGroupResizerPositions().get("bottom") ?? "50%",
+                panelGroupResizerStyles: this.panelGroupResizerStyles().get("bottom") ?? { top: "50%" },
                 panelSizeData: this.panelSizeStyles().get("bottom") ?? { primary: {}, secondary: {} },
                 styles: this.containerStyles().get("bottom") ?? {}
             },
             left: {
-                ...this.containerSizeDataMap.left,
-                lastPanelGroupResizerPosition: this.containerSizeDataMap.left.lastPanelGroupResizerPosition(),
-                panelGroupResizerStyles: this.containerSizeDataMap.left.panelGroupResizerStyles(),
+                lastPanelGroupResizerPosition: this.panelGroupResizerPositions().get("left") ?? "50%",
+                panelGroupResizerStyles: this.panelGroupResizerStyles().get("left") ?? { top: "50%" },
                 panelSizeData: this.panelSizeStyles().get("left") ?? { primary: {}, secondary: {} },
                 styles: this.containerStyles().get("left") ?? {}
             },
             right: {
-                ...this.containerSizeDataMap.right,
-                lastPanelGroupResizerPosition: this.containerSizeDataMap.right.lastPanelGroupResizerPosition(),
-                panelGroupResizerStyles: this.containerSizeDataMap.right.panelGroupResizerStyles(),
+                lastPanelGroupResizerPosition: this.panelGroupResizerPositions().get("right") ?? "50%",
+                panelGroupResizerStyles: this.panelGroupResizerStyles().get("right") ?? { top: "50%" },
                 panelSizeData: this.panelSizeStyles().get("right") ?? { primary: {}, secondary: {} },
                 styles: this.containerStyles().get("right") ?? {}
             }

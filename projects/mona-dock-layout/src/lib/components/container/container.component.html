@@ -4,20 +4,15 @@
      [class.vertical]="position()==='left' || position()==='right'"
      [class.top]="position()==='top'" [class.bottom]="position()==='bottom'"
      [class.left]="position()==='left'" [class.right]="position()==='right'">
-    <div class="panel-group-container primary"
-         [class.bordered]="anySecondaryPanelOpen()"
+    <div class="panel-group-container primary" [class.bordered]="anySecondaryPanelOpen()"
          [class.hidden]="!anyPrimaryPanelOpen()"
          [ngStyle]="primaryPanelStyles()">
         <mona-panel-group [position]="position()" priority="primary"></mona-panel-group>
     </div>
     @if (panelGroupResizerVisible()) {
-        <div class="panel-group-resizer"
-             [ngStyle]="layoutService.containerSizeDataMap[position()].panelGroupResizerStyles()"
-             #panelGroupResizer></div>
+        <div class="panel-group-resizer" [ngStyle]="panelGroupResizerStyles()" #panelGroupResizer></div>
     }
-    <div class="panel-group-container secondary"
-         [class.hidden]="!anySecondaryPanelOpen()"
-         [ngStyle]="secondaryPanelStyles()">
+    <div class="panel-group-container secondary" [class.hidden]="!anySecondaryPanelOpen()" [ngStyle]="secondaryPanelStyles()">
         <mona-panel-group [position]="position()" [priority]="'secondary'"></mona-panel-group>
     </div>
     <div class="container-resizer"
