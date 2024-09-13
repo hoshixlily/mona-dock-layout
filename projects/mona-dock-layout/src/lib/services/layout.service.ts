@@ -26,7 +26,6 @@ export class LayoutService {
     });
     private layoutId: string = "";
     public readonly containerResizeInProgress$ = new BehaviorSubject<boolean>(false);
-    public readonly containerResizeStart$ = new Subject<Position>();
     public readonly headerStyles = signal(
         ImmutableDictionary.create<Position, WritableSignal<Partial<CSSStyleDeclaration>>>([
             [
