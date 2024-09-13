@@ -1,4 +1,4 @@
-<div class="wrapper mona-panel" [attr.data-pid]="panel().Uid">
+<div class="wrapper mona-panel" [attr.data-pid]="panel().uid">
     <div class="mona-panel-header" [ngStyle]="panelHeaderStyles()">
         <div class="mona-panel-title">
             @if (panel().titleTemplate) {
@@ -11,7 +11,7 @@
             @for (action of panel().actions; track $index) {
                 <div class="mona-panel-action" [ngStyle]="panelActionStyles()">
                     <ng-container [ngTemplateOutlet]="action"
-                                  [ngTemplateOutletContext]="{position: panel().position, priority: panel().priority, id: panel().Id}"></ng-container>
+                                  [ngTemplateOutletContext]="{position: panel().position, priority: panel().priority, id: panel().id}"></ng-container>
                 </div>
             }
             <div class="mona-panel-action" [ngStyle]="panelActionStyles()" #panelMenuElement>
@@ -22,7 +22,7 @@
             </div>
         </div>
     </div>
-    <div class="mona-panel-content" [ngStyle]="panelContentStyles()" [attr.data-pid]="panel().Uid">
+    <div class="mona-panel-content" [ngStyle]="panelContentStyles()" [attr.data-pid]="panel().uid">
         <ng-container monaPanelContentAnchor></ng-container>
     </div>
 </div>
@@ -34,7 +34,7 @@
         </ng-template>
     </mona-menu-item>
     <mona-menu-item [divider]="true"></mona-menu-item>
-    <mona-menu-item text="Move to" [visible]="panel().movable">
+    <mona-menu-item text="Move to" [visible]="panel().movable()">
         <mona-menu-item text="Bottom Left" (menuClick)="movePanel('bottom', 'primary')"
                         [disabled]="panel().position==='bottom' && panel().priority==='primary'"></mona-menu-item>
         <mona-menu-item text="Bottom Right" (menuClick)="movePanel('bottom', 'secondary')"
@@ -54,9 +54,9 @@
     </mona-menu-item>
     <mona-menu-item text="View Mode">
         <mona-menu-item text="Dock Pinned" (menuClick)="setPanelPinned(true)"
-                        [disabled]="panel().pinned"></mona-menu-item>
+                        [disabled]="panel().pinned()"></mona-menu-item>
         <mona-menu-item text="Dock Unpinned" (menuClick)="setPanelPinned(false)"
-                        [disabled]="!panel().pinned"></mona-menu-item>
+                        [disabled]="!panel().pinned()"></mona-menu-item>
     </mona-menu-item>
     <mona-menu-item [divider]="true"></mona-menu-item>
     <mona-menu-item text="Hide Panel" (menuClick)="close()"></mona-menu-item>

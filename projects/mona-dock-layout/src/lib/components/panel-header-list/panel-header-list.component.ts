@@ -46,12 +46,12 @@ export class PanelHeaderListComponent {
             newPosition: position,
             oldPriority: panel.priority,
             newPriority: priority,
-            wasOpenBefore: panel.open
+            wasOpenBefore: panel.open()
         });
     }
 
     public onPanelHeaderClicked(panel: Panel): void {
-        if (panel.open) {
+        if (panel.open()) {
             this.layoutService.panelClose$.next({ panel, viaUser: true });
         } else {
             this.layoutService.panelOpen$.next({ panel, viaUser: true });
@@ -75,7 +75,7 @@ export class PanelHeaderListComponent {
     }
 
     public setPanelPinned(panel: Panel, pinned: boolean): void {
-        panel.pinned = pinned;
+        panel.pinned.set(pinned);
         this.layoutService.saveLayout();
     }
 

@@ -1,10 +1,10 @@
 import { v4 } from "uuid";
 import { Position } from "./Position";
 import { Priority } from "./Priority";
-import { EmbeddedViewRef, TemplateRef, ViewContainerRef } from "@angular/core";
+import { EmbeddedViewRef, signal, TemplateRef, ViewContainerRef } from "@angular/core";
 
 export interface PanelOptions {
-    actions?: Array<TemplateRef<void>>;
+    actions?: ReadonlyArray<TemplateRef<void>>;
     content: TemplateRef<void> | null;
     id: string;
     index: number;
@@ -19,14 +19,15 @@ export interface PanelOptions {
 }
 
 export class Panel {
-    public readonly Id: string = "";
-    public readonly Uid: string = v4();
-    public actions: Array<TemplateRef<any>> = [];
+    public readonly id: string = "";
+    public readonly uid: string = v4();
+    public readonly open = signal(false);
+    public readonly movable = signal(true);
+    public readonly pinned = signal(true);
+
+    public actions: ReadonlyArray<TemplateRef<any>> = [];
     public content: TemplateRef<any> | null = null;
     public index: number = 0;
-    public movable: boolean = true;
-    public open: boolean = false;
-    public pinned: boolean = true;
     public position: Position = "bottom";
     public priority: Priority = "primary";
     public startOpen: boolean = false;
@@ -38,13 +39,13 @@ export class Panel {
     public wasOpenBeforeHidden: boolean = false;
 
     public constructor(options: Partial<PanelOptions>) {
-        this.Id = options.id ?? "";
+        this.id = options.id ?? "";
         this.actions = options.actions ?? [];
         this.content = options.content ?? null;
         this.index = options.index ?? 0;
-        this.movable = options.movable ?? true;
+        this.movable.set(options.movable ?? true);
         this.title = options.title ?? "";
-        this.pinned = options.pinned ?? true;
+        this.pinned.set(options.pinned ?? true);
         this.position = options.position ?? "bottom";
         this.priority = options.priority ?? "primary";
         this.startOpen = options.startOpen ?? false;

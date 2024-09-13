@@ -58,7 +58,7 @@ export class PanelComponent implements OnInit, AfterViewInit {
             newPosition: position,
             oldPriority: this.panel().priority,
             newPriority: priority,
-            wasOpenBefore: this.panel().open
+            wasOpenBefore: this.panel().open()
         });
     }
 
@@ -71,7 +71,7 @@ export class PanelComponent implements OnInit, AfterViewInit {
     }
 
     public setPanelPinned(pinned: boolean): void {
-        this.panel().pinned = pinned;
+        this.panel().pinned.set(pinned);
         this.layoutService.saveLayout();
     }
 
@@ -84,7 +84,7 @@ export class PanelComponent implements OnInit, AfterViewInit {
                     switchMap(event => {
                         this.#zone.runOutsideAngular(() => {
                             const target = event.target as HTMLElement;
-                            const panelElement = target.closest(`div.mona-panel[data-pid="${this.panel().Uid}"]`);
+                            const panelElement = target.closest(`div.mona-panel[data-pid="${this.panel().uid}"]`);
                             if (panelElement) {
                                 return;
                             }
@@ -99,7 +99,7 @@ export class PanelComponent implements OnInit, AfterViewInit {
                             if (this.#hostElementRef.nativeElement.contains(event.target as HTMLElement)) {
                                 return;
                             }
-                            if (!this.panel().pinned) {
+                            if (!this.panel().pinned()) {
                                 this.#zone.run(() => {
                                     this.layoutService.panelClose$.next({ panel: this.panel(), viaUser: true });
                                 });

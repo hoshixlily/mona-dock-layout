@@ -1,20 +1,25 @@
 import {
     Component,
-    ContentChild,
-    ContentChildren,
-    EventEmitter,
-    Input,
-    Output,
-    QueryList,
-    TemplateRef
+    computed,
+    contentChild,
+    contentChildren,
+    DestroyRef,
+    effect,
+    inject,
+    input,
+    OnInit,
+    output,
+    TemplateRef,
+    untracked
 } from "@angular/core";
-import { ReplaySubject, takeUntil } from "rxjs";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { filter, skipUntil, tap } from "rxjs";
 import { PanelOptions } from "../../data/Panel";
-import { PanelContentTemplateDirective } from "../../directives/panel-content-template.directive";
-import { PanelActionTemplateDirective } from "../../directives/panel-action-template.directive";
 import { PanelCloseEvent, PanelOpenEvent } from "../../data/PanelEvents";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
+import { PanelActionTemplateDirective } from "../../directives/panel-action-template.directive";
+import { PanelContentTemplateDirective } from "../../directives/panel-content-template.directive";
 import { PanelTitleTemplateDirective } from "../../directives/panel-title-template.directive";
 import { LayoutService } from "../../services/layout.service";
 
@@ -23,72 +28,45 @@ import { LayoutService } from "../../services/layout.service";
     template: "",
     styleUrls: []
 })
-export class DockPanelComponent {
-    readonly #destroy$: ReplaySubject<void> = new ReplaySubject<void>(1);
-    private panelOptions: Partial<PanelOptions> = {};
-    private panelVisible: boolean = true;
+export class DockPanelComponent implements OnInit {
+    readonly #destroyRef = inject(DestroyRef);
+    readonly #layoutService = inject(LayoutService);
 
-    @ContentChild(PanelContentTemplateDirective, { read: TemplateRef })
-    public content: TemplateRef<void> | null = null;
+    public readonly options = computed<Partial<PanelOptions>>(() => {
+        return {
+            actions: this.panelActionTemplates() ?? [],
+            content: this.content() ?? null,
+            id: this.panelId(),
+            position: this.position(),
+            priority: this.priority(),
+            title: this.title(),
+            titleTemplate: this.titleTemplate() ?? null,
+            visible: this.visible(),
+            startOpen: this.visible() ? this.startOpen() : false,
+            movable: this.movable() ?? true
+        };
+    });
+    public readonly content = contentChild(PanelContentTemplateDirective, { read: TemplateRef<void> });
+    public readonly movable = input(true);
+    public readonly panelActionTemplates = contentChildren(PanelActionTemplateDirective, { read: TemplateRef<void> });
+    public readonly panelClose = output<PanelCloseEvent>();
+    public readonly panelId = input.required<string>();
+    public readonly panelOpen = output<PanelOpenEvent>();
+    public readonly position = input<Position>("left");
+    public readonly priority = input<Priority>("primary");
+    public readonly startOpen = input<boolean>(false);
+    public readonly title = input<string>("");
+    public readonly titleTemplate = contentChild(PanelTitleTemplateDirective, { read: TemplateRef<void> });
+    public readonly visible = input<boolean>(true);
 
-    @Input()
-    public movable: boolean = true;
-
-    @ContentChildren(PanelActionTemplateDirective, { read: TemplateRef })
-    public panelActionTemplates: QueryList<TemplateRef<void>> = new QueryList<TemplateRef<void>>();
-
-    @Output()
-    public panelClose: EventEmitter<PanelCloseEvent> = new EventEmitter<PanelCloseEvent>();
-
-    @Input()
-    public panelId!: string;
-
-    @Output()
-    public panelOpen: EventEmitter<PanelOpenEvent> = new EventEmitter<PanelOpenEvent>();
-
-    @Input()
-    public position: Position = "left";
-
-    @Input()
-    public priority: Priority = "primary";
-
-    @Input()
-    public startOpen: boolean = false;
-
-    @Input()
-    public title: string = "";
-
-    @ContentChild(PanelTitleTemplateDirective, { read: TemplateRef })
-    public titleTemplate: TemplateRef<void> | null = null;
-
-    @Input()
-    public set visible(visible: boolean) {
-        this.panelVisible = visible;
-        this.layoutService.panelVisibility$.next({ panelId: this.panelId, visible });
-    }
-
-    public constructor(private readonly layoutService: LayoutService) {}
-
-    public getPanelOptions(): PanelOptions {
-        return this.panelOptions as PanelOptions;
-    }
-
-    public ngAfterContentInit(): void {
-        this.panelOptions.actions = this.panelActionTemplates.toArray() ?? [];
-        this.panelOptions.content = this.content ?? null;
-        this.panelOptions.id = this.panelId;
-        this.panelOptions.position = this.position;
-        this.panelOptions.priority = this.priority;
-        this.panelOptions.title = this.title;
-        this.panelOptions.titleTemplate = this.titleTemplate ?? null;
-        this.panelOptions.visible = this.panelVisible;
-        this.panelOptions.startOpen = this.panelVisible ? this.startOpen : false;
-        this.panelOptions.movable = this.movable ?? true;
-    }
-
-    public ngOnDestroy(): void {
-        this.#destroy$.next();
-        this.#destroy$.complete();
+    public constructor() {
+        effect(() => {
+            const visible = this.visible();
+            const panelId = this.panelId();
+            untracked(() => {
+                this.#layoutService.panelVisibility$.next({ panelId, visible });
+            });
+        });
     }
 
     public ngOnInit(): void {
@@ -99,25 +77,46 @@ export class DockPanelComponent {
     }
 
     private setSubscriptions(): void {
-        this.layoutService.layoutReady$.pipe(takeUntil(this.#destroy$)).subscribe(() => {
-            this.layoutService.panelClose$.subscribe(event => {
-                if (event.panel.Id === this.panelId && (event.viaApi || event.viaUser)) {
-                    this.panelClose.emit({
-                        panelId: this.panelId,
-                        viaApi: event.viaApi,
-                        viaUser: event.viaUser
-                    });
-                }
-            });
-            this.layoutService.panelOpen$.subscribe(event => {
-                if (event.panel.Id === this.panelId && (event.viaApi || event.viaUser)) {
-                    this.panelOpen.emit({
-                        panelId: this.panelId,
-                        viaApi: event.viaApi,
-                        viaUser: event.viaUser
-                    });
-                }
-            });
-        });
+        this.#layoutService.panelClose$
+            .pipe(
+                takeUntilDestroyed(this.#destroyRef),
+                skipUntil(this.#layoutService.layoutReady$),
+                filter(event => event.panel.id === this.panelId() && (!!event.viaApi || !!event.viaUser)),
+                tap(event =>
+                    this.panelClose.emit({ panelId: this.panelId(), viaApi: event.viaApi, viaUser: event.viaUser })
+                )
+            )
+            .subscribe();
+        this.#layoutService.panelOpen$
+            .pipe(
+                takeUntilDestroyed(this.#destroyRef),
+                skipUntil(this.#layoutService.layoutReady$),
+                filter(event => event.panel.id === this.panelId() && (!!event.viaApi || !!event.viaUser)),
+                tap(event =>
+                    this.panelOpen.emit({ panelId: this.panelId(), viaApi: event.viaApi, viaUser: event.viaUser })
+                )
+            )
+            .subscribe();
+
+        // this.layoutService.layoutReady$.pipe(takeUntil(this.#destroy$)).subscribe(() => {
+        //     this.layoutService.panelClose$.subscribe(event => {
+        //         if (event.panel.Id === this.panelId && (event.viaApi || event.viaUser)) {
+        //             this.panelClose.emit({
+        //                 panelId: this.panelId,
+        //                 viaApi: event.viaApi,
+        //                 viaUser: event.viaUser
+        //             });
+        //         }
+        //     });
+        //     this.layoutService.panelOpen$.subscribe(event => {
+        //         if (event.panel.Id === this.panelId && (event.viaApi || event.viaUser)) {
+        //             this.panelOpen.emit({
+        //                 panelId: this.panelId,
+        //                 viaApi: event.viaApi,
+        //                 viaUser: event.viaUser
+        //             });
+        //         }
+        //     });
+        // });
     }
 }

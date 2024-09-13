@@ -66,9 +66,9 @@ export class ContainerComponent implements OnInit, AfterViewInit {
     public readonly position = input.required<Position>();
 
     public closePanel(panel: Panel): void {
-        panel.open = false;
+        panel.open.set(false);
         const containerPanels = this.layoutService.panels().where(panel => panel.position === this.position());
-        const openPanels = containerPanels.where(panel => panel.open);
+        const openPanels = containerPanels.where(panel => panel.open());
         if (!openPanels.any()) {
             this.open.set(false);
             this.updateContainerStyles({
@@ -113,7 +113,7 @@ export class ContainerComponent implements OnInit, AfterViewInit {
     private openPanel(panel: Panel): void {
         const openPanel = this.layoutService
             .panels()
-            .firstOrDefault(p => p.position === panel.position && p.priority === panel.priority && p.open);
+            .firstOrDefault(p => p.position === panel.position && p.priority === panel.priority && p.open());
         if (openPanel) {
             this.closePanel(openPanel);
         }
@@ -122,7 +122,7 @@ export class ContainerComponent implements OnInit, AfterViewInit {
             display: "block",
             zIndex: "0"
         });
-        panel.open = true;
+        panel.open.set(true);
         this.updatePanelSizes();
         const oppositeContainerElement = this.getOppositeContainerElement();
         if (oppositeContainerElement.style.display !== "none") {
@@ -133,7 +133,7 @@ export class ContainerComponent implements OnInit, AfterViewInit {
         const openPanels = this.layoutService
             .panels()
             .where(panel => panel.position === this.position())
-            .where(panel => panel.open)
+            .where(panel => panel.open())
             .toArray();
         if (openPanels.length === 2 && !this.panelGroupResizerVisible()) {
             this.setPanelGroupResizerEvent();
@@ -373,7 +373,7 @@ export class ContainerComponent implements OnInit, AfterViewInit {
                             .panels()
                             .where(panel => panel.position === this.position());
                         const priorityPanels = containerPanels.where(panel => panel.priority === event.newPriority);
-                        const openPanels = priorityPanels.where(panel => panel.open);
+                        const openPanels = priorityPanels.where(panel => panel.open());
                         if (!openPanels.any()) {
                             this.openPanel(event.panel);
                         }
@@ -453,13 +453,13 @@ export class ContainerComponent implements OnInit, AfterViewInit {
 
     private updatePanelSizes(): void {
         const containerPanels = this.layoutService.panels().where(panel => panel.position === this.position());
-        const openPanels = containerPanels.where(panel => panel.open).toArray();
+        const openPanels = containerPanels.where(panel => panel.open()).toArray();
         const isHorizontal = this.position() === "left" || this.position() === "right";
         this.updatePanelSizeStyles(openPanels, isHorizontal);
 
-        const anyPrimaryPanelOpen = containerPanels.where(panel => panel.priority === "primary" && panel.open).any();
+        const anyPrimaryPanelOpen = containerPanels.where(panel => panel.priority === "primary" && panel.open()).any();
         const anySecondaryPanelOpen = containerPanels
-            .where(panel => panel.priority === "secondary" && panel.open)
+            .where(panel => panel.priority === "secondary" && panel.open())
             .any();
         this.anyPrimaryPanelOpen.set(anyPrimaryPanelOpen);
         this.anySecondaryPanelOpen.set(anySecondaryPanelOpen);

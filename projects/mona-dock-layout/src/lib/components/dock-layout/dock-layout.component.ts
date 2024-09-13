@@ -107,7 +107,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
         });
         for (const panel of this.layoutService.panels()) {
             this.#cdr.detectChanges();
-            const panelTemplateRef = this.panelTemplateReferences().find(p => p.panel().Uid === panel.Uid);
+            const panelTemplateRef = this.panelTemplateReferences().find(p => p.panel().uid === panel.uid);
             if (panelTemplateRef) {
                 panel.viewRef = this.panelTemplateContentsContainerRef().createEmbeddedView(
                     panelTemplateRef.templateRef
@@ -151,13 +151,13 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
         const service = this.layoutService;
         return {
             closePanel(panelId: string): void {
-                const panel = service.panels().firstOrDefault(p => p.Id === panelId);
+                const panel = service.panels().firstOrDefault(p => p.id === panelId);
                 if (panel) {
                     service.panelClose$.next({ panel, viaApi: true });
                 }
             },
             movePanel(panelId: string, position: Position, priority: Priority): void {
-                const panel = service.panels().firstOrDefault(p => p.Id === panelId);
+                const panel = service.panels().firstOrDefault(p => p.id === panelId);
                 if (panel) {
                     if (panel.position === position && panel.priority === priority) {
                         return;
@@ -169,20 +169,20 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
                         oldPriority: panel.priority,
                         newPosition: position,
                         newPriority: priority,
-                        wasOpenBefore: panel.open
+                        wasOpenBefore: panel.open()
                     });
                 }
             },
             openPanel(panelId: string): void {
-                const panel = service.panels().firstOrDefault(p => p.Id === panelId);
+                const panel = service.panels().firstOrDefault(p => p.id === panelId);
                 if (panel && panel.visible) {
                     service.panelOpen$.next({ panel, viaApi: true });
                 }
             },
             setPanelVisible(panelId: string, visible: boolean): void {
-                const panel = service.panels().firstOrDefault(p => p.Id === panelId);
+                const panel = service.panels().firstOrDefault(p => p.id === panelId);
                 if (panel) {
-                    service.panelVisibility$.next({ panelId: panel.Id, visible: visible });
+                    service.panelVisibility$.next({ panelId: panel.id, visible: visible });
                 }
             }
         };
@@ -209,7 +209,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
             }
         };
         for (const dpc of this.dockPanelComponents()) {
-            const panel = new Panel(dpc.getPanelOptions());
+            const panel = new Panel(dpc.options());
             panel.index = panelIndexMap[panel.position][panel.priority]++;
             panels = [...panels, panel];
         }
@@ -227,13 +227,13 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
                 delayWhen(() => this.layoutService.layoutReady$),
                 tap(event => {
                     if (!event.visible) {
-                        const panel = this.layoutService.panels().firstOrDefault(p => p.Id === event.panelId);
+                        const panel = this.layoutService.panels().firstOrDefault(p => p.id === event.panelId);
                         if (panel) {
-                            panel.wasOpenBeforeHidden = panel.open;
+                            panel.wasOpenBeforeHidden = panel.open();
                             this.layoutService.panelClose$.next({ panel, viaVisibilityChange: true });
                         }
                     } else {
-                        const panel = this.layoutService.panels().firstOrDefault(p => p.Id === event.panelId);
+                        const panel = this.layoutService.panels().firstOrDefault(p => p.id === event.panelId);
                         if (panel) {
                             const panels = this.layoutService
                                 .panels()
@@ -250,7 +250,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
                 })
             )
             .subscribe(event => {
-                const panel = this.layoutService.panels().firstOrDefault(p => p.Id === event.panelId);
+                const panel = this.layoutService.panels().firstOrDefault(p => p.id === event.panelId);
                 if (panel) {
                     panel.visible = event.visible;
                 }

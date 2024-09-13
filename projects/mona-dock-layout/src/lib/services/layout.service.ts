@@ -185,10 +185,10 @@ export class LayoutService {
 
     private loadPanels(savedLayoutData: LayoutSaveData): void {
         this.panels().forEach(p => {
-            const panelSaveData = savedLayoutData.panelSaveData.find(p2 => p2.id === p.Id);
+            const panelSaveData = savedLayoutData.panelSaveData.find(p2 => p2.id === p.id);
             if (panelSaveData) {
                 p.index = panelSaveData.index;
-                p.pinned = panelSaveData.pinned ?? true;
+                p.pinned.set(panelSaveData.pinned ?? true);
                 if (panelSaveData.position !== p.position || panelSaveData.priority !== p.priority) {
                     this.panelClose$.next({ panel: p, viaMove: true, viaUser: false });
                     this.detachPanelContent(p);
@@ -199,7 +199,7 @@ export class LayoutService {
                             newPosition: panelSaveData.position,
                             oldPriority: p.priority,
                             newPriority: panelSaveData.priority,
-                            wasOpenBefore: panelSaveData.open && p.visible && p.pinned
+                            wasOpenBefore: panelSaveData.open && p.visible && p.pinned()
                         });
                     });
                 } else if (panelSaveData.open && p.visible) {
@@ -260,12 +260,12 @@ export class LayoutService {
             panelSaveData:
                 this.panels()
                     .select(panel => ({
-                        id: panel.Id,
+                        id: panel.id,
                         index: panel.index,
-                        pinned: panel.pinned,
+                        pinned: panel.pinned(),
                         position: panel.position,
                         priority: panel.priority,
-                        open: panel.open
+                        open: panel.open()
                     }))
                     .toArray() ?? []
         };
