@@ -1,6 +1,8 @@
 import {
+    AfterViewInit,
     ChangeDetectionStrategy,
     Component,
+    computed,
     DestroyRef,
     effect,
     ElementRef,
@@ -25,7 +27,7 @@ import { LayoutService } from "../../services/layout.service";
     styleUrls: ["./container.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ContainerComponent implements OnInit {
+export class ContainerComponent implements OnInit, AfterViewInit {
     readonly #destroyRef = inject(DestroyRef);
     readonly #hostElementRef = inject(ElementRef<HTMLElement>);
     readonly #injector = inject(Injector);
@@ -34,6 +36,9 @@ export class ContainerComponent implements OnInit {
     private readonly panelGroupResizer = viewChild<ElementRef<HTMLElement>>("panelGroupResizer");
     protected readonly anyPrimaryPanelOpen = signal(false);
     protected readonly anySecondaryPanelOpen = signal(false);
+    protected readonly containerStyles = computed<Partial<CSSStyleDeclaration>>(() => {
+        return this.layoutService.containerStyles().get(this.position()) ?? {};
+    });
     protected readonly layoutService = inject(LayoutService);
     protected readonly open = signal(false);
     protected readonly panelGroupResizerVisible = signal(false);
@@ -47,11 +52,9 @@ export class ContainerComponent implements OnInit {
         const openPanels = containerPanels.where(panel => panel.open);
         if (!openPanels.any()) {
             this.open.set(false);
-            this.layoutService.containerSizeDataMap[this.position()].styles.update(value => {
-                return Object.assign(value, {
-                    display: "none",
-                    zIndex: "-10"
-                });
+            this.updateContainerStyles({
+                display: "none",
+                zIndex: "-10"
             });
         } else {
             this.updatePanelSizes();
@@ -96,11 +99,9 @@ export class ContainerComponent implements OnInit {
             this.closePanel(openPanel);
         }
         this.open.set(true);
-        this.layoutService.containerSizeDataMap[this.position()].styles.update(value => {
-            return Object.assign(value, {
-                display: "block",
-                zIndex: "0"
-            });
+        this.updateContainerStyles({
+            display: "block",
+            zIndex: "0"
         });
         panel.open = true;
         this.updatePanelSizes();
@@ -131,7 +132,7 @@ export class ContainerComponent implements OnInit {
                     this.layoutService.layoutDomRect.width - (width + oppositeContainerSize) > offset &&
                     width > this.layoutService.layoutConfig().minContainerWidth()
                 ) {
-                    this.layoutService.containerSizeDataMap[this.position()].styles.set({
+                    this.updateContainerStyles({
                         width: `${width}px`
                     });
                 }
@@ -149,7 +150,7 @@ export class ContainerComponent implements OnInit {
                     this.layoutService.layoutDomRect.width - (width + oppositeContainerSize) > offset &&
                     width > this.layoutService.layoutConfig().minContainerWidth()
                 ) {
-                    this.layoutService.containerSizeDataMap[this.position()].styles.set({
+                    this.updateContainerStyles({
                         width: `${width}px`
                     });
                 }
@@ -163,7 +164,7 @@ export class ContainerComponent implements OnInit {
                     this.layoutService.layoutDomRect.height - (height + oppositeContainerSize) > offset &&
                     height > this.layoutService.layoutConfig().minContainerHeight()
                 ) {
-                    this.layoutService.containerSizeDataMap[this.position()].styles.set({
+                    this.updateContainerStyles({
                         height: `${height}px`
                     });
                 }
@@ -181,7 +182,7 @@ export class ContainerComponent implements OnInit {
                     this.layoutService.layoutDomRect.height - (height + oppositeContainerSize) > offset &&
                     height > this.layoutService.layoutConfig().minContainerHeight()
                 ) {
-                    this.layoutService.containerSizeDataMap[this.position()].styles.set({
+                    this.updateContainerStyles({
                         height: `${height}px`
                     });
                 }
@@ -356,6 +357,15 @@ export class ContainerComponent implements OnInit {
                     this.layoutService.reattachPanelContent(event.panel, 120); // slight delay is needed, otherwise the panel content is not rendered correctly. TODO: find a better solution
                 });
             }
+        });
+    }
+
+    private updateContainerStyles(styles: Partial<CSSStyleDeclaration>): void {
+        this.layoutService.containerStyles.update(dict => {
+            return dict.set(this.position(), {
+                ...dict.get(this.position()),
+                ...styles
+            });
         });
     }
 

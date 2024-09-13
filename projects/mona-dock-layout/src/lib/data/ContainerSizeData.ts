@@ -5,7 +5,7 @@ export interface ContainerSizeData {
     lastPanelGroupResizerPosition: WritableSignal<string>;
     panelGroupResizerStyles: WritableSignal<Partial<CSSStyleDeclaration>>;
     panelSizeData: Record<Priority, Partial<CSSStyleDeclaration>>;
-    styles: WritableSignal<Partial<CSSStyleDeclaration>>;
+    // styles: WritableSignal<Partial<CSSStyleDeclaration>>;
 }
 
 export interface ContainerSizeSaveData {

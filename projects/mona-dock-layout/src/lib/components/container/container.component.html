@@ -1,5 +1,5 @@
 <div class="wrapper mona-layout-container"
-     [ngStyle]="layoutService.containerSizeDataMap[position()].styles()"
+     [ngStyle]="containerStyles()"
      [class.horizontal]="position()==='top' || position()==='bottom'"
      [class.vertical]="position()==='left' || position()==='right'"
      [class.top]="position()==='top'" [class.bottom]="position()==='bottom'"
