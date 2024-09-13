@@ -19,6 +19,7 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { asyncScheduler, debounceTime, EMPTY, fromEvent, skipUntil, switchMap, takeUntil, tap } from "rxjs";
 import { Panel } from "../../data/Panel";
 import { Position } from "../../data/Position";
+import { Priority } from "../../data/Priority";
 import { LayoutService } from "../../services/layout.service";
 
 @Component({
@@ -42,8 +43,16 @@ export class ContainerComponent implements OnInit, AfterViewInit {
     protected readonly layoutService = inject(LayoutService);
     protected readonly open = signal(false);
     protected readonly panelGroupResizerVisible = signal(false);
+    protected readonly primaryPanelStyles = computed(() => {
+        const position = this.position();
+        return this.layoutService.panelSizeStyles().get(position)?.primary ?? {};
+    });
     protected readonly resizing = signal(false);
     protected readonly resizingPanel = signal(false);
+    protected readonly secondaryPanelStyles = computed(() => {
+        const position = this.position();
+        return this.layoutService.panelSizeStyles().get(position)?.secondary ?? {};
+    });
     public readonly position = input.required<Position>();
 
     public closePanel(panel: Panel): void {
@@ -369,33 +378,6 @@ export class ContainerComponent implements OnInit, AfterViewInit {
         });
     }
 
-    private updateHorizontalPanelSizes(openPanels: Panel[]): void {
-        if (openPanels.length === 1) {
-            if (openPanels[0].priority === "primary") {
-                this.layoutService.containerSizeDataMap[this.position()].panelGroupResizerStyles.set({
-                    ...this.layoutService.containerSizeDataMap[this.position()].panelGroupResizerStyles,
-                    top: "100%"
-                });
-                this.layoutService.containerSizeDataMap[this.position()].panelSizeData.primary.bottom = "0%";
-            } else if (openPanels[0].priority === "secondary") {
-                this.layoutService.containerSizeDataMap[this.position()].panelGroupResizerStyles.set({
-                    ...this.layoutService.containerSizeDataMap[this.position()].panelGroupResizerStyles,
-                    top: "0%"
-                });
-                this.layoutService.containerSizeDataMap[this.position()].panelSizeData.secondary.top = "0%";
-            }
-        } else if (openPanels.length === 2) {
-            this.layoutService.containerSizeDataMap[this.position()].panelGroupResizerStyles.set({
-                ...this.layoutService.containerSizeDataMap[this.position()].panelGroupResizerStyles,
-                top: this.layoutService.containerSizeDataMap[this.position()].lastPanelGroupResizerPosition()
-            });
-            this.layoutService.containerSizeDataMap[this.position()].panelSizeData.primary.bottom =
-                `calc(100% - 4px - ${this.layoutService.containerSizeDataMap[this.position()].lastPanelGroupResizerPosition()}`;
-            this.layoutService.containerSizeDataMap[this.position()].panelSizeData.secondary.top =
-                `calc(4px + ${this.layoutService.containerSizeDataMap[this.position()].lastPanelGroupResizerPosition()})`;
-        }
-    }
-
     private updateOppositeContainerSize(): void {
         const size =
             this.position() === "left" || this.position() === "right"
@@ -421,14 +403,48 @@ export class ContainerComponent implements OnInit, AfterViewInit {
         }
     }
 
+    private updatePanelSizeStyles(openPanels: Panel[], isHorizontal: boolean): void {
+        if (openPanels.length === 1) {
+            const primaryPanelStyle = isHorizontal ? { right: "0%" } : { bottom: "0%" };
+            const secondaryPanelStyle = isHorizontal ? { left: "0%" } : { top: "0%" };
+            const primaryResizerStyle = isHorizontal ? { top: "100%" } : { left: "100%" };
+            const secondaryResizerStyle = isHorizontal ? { top: "0%" } : { left: "0%" };
+
+            if (openPanels[0].priority === "primary") {
+                this.layoutService.containerSizeDataMap[this.position()].panelGroupResizerStyles.set(
+                    primaryResizerStyle
+                );
+                this.updatePanelStyles("primary", primaryPanelStyle);
+            } else if (openPanels[0].priority === "secondary") {
+                this.layoutService.containerSizeDataMap[this.position()].panelGroupResizerStyles.set(
+                    secondaryResizerStyle
+                );
+                this.updatePanelStyles("secondary", secondaryPanelStyle);
+            }
+        } else if (openPanels.length === 2) {
+            const resizerPosition =
+                this.layoutService.containerSizeDataMap[this.position()].lastPanelGroupResizerPosition();
+            const primaryPanelStyle = `calc(100% - 4px - ${resizerPosition})`;
+            const secondaryPanelStyle = `calc(4px + ${resizerPosition})`;
+
+            this.layoutService.containerSizeDataMap[this.position()].panelGroupResizerStyles.set({
+                [isHorizontal ? "top" : "left"]: resizerPosition
+            });
+            this.updatePanelStyles("primary", {
+                [isHorizontal ? "bottom" : "right"]: primaryPanelStyle
+            });
+            this.updatePanelStyles("secondary", {
+                [isHorizontal ? "top" : "left"]: secondaryPanelStyle
+            });
+        }
+    }
+
     private updatePanelSizes(): void {
         const containerPanels = this.layoutService.panels().where(panel => panel.position === this.position());
         const openPanels = containerPanels.where(panel => panel.open).toArray();
-        if (this.position() === "left" || this.position() === "right") {
-            this.updateHorizontalPanelSizes(openPanels);
-        } else {
-            this.updateVerticalPanelSizes(openPanels);
-        }
+        const isHorizontal = this.position() === "left" || this.position() === "right";
+        this.updatePanelSizeStyles(openPanels, isHorizontal);
+
         const anyPrimaryPanelOpen = containerPanels.where(panel => panel.priority === "primary" && panel.open).any();
         const anySecondaryPanelOpen = containerPanels
             .where(panel => panel.priority === "secondary" && panel.open)
@@ -438,30 +454,16 @@ export class ContainerComponent implements OnInit, AfterViewInit {
         this.panelGroupResizerVisible.set(openPanels.length > 1);
     }
 
-    private updateVerticalPanelSizes(openPanels: Panel[]): void {
-        if (openPanels.length === 1) {
-            if (openPanels[0].priority === "primary") {
-                this.layoutService.containerSizeDataMap[this.position()].panelGroupResizerStyles.set({
-                    ...this.layoutService.containerSizeDataMap[this.position()].panelGroupResizerStyles,
-                    left: "100%"
-                });
-                this.layoutService.containerSizeDataMap[this.position()].panelSizeData.primary.right = "0%";
-            } else if (openPanels[0].priority === "secondary") {
-                this.layoutService.containerSizeDataMap[this.position()].panelGroupResizerStyles.set({
-                    ...this.layoutService.containerSizeDataMap[this.position()].panelGroupResizerStyles,
-                    left: "0%"
-                });
-                this.layoutService.containerSizeDataMap[this.position()].panelSizeData.secondary.left = "0%";
-            }
-        } else if (openPanels.length === 2) {
-            this.layoutService.containerSizeDataMap[this.position()].panelGroupResizerStyles.set({
-                ...this.layoutService.containerSizeDataMap[this.position()].panelGroupResizerStyles,
-                left: this.layoutService.containerSizeDataMap[this.position()].lastPanelGroupResizerPosition()
+    private updatePanelStyles(priority: Priority, styles: Partial<CSSStyleDeclaration>): void {
+        this.layoutService.panelSizeStyles.update(dict => {
+            const style = dict.get(this.position()) ?? { primary: {}, secondary: {} };
+            return dict.set(this.position(), {
+                ...style,
+                [priority]: {
+                    ...style[priority],
+                    ...styles
+                }
             });
-            this.layoutService.containerSizeDataMap[this.position()].panelSizeData.primary.right =
-                `calc(100% - 4px - ${this.layoutService.containerSizeDataMap[this.position()].lastPanelGroupResizerPosition()}`;
-            this.layoutService.containerSizeDataMap[this.position()].panelSizeData.secondary.left =
-                `calc(4px + ${this.layoutService.containerSizeDataMap[this.position()].lastPanelGroupResizerPosition()})`;
-        }
+        });
     }
 }
