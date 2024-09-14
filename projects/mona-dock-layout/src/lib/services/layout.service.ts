@@ -1,10 +1,19 @@
-import { ChangeDetectorRef, inject, Injectable, signal, WritableSignal } from "@angular/core";
-import { ImmutableDictionary, ImmutableList } from "@mirei/ts-collections";
+import {
+    ChangeDetectorRef,
+    EmbeddedViewRef,
+    inject,
+    Injectable,
+    signal,
+    ViewContainerRef,
+    WritableSignal
+} from "@angular/core";
+import { Dictionary, ImmutableDictionary, ImmutableList } from "@mirei/ts-collections";
 import { asyncScheduler, BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 import { ContainerSizeSaveData, ResizerStyles } from "../data/ContainerSizeData";
 import { LayoutConfiguration } from "../data/LayoutConfiguration";
 import { LayoutSaveData } from "../data/LayoutSaveData";
 import { Panel } from "../data/Panel";
+import { PanelContentTemplateContext } from "../data/PanelContentTemplateContext";
 import { PanelCloseInternalEvent, PanelOpenInternalEvent } from "../data/PanelEvents";
 import { PanelMoveEvent } from "../data/PanelMoveEvent";
 import { PanelVisibilityEvent } from "../data/PanelVisibilityEvent";
@@ -72,6 +81,7 @@ export class LayoutService {
     public readonly layoutReady$ = new ReplaySubject<void>(1);
     public readonly panelClose$ = new Subject<PanelCloseInternalEvent>();
     public readonly panelContentAnchors = signal(ImmutableDictionary.create<string, PanelContentAnchorDirective>());
+    public readonly panelTemplateContentContainerRef = signal<ViewContainerRef | null>(null);
     public readonly panelMove$ = new Subject<PanelMoveEvent>();
     public readonly panelMoveEnd$ = new Subject<Panel>();
     public readonly panelOpen$ = new Subject<PanelOpenInternalEvent>();
@@ -100,6 +110,7 @@ export class LayoutService {
             ["bottom", { primary: { right: "50%" }, secondary: { left: "50%" } }]
         ])
     );
+    public readonly panelViewRefMap = new Dictionary<string, EmbeddedViewRef<PanelContentTemplateContext>>();
     public readonly panelVisibility$ = new Subject<PanelVisibilityEvent>();
     public layoutDomRect!: DOMRect;
     public panels = signal(ImmutableList.create<Panel>());
@@ -146,7 +157,6 @@ export class LayoutService {
             this.loadPanelSizeStyles(savedLayoutData);
             this.loadPanelGroupResizerPositions(savedLayoutData);
             this.loadPanelGroupResizerStyles(savedLayoutData);
-            // this.loadPanels(savedLayoutData);
             return true;
         }
         return false;

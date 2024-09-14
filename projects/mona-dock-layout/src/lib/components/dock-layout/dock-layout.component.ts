@@ -17,7 +17,8 @@ import {
     output,
     signal,
     TemplateRef,
-    viewChild
+    viewChild,
+    ViewContainerRef
 } from "@angular/core";
 import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
 import { combineLatestWith, delay, delayWhen, map, tap } from "rxjs";
@@ -51,6 +52,9 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
     #layoutResizeObserver!: ResizeObserver;
     private readonly dockPanelComponents = contentChildren(DockPanelComponent);
     private readonly layoutElementRef = viewChild.required<ElementRef<HTMLDivElement>>("layoutElementRef");
+    private readonly panelTemplateContentsContainerRef = viewChild.required("panelTemplateContentsContainerRef", {
+        read: ViewContainerRef
+    });
     protected readonly bottomHeaderStyles = computed(() => {
         return this.layoutService.headerStyles().get("bottom")?.() ?? {};
     });
@@ -90,6 +94,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
     }
 
     public ngAfterViewInit(): void {
+        this.layoutService.panelTemplateContentContainerRef.set(this.panelTemplateContentsContainerRef());
         this.#zone.runOutsideAngular(() => {
             this.#layoutResizeObserver = new ResizeObserver(() => {
                 this.layoutService.layoutDomRect = this.layoutElementRef().nativeElement.getBoundingClientRect();
