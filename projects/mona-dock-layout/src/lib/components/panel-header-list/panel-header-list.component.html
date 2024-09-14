@@ -18,21 +18,21 @@
                 <mona-menu-item [divider]="true"></mona-menu-item>
                 <mona-menu-item text="Move to" [visible]="panel.movable()">
                     <mona-menu-item text="Bottom Left" (menuClick)="movePanel(panel,'bottom', 'primary')"
-                                    [disabled]="panel.position()==='bottom' && panel.priority==='primary'"></mona-menu-item>
+                                    [disabled]="panel.position()==='bottom' && panel.priority()==='primary'"></mona-menu-item>
                     <mona-menu-item text="Bottom Right" (menuClick)="movePanel(panel,'bottom', 'secondary')"
-                                    [disabled]="panel.position()==='bottom' && panel.priority==='secondary'"></mona-menu-item>
+                                    [disabled]="panel.position()==='bottom' && panel.priority()==='secondary'"></mona-menu-item>
                     <mona-menu-item text="Top Left" (menuClick)="movePanel(panel,'top', 'primary')"
-                                    [disabled]="panel.position()==='top' && panel.priority==='primary'"></mona-menu-item>
+                                    [disabled]="panel.position()==='top' && panel.priority()==='primary'"></mona-menu-item>
                     <mona-menu-item text="Top Right" (menuClick)="movePanel(panel,'top', 'secondary')"
-                                    [disabled]="panel.position()==='top' && panel.priority==='secondary'"></mona-menu-item>
+                                    [disabled]="panel.position()==='top' && panel.priority()==='secondary'"></mona-menu-item>
                     <mona-menu-item text="Left Top" (menuClick)="movePanel(panel,'left', 'primary')"
-                                    [disabled]="panel.position()==='left' && panel.priority==='primary'"></mona-menu-item>
+                                    [disabled]="panel.position()==='left' && panel.priority()==='primary'"></mona-menu-item>
                     <mona-menu-item text="Left Bottom" (menuClick)="movePanel(panel,'left', 'secondary')"
-                                    [disabled]="panel.position()==='left' && panel.priority==='secondary'"></mona-menu-item>
+                                    [disabled]="panel.position()==='left' && panel.priority()==='secondary'"></mona-menu-item>
                     <mona-menu-item text="Right Top" (menuClick)="movePanel(panel,'right', 'primary')"
-                                    [disabled]="panel.position()==='right' && panel.priority==='primary'"></mona-menu-item>
+                                    [disabled]="panel.position()==='right' && panel.priority()==='primary'"></mona-menu-item>
                     <mona-menu-item text="Right Bottom" (menuClick)="movePanel(panel,'right', 'secondary')"
-                                    [disabled]="panel.position()==='right' && panel.priority==='secondary'"></mona-menu-item>
+                                    [disabled]="panel.position()==='right' && panel.priority()==='secondary'"></mona-menu-item>
                 </mona-menu-item>
                 <mona-menu-item text="View Mode">
                     <mona-menu-item text="Dock Pinned" (menuClick)="setPanelPinned(panel, true)"

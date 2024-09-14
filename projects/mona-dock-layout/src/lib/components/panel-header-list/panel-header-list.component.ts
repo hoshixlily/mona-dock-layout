@@ -31,7 +31,7 @@ export class PanelHeaderListComponent {
     protected readonly panels = computed(() => {
         return this.layoutService
             .panels()
-            .where(panel => panel.position() === this.position() && panel.priority === this.priority())
+            .where(panel => panel.position() === this.position() && panel.priority() === this.priority())
             .toArray();
     });
     public readonly orientation = input.required<Orientation>();
@@ -44,7 +44,7 @@ export class PanelHeaderListComponent {
             panel: panel,
             oldPosition: panel.position(),
             newPosition: position,
-            oldPriority: panel.priority,
+            oldPriority: panel.priority(),
             newPriority: priority,
             wasOpenBefore: panel.open()
         });
@@ -61,7 +61,7 @@ export class PanelHeaderListComponent {
     public onPanelHeadersReordered(event: CdkDragDrop<string>, position: Position, priority: Priority): void {
         const panels = this.layoutService
             .panels()
-            .where(p => p.position() === position && p.priority === priority)
+            .where(p => p.position() === position && p.priority() === priority)
             .toArray();
         const panel = panels.find(p => p.index() === event.previousIndex);
         if (panel) {

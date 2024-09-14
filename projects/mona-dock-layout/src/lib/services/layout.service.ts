@@ -189,7 +189,7 @@ export class LayoutService {
             if (panelSaveData) {
                 p.index.set(panelSaveData.index);
                 p.pinned.set(panelSaveData.pinned ?? true);
-                if (panelSaveData.position !== p.position() || panelSaveData.priority !== p.priority) {
+                if (panelSaveData.position !== p.position() || panelSaveData.priority !== p.priority()) {
                     this.panelClose$.next({ panel: p, viaMove: true, viaUser: false });
                     this.detachPanelContent(p);
                     window.setTimeout(() => {
@@ -197,7 +197,7 @@ export class LayoutService {
                             panel: p,
                             oldPosition: p.position(),
                             newPosition: panelSaveData.position,
-                            oldPriority: p.priority,
+                            oldPriority: p.priority(),
                             newPriority: panelSaveData.priority,
                             wasOpenBefore: panelSaveData.open && p.visible() && p.pinned()
                         });
@@ -264,7 +264,7 @@ export class LayoutService {
                         index: panel.index(),
                         pinned: panel.pinned(),
                         position: panel.position(),
-                        priority: panel.priority,
+                        priority: panel.priority(),
                         open: panel.open()
                     }))
                     .toArray() ?? []

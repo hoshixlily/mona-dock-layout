@@ -159,14 +159,14 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
             movePanel(panelId: string, position: Position, priority: Priority): void {
                 const panel = service.panels().firstOrDefault(p => p.id === panelId);
                 if (panel) {
-                    if (panel.position() === position && panel.priority === priority) {
+                    if (panel.position() === position && panel.priority() === priority) {
                         return;
                     }
                     service.detachPanelContent(panel);
                     service.panelMove$.next({
                         panel: panel,
                         oldPosition: panel.position(),
-                        oldPriority: panel.priority,
+                        oldPriority: panel.priority(),
                         newPosition: position,
                         newPriority: priority,
                         wasOpenBefore: panel.open()
@@ -210,7 +210,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
         };
         for (const dpc of this.dockPanelComponents()) {
             const panel = new Panel(dpc.options());
-            panel.index.set(panelIndexMap[panel.position()][panel.priority]++);
+            panel.index.set(panelIndexMap[panel.position()][panel.priority()]++);
             panels = [...panels, panel];
         }
         this.layoutService.panels.update(set => set.clear().addAll(panels));
@@ -237,7 +237,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
                         if (panel) {
                             const panels = this.layoutService
                                 .panels()
-                                .where(p => p.position() === panel.position() && p.priority === panel.priority)
+                                .where(p => p.position() === panel.position() && p.priority() === panel.priority())
                                 .orderBy(p => p.index())
                                 .toArray();
                             panels.forEach((p, px) => p.index.set(px));

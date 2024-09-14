@@ -16,7 +16,7 @@ export class PanelGroupComponent {
         const position = this.position();
         const priority = this.priority();
         return orderBy(panels, p => p.index())
-            .where(p => p.position() === position && p.priority === priority)
+            .where(p => p.position() === position && p.priority() === priority)
             .toImmutableSet();
     });
     protected readonly layoutService = inject(LayoutService);

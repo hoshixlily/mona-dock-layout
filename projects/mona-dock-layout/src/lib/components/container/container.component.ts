@@ -113,7 +113,7 @@ export class ContainerComponent implements OnInit, AfterViewInit {
     private openPanel(panel: Panel): void {
         const openPanel = this.layoutService
             .panels()
-            .firstOrDefault(p => p.position() === panel.position() && p.priority === panel.priority && p.open());
+            .firstOrDefault(p => p.position() === panel.position() && p.priority() === panel.priority() && p.open());
         if (openPanel) {
             this.closePanel(openPanel);
         }
@@ -352,7 +352,7 @@ export class ContainerComponent implements OnInit, AfterViewInit {
         this.layoutService.panelMove$.pipe(takeUntilDestroyed(this.#destroyRef)).subscribe(event => {
             const panels = this.layoutService
                 .panels()
-                .where(panel => panel.position() === event.newPosition && panel.priority === event.newPriority);
+                .where(panel => panel.position() === event.newPosition && panel.priority() === event.newPriority);
             if (event.newPosition === this.position()) {
                 this.layoutService.panelClose$.next({
                     panel: event.panel,
@@ -360,11 +360,13 @@ export class ContainerComponent implements OnInit, AfterViewInit {
                 });
                 window.setTimeout(() => {
                     event.panel.position.set(event.newPosition);
-                    event.panel.priority = event.newPriority;
+                    event.panel.priority.set(event.newPriority);
                     event.panel.index.set(panels.count());
                     this.layoutService
                         .panels()
-                        .where(panel => panel.position() === event.newPosition && panel.priority === event.newPriority)
+                        .where(
+                            panel => panel.position() === event.newPosition && panel.priority() === event.newPriority
+                        )
                         .orderBy(p => p.index())
                         .forEach((p, px) => p.index.set(px));
                     this.layoutService.panels.update(set => set.toImmutableSet());
@@ -372,7 +374,7 @@ export class ContainerComponent implements OnInit, AfterViewInit {
                         const containerPanels = this.layoutService
                             .panels()
                             .where(panel => panel.position() === this.position());
-                        const priorityPanels = containerPanels.where(panel => panel.priority === event.newPriority);
+                        const priorityPanels = containerPanels.where(panel => panel.priority() === event.newPriority);
                         const openPanels = priorityPanels.where(panel => panel.open());
                         if (!openPanels.any()) {
                             this.openPanel(event.panel);
@@ -422,12 +424,12 @@ export class ContainerComponent implements OnInit, AfterViewInit {
 
     private updatePanelSizeStyles(openPanels: Panel[], isHorizontal: boolean): void {
         if (openPanels.length === 1) {
-            if (openPanels[0].priority === "primary") {
+            if (openPanels[0].priority() === "primary") {
                 this.layoutService.panelGroupResizerStyles.update(dict => {
                     return dict.put(this.position(), { top: "100%" });
                 });
                 this.updatePanelStyles("primary", isHorizontal ? { bottom: "0%" } : { right: "0%" });
-            } else if (openPanels[0].priority === "secondary") {
+            } else if (openPanels[0].priority() === "secondary") {
                 this.layoutService.panelGroupResizerStyles.update(dict => {
                     return dict.put(this.position(), { top: "0%" });
                 });
@@ -457,9 +459,11 @@ export class ContainerComponent implements OnInit, AfterViewInit {
         const isHorizontal = this.position() === "left" || this.position() === "right";
         this.updatePanelSizeStyles(openPanels, isHorizontal);
 
-        const anyPrimaryPanelOpen = containerPanels.where(panel => panel.priority === "primary" && panel.open()).any();
+        const anyPrimaryPanelOpen = containerPanels
+            .where(panel => panel.priority() === "primary" && panel.open())
+            .any();
         const anySecondaryPanelOpen = containerPanels
-            .where(panel => panel.priority === "secondary" && panel.open())
+            .where(panel => panel.priority() === "secondary" && panel.open())
             .any();
         this.anyPrimaryPanelOpen.set(anyPrimaryPanelOpen);
         this.anySecondaryPanelOpen.set(anySecondaryPanelOpen);
