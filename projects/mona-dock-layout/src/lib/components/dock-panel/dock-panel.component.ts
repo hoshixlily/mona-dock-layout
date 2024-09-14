@@ -26,7 +26,8 @@ import { LayoutService } from "../../services/layout.service";
 @Component({
     selector: "mona-dock-panel",
     template: "",
-    styleUrls: []
+    styleUrls: [],
+    standalone: true
 })
 export class DockPanelComponent implements OnInit {
     readonly #destroyRef = inject(DestroyRef);

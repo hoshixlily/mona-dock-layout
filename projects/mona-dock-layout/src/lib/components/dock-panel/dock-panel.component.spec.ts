@@ -8,8 +8,8 @@ describe('DockPanelComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [DockPanelComponent]
-    });
+    imports: [DockPanelComponent]
+});
     fixture = TestBed.createComponent(DockPanelComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

@@ -22,12 +22,16 @@ import { Panel } from "../../data/Panel";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
 import { LayoutService } from "../../services/layout.service";
+import { NgStyle } from "@angular/common";
+import { PanelGroupComponent } from "../panel-group/panel-group.component";
 
 @Component({
     selector: "mona-container",
     templateUrl: "./container.component.html",
     styleUrls: ["./container.component.scss"],
-    changeDetection: ChangeDetectionStrategy.OnPush
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: true,
+    imports: [NgStyle, PanelGroupComponent]
 })
 export class ContainerComponent implements OnInit, AfterViewInit {
     readonly #destroyRef = inject(DestroyRef);

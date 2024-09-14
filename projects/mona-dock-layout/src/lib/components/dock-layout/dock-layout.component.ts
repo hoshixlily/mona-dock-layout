@@ -30,13 +30,18 @@ import { Priority } from "../../data/Priority";
 import { LayoutContentTemplateDirective } from "../../directives/layout-content-template.directive";
 import { LayoutService } from "../../services/layout.service";
 import { DockPanelComponent } from "../dock-panel/dock-panel.component";
+import { NgStyle, NgTemplateOutlet } from "@angular/common";
+import { PanelHeaderListComponent } from "../panel-header-list/panel-header-list.component";
+import { ContainerComponent } from "../container/container.component";
 
 @Component({
     selector: "mona-dock-layout",
     templateUrl: "./dock-layout.component.html",
     styleUrls: ["./dock-layout.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [LayoutService]
+    providers: [LayoutService],
+    standalone: true,
+    imports: [NgStyle, PanelHeaderListComponent, ContainerComponent, NgTemplateOutlet]
 })
 export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, AfterContentInit {
     readonly #cdr = inject(ChangeDetectorRef);

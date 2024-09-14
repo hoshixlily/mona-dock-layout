@@ -12,8 +12,10 @@
         <mona-dock-panel panelId="Grid" position="bottom" priority="primary" title="People" (panelOpen)="print($event)" (panelClose)="print($event)">
             <ng-template monaPanelContentTemplate>
                 <mona-grid [data]="gridData" [pageSize]="5" style="height: 100%;" [filterable]="true">
-                    <mona-grid-column *ngFor="let column of gridColumns" [field]="column.field"
-                                      [title]="column.title" [type]="$any(column.type)"></mona-grid-column>
+                    @for (column of gridColumns; track $index) {
+                        <mona-grid-column [field]="column.field"
+                                          [title]="column.title" [type]="$any(column.type)"></mona-grid-column>
+                    }
                 </mona-grid>
             </ng-template>
         </mona-dock-panel>

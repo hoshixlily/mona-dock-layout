@@ -19,12 +19,17 @@ import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
 import { PanelContentAnchorDirective } from "../../directives/panel-content-anchor.directive";
 import { LayoutService } from "../../services/layout.service";
+import { NgStyle, NgTemplateOutlet } from "@angular/common";
+import { FaIconComponent } from "@fortawesome/angular-fontawesome";
+import { ContextMenuComponent, MenuItemComponent } from "@mirei/mona-ui";
 
 @Component({
     selector: "mona-panel",
     templateUrl: "./panel.component.html",
     styleUrls: ["./panel.component.scss"],
-    changeDetection: ChangeDetectionStrategy.OnPush
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: true,
+    imports: [NgStyle, NgTemplateOutlet, FaIconComponent, PanelContentAnchorDirective, ContextMenuComponent, MenuItemComponent]
 })
 export class PanelComponent implements OnInit, AfterViewInit {
     readonly #destroyRef = inject(DestroyRef);
