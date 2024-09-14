@@ -1,0 +1,31 @@
+<mona-contextmenu [target]="target()" [trigger]="trigger()">
+    <mona-menu-item text="Move to" [visible]="moveMenuVisible()">
+        <mona-menu-item text="Bottom Left" (menuClick)="onPanelMove('bottom', 'primary')"
+                        [disabled]="panel().position()==='bottom' && panel().priority()==='primary'"></mona-menu-item>
+        <mona-menu-item text="Bottom Right" (menuClick)="onPanelMove('bottom', 'secondary')"
+                        [disabled]="panel().position()==='bottom' && panel().priority()==='secondary'"></mona-menu-item>
+        <mona-menu-item text="Top Left" (menuClick)="onPanelMove('top', 'primary')"
+                        [disabled]="panel().position()==='top' && panel().priority()==='primary'"></mona-menu-item>
+        <mona-menu-item text="Top Right" (menuClick)="onPanelMove('top', 'secondary')"
+                        [disabled]="panel().position()==='top' && panel().priority()==='secondary'"></mona-menu-item>
+        <mona-menu-item text="Left Top" (menuClick)="onPanelMove('left', 'primary')"
+                        [disabled]="panel().position()==='left' && panel().priority()==='primary'"></mona-menu-item>
+        <mona-menu-item text="Left Bottom" (menuClick)="onPanelMove('left', 'secondary')"
+                        [disabled]="panel().position()==='left' && panel().priority()==='secondary'"></mona-menu-item>
+        <mona-menu-item text="Right Top" (menuClick)="onPanelMove('right', 'primary')"
+                        [disabled]="panel().position()==='right' && panel().priority()==='primary'"></mona-menu-item>
+        <mona-menu-item text="Right Bottom" (menuClick)="onPanelMove('right', 'secondary')"
+                        [disabled]="panel().position()==='right' && panel().priority()==='secondary'"></mona-menu-item>
+    </mona-menu-item>
+    <mona-menu-item text="View Mode">
+        <mona-menu-item text="Dock Pinned" (menuClick)="onPanelPin(true)"
+                        [disabled]="panel().pinned()"></mona-menu-item>
+        <mona-menu-item text="Dock Unpinned" (menuClick)="onPanelPin(false)"
+                        [disabled]="!panel().pinned()"></mona-menu-item>
+    </mona-menu-item>
+    <mona-menu-item [divider]="true"></mona-menu-item>
+    <mona-menu-item text="Hide Panel" [visible]="panel().open()"
+                    (menuClick)="onPanelToggle(false)"></mona-menu-item>
+    <mona-menu-item text="Show Panel" [visible]="!panel().open()"
+                    (menuClick)="onPanelToggle(true)"></mona-menu-item>
+</mona-contextmenu>

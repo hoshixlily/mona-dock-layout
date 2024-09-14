@@ -9,6 +9,7 @@ import { Panel } from "../../data/Panel";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
 import { LayoutService } from "../../services/layout.service";
+import { PanelContextMenuComponent } from "../panel-context-menu/panel-context-menu.component";
 
 @Component({
     selector: "mona-panel-header-list",
@@ -20,7 +21,8 @@ import { LayoutService } from "../../services/layout.service";
         ContextMenuComponent,
         MenuItemComponent,
         MenuItemTextTemplateDirective,
-        NgStyle
+        NgStyle,
+        PanelContextMenuComponent
     ],
     templateUrl: "./panel-header-list.component.html",
     styleUrl: "./panel-header-list.component.scss",
