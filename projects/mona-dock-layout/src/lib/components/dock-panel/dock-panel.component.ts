@@ -98,26 +98,5 @@ export class DockPanelComponent implements OnInit {
                 )
             )
             .subscribe();
-
-        // this.layoutService.layoutReady$.pipe(takeUntil(this.#destroy$)).subscribe(() => {
-        //     this.layoutService.panelClose$.subscribe(event => {
-        //         if (event.panel.Id === this.panelId && (event.viaApi || event.viaUser)) {
-        //             this.panelClose.emit({
-        //                 panelId: this.panelId,
-        //                 viaApi: event.viaApi,
-        //                 viaUser: event.viaUser
-        //             });
-        //         }
-        //     });
-        //     this.layoutService.panelOpen$.subscribe(event => {
-        //         if (event.panel.Id === this.panelId && (event.viaApi || event.viaUser)) {
-        //             this.panelOpen.emit({
-        //                 panelId: this.panelId,
-        //                 viaApi: event.viaApi,
-        //                 viaUser: event.viaUser
-        //             });
-        //         }
-        //     });
-        // });
     }
 }

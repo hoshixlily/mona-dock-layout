@@ -55,7 +55,6 @@ export class PanelHeaderListComponent {
     public readonly priority = input.required<Priority>();
 
     public movePanel(panel: Panel, position: Position, priority: Priority): void {
-        this.layoutService.detachPanelContent(panel);
         this.layoutService.panelMove$.next({
             panel: panel,
             oldPosition: panel.position(),

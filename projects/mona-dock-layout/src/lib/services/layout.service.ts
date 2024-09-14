@@ -1,14 +1,6 @@
-import {
-    ChangeDetectorRef,
-    EmbeddedViewRef,
-    inject,
-    Injectable,
-    signal,
-    ViewContainerRef,
-    WritableSignal
-} from "@angular/core";
+import { EmbeddedViewRef, Injectable, signal, ViewContainerRef, WritableSignal } from "@angular/core";
 import { Dictionary, ImmutableDictionary, ImmutableList } from "@mirei/ts-collections";
-import { asyncScheduler, BehaviorSubject, ReplaySubject, Subject } from "rxjs";
+import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 import { ContainerSizeSaveData, ResizerStyles } from "../data/ContainerSizeData";
 import { LayoutConfiguration } from "../data/LayoutConfiguration";
 import { LayoutSaveData } from "../data/LayoutSaveData";
@@ -23,7 +15,6 @@ import { PanelContentAnchorDirective } from "../directives/panel-content-anchor.
 
 @Injectable()
 export class LayoutService {
-    readonly #cdr: ChangeDetectorRef = inject(ChangeDetectorRef);
     readonly #layoutConfig = signal<LayoutConfiguration>({
         containerResizeOffset: signal(120),
         headerHeight: signal(25),
@@ -115,18 +106,6 @@ export class LayoutService {
     public layoutDomRect!: DOMRect;
     public panels = signal(ImmutableList.create<Panel>());
 
-    public detachPanelContent(panel: Panel): void {
-        const anchor = this.panelContentAnchors().get(panel.id);
-        if (!anchor) {
-            return;
-        }
-        const viewRef = panel.viewRef;
-        const viewRefIndex = anchor.viewContainerRef.indexOf(viewRef);
-        if (viewRefIndex !== -1) {
-            anchor.viewContainerRef.detach(viewRefIndex);
-        }
-    }
-
     public getHeaderSize(position: Position): number {
         const headerElement = document.querySelector(`div.layout-header.${position}`) as HTMLElement;
         return position === "left" || position === "right" ? headerElement.offsetWidth : headerElement.offsetHeight;
@@ -140,16 +119,6 @@ export class LayoutService {
         return null;
     }
 
-    private loadContainerStyles(savedLayoutData: LayoutSaveData): void {
-        this.containerStyles.update(dict => {
-            return dict
-                .put("top", { ...dict.get("top"), ...savedLayoutData.sizeData.top.styles })
-                .put("bottom", { ...dict.get("bottom"), ...savedLayoutData.sizeData.bottom.styles })
-                .put("left", { ...dict.get("left"), ...savedLayoutData.sizeData.left.styles })
-                .put("right", { ...dict.get("right"), ...savedLayoutData.sizeData.right.styles });
-        });
-    }
-
     public loadLayout(): boolean {
         const savedLayoutData = this.getStoredSaveData();
         if (savedLayoutData) {
@@ -160,68 +129,6 @@ export class LayoutService {
             return true;
         }
         return false;
-    }
-
-    private loadPanelGroupResizerPositions(savedLayoutData: LayoutSaveData): void {
-        this.panelGroupResizerPositions.update(dict => {
-            return dict
-                .put("top", savedLayoutData.sizeData.top.lastPanelGroupResizerPosition)
-                .put("bottom", savedLayoutData.sizeData.bottom.lastPanelGroupResizerPosition)
-                .put("left", savedLayoutData.sizeData.left.lastPanelGroupResizerPosition)
-                .put("right", savedLayoutData.sizeData.right.lastPanelGroupResizerPosition);
-        });
-    }
-
-    private loadPanelGroupResizerStyles(savedLayoutData: LayoutSaveData): void {
-        this.panelGroupResizerStyles.update(dict => {
-            return dict
-                .put("top", savedLayoutData.sizeData.top.panelGroupResizerStyles)
-                .put("bottom", savedLayoutData.sizeData.bottom.panelGroupResizerStyles)
-                .put("left", savedLayoutData.sizeData.left.panelGroupResizerStyles)
-                .put("right", savedLayoutData.sizeData.right.panelGroupResizerStyles);
-        });
-    }
-
-    private loadPanelSizeStyles(savedLayoutData: LayoutSaveData): void {
-        this.panelSizeStyles.update(dict => {
-            return dict
-                .put("top", {
-                    ...dict.get("top"),
-                    ...savedLayoutData.sizeData.top.panelSizeData
-                })
-                .put("bottom", {
-                    ...dict.get("bottom"),
-                    ...savedLayoutData.sizeData.bottom.panelSizeData
-                })
-                .put("left", {
-                    ...dict.get("left"),
-                    ...savedLayoutData.sizeData.left.panelSizeData
-                })
-                .put("right", {
-                    ...dict.get("right"),
-                    ...savedLayoutData.sizeData.right.panelSizeData
-                });
-        });
-    }
-
-    public reattachPanelContent(panel: Panel, timeout?: number): void {
-        const anchor = this.panelContentAnchors().get(panel.id);
-        if (!anchor) {
-            return;
-        }
-        const viewRefIndex = anchor.viewContainerRef.indexOf(panel.viewRef);
-        if (viewRefIndex !== -1) {
-            const reattach = (): void => {
-                anchor.viewContainerRef.insert(panel.viewRef, viewRefIndex);
-                this.#cdr.detectChanges();
-                this.panelMoveEnd$.next(panel);
-            };
-            if (timeout != null) {
-                asyncScheduler.schedule(() => reattach(), timeout);
-            } else {
-                reattach();
-            }
-        }
     }
 
     public saveLayout(): void {
@@ -296,5 +203,57 @@ export class LayoutService {
                 }
             });
         }
+    }
+
+    private loadContainerStyles(savedLayoutData: LayoutSaveData): void {
+        this.containerStyles.update(dict => {
+            return dict
+                .put("top", { ...dict.get("top"), ...savedLayoutData.sizeData.top.styles })
+                .put("bottom", { ...dict.get("bottom"), ...savedLayoutData.sizeData.bottom.styles })
+                .put("left", { ...dict.get("left"), ...savedLayoutData.sizeData.left.styles })
+                .put("right", { ...dict.get("right"), ...savedLayoutData.sizeData.right.styles });
+        });
+    }
+
+    private loadPanelGroupResizerPositions(savedLayoutData: LayoutSaveData): void {
+        this.panelGroupResizerPositions.update(dict => {
+            return dict
+                .put("top", savedLayoutData.sizeData.top.lastPanelGroupResizerPosition)
+                .put("bottom", savedLayoutData.sizeData.bottom.lastPanelGroupResizerPosition)
+                .put("left", savedLayoutData.sizeData.left.lastPanelGroupResizerPosition)
+                .put("right", savedLayoutData.sizeData.right.lastPanelGroupResizerPosition);
+        });
+    }
+
+    private loadPanelGroupResizerStyles(savedLayoutData: LayoutSaveData): void {
+        this.panelGroupResizerStyles.update(dict => {
+            return dict
+                .put("top", savedLayoutData.sizeData.top.panelGroupResizerStyles)
+                .put("bottom", savedLayoutData.sizeData.bottom.panelGroupResizerStyles)
+                .put("left", savedLayoutData.sizeData.left.panelGroupResizerStyles)
+                .put("right", savedLayoutData.sizeData.right.panelGroupResizerStyles);
+        });
+    }
+
+    private loadPanelSizeStyles(savedLayoutData: LayoutSaveData): void {
+        this.panelSizeStyles.update(dict => {
+            return dict
+                .put("top", {
+                    ...dict.get("top"),
+                    ...savedLayoutData.sizeData.top.panelSizeData
+                })
+                .put("bottom", {
+                    ...dict.get("bottom"),
+                    ...savedLayoutData.sizeData.bottom.panelSizeData
+                })
+                .put("left", {
+                    ...dict.get("left"),
+                    ...savedLayoutData.sizeData.left.panelSizeData
+                })
+                .put("right", {
+                    ...dict.get("right"),
+                    ...savedLayoutData.sizeData.right.panelSizeData
+                });
+        });
     }
 }

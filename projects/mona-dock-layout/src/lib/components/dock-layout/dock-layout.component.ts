@@ -101,23 +101,21 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
             });
             this.#layoutResizeObserver.observe(this.layoutElementRef().nativeElement);
         });
-        window.setTimeout(() => {
-            const loaded = this.layoutService.loadLayout();
-            if (!loaded) {
-                for (const panel of this.layoutService.panels()) {
-                    if (panel.startOpen()) {
-                        this.layoutService.panelOpen$.next({
-                            panel
-                        });
-                    }
+        const loaded = this.layoutService.loadLayout();
+        if (!loaded) {
+            for (const panel of this.layoutService.panels()) {
+                if (panel.startOpen()) {
+                    this.layoutService.panelOpen$.next({
+                        panel
+                    });
                 }
-                this.layoutService.saveLayout();
             }
-            this.layoutService.layoutReady$.next();
-            this.layoutService.layoutReady$.complete();
-            this.ready.emit({
-                api: this.createLayoutApi()
-            });
+            this.layoutService.saveLayout();
+        }
+        this.layoutService.layoutReady$.next();
+        this.layoutService.layoutReady$.complete();
+        this.ready.emit({
+            api: this.createLayoutApi()
         });
         this.layoutService.updateHeaderSizes();
     }
@@ -150,7 +148,6 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
                     if (panel.position() === position && panel.priority() === priority) {
                         return;
                     }
-                    service.detachPanelContent(panel);
                     service.panelMove$.next({
                         panel: panel,
                         oldPosition: panel.position(),

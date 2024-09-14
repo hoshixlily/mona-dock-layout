@@ -10,24 +10,21 @@ import {
     inject,
     input,
     NgZone,
-    OnDestroy,
     OnInit,
-    signal,
     viewChild
 } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FaIconComponent } from "@fortawesome/angular-fontawesome";
 import { faEllipsisV, faMinus } from "@fortawesome/free-solid-svg-icons";
-import { WindowComponent } from "@mirei/mona-ui";
 import { debounceTime, filter, fromEvent, of, switchMap } from "rxjs";
 import { Panel } from "../../data/Panel";
+import { PanelContentTemplateContext } from "../../data/PanelContentTemplateContext";
 import { PanelViewMode } from "../../data/PanelViewMode";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
 import { PanelContentAnchorDirective } from "../../directives/panel-content-anchor.directive";
 import { LayoutService } from "../../services/layout.service";
 import { PanelContextMenuComponent } from "../panel-context-menu/panel-context-menu.component";
-import { PanelContentTemplateContext } from "../../data/PanelContentTemplateContext";
 
 @Component({
     selector: "mona-panel",
@@ -35,14 +32,7 @@ import { PanelContentTemplateContext } from "../../data/PanelContentTemplateCont
     styleUrls: ["./panel.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
-    imports: [
-        NgStyle,
-        NgTemplateOutlet,
-        FaIconComponent,
-        PanelContentAnchorDirective,
-        WindowComponent,
-        PanelContextMenuComponent
-    ]
+    imports: [NgStyle, NgTemplateOutlet, FaIconComponent, PanelContentAnchorDirective, PanelContextMenuComponent]
 })
 export class PanelComponent implements OnInit, AfterViewInit {
     readonly #destroyRef = inject(DestroyRef);
@@ -61,7 +51,6 @@ export class PanelComponent implements OnInit, AfterViewInit {
     protected readonly panelHeaderStyles = computed<Partial<CSSStyleDeclaration>>(() => ({
         height: `${this.layoutService.layoutConfig().panelHeaderHeight()}px`
     }));
-    protected readonly undockWindowVisible = signal(false);
     public readonly panel = input.required<Panel>();
 
     public close(): void {
@@ -69,7 +58,6 @@ export class PanelComponent implements OnInit, AfterViewInit {
     }
 
     public movePanel(position: Position, priority: Priority): void {
-        this.layoutService.detachPanelContent(this.panel());
         this.layoutService.panelMove$.next({
             panel: this.panel(),
             oldPosition: this.panel().position(),
