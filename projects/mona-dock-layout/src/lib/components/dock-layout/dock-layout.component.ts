@@ -121,7 +121,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
             const loaded = this.layoutService.loadLayout();
             if (!loaded) {
                 for (const panel of this.layoutService.panels()) {
-                    if (panel.startOpen) {
+                    if (panel.startOpen()) {
                         this.layoutService.panelOpen$.next({
                             panel
                         });
@@ -175,7 +175,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
             },
             openPanel(panelId: string): void {
                 const panel = service.panels().firstOrDefault(p => p.id === panelId);
-                if (panel && panel.visible) {
+                if (panel && panel.visible()) {
                     service.panelOpen$.next({ panel, viaApi: true });
                 }
             },
@@ -210,7 +210,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
         };
         for (const dpc of this.dockPanelComponents()) {
             const panel = new Panel(dpc.options());
-            panel.index = panelIndexMap[panel.position][panel.priority]++;
+            panel.index.set(panelIndexMap[panel.position][panel.priority]++);
             panels = [...panels, panel];
         }
         this.layoutService.panels.update(set => set.clear().addAll(panels));
@@ -238,9 +238,9 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
                             const panels = this.layoutService
                                 .panels()
                                 .where(p => p.position === panel.position && p.priority === panel.priority)
-                                .orderBy(p => p.index)
+                                .orderBy(p => p.index())
                                 .toArray();
-                            panels.forEach((p, px) => (p.index = px));
+                            panels.forEach((p, px) => p.index.set(px));
                             const openPanel = panels.find(p => p.open);
                             if (!openPanel && panel.wasOpenBeforeHidden) {
                                 this.layoutService.panelOpen$.next({ panel, viaVisibilityChange: true });
@@ -252,7 +252,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
             .subscribe(event => {
                 const panel = this.layoutService.panels().firstOrDefault(p => p.id === event.panelId);
                 if (panel) {
-                    panel.visible = event.visible;
+                    panel.visible.set(event.visible);
                 }
             });
         this.layoutService.panelMoveEnd$

@@ -5,10 +5,10 @@
 
     @for (panel of panels(); track $index) {
         <li cdkDragPreviewClass="panel-header-drag"
-            [class.opened]="panel.open()" [class.hidden]="!panel.visible"
+            [class.opened]="panel.open()" [class.hidden]="!panel.visible()"
             (click)="onPanelHeaderClicked(panel)"
             cdkDrag #panelHeaderElement>
-            <span>{{panel.title}}</span>
+            <span>{{panel.title()}}</span>
             <mona-contextmenu [target]="panelHeaderElement" trigger="contextmenu">
                 <mona-menu-item [disabled]="true">
                     <ng-template monaMenuItemTextTemplate>

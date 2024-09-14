@@ -15,7 +15,7 @@ export class PanelGroupComponent {
         const panels = this.layoutService.panels();
         const position = this.position();
         const priority = this.priority();
-        return orderBy(panels, p => p.index)
+        return orderBy(panels, p => p.index())
             .where(p => p.position === position && p.priority === priority)
             .toImmutableSet();
     });

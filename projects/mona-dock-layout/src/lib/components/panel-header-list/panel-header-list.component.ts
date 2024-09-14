@@ -63,12 +63,12 @@ export class PanelHeaderListComponent {
             .panels()
             .where(p => p.position === position && p.priority === priority)
             .toArray();
-        const panel = panels.find(p => p.index === event.previousIndex);
+        const panel = panels.find(p => p.index() === event.previousIndex);
         if (panel) {
             panels.splice(event.previousIndex, 1);
             panels.splice(event.currentIndex, 0, panel);
             panels.forEach((p, i) => {
-                p.index = i;
+                p.index.set(i);
             });
             this.layoutService.saveLayout();
         }

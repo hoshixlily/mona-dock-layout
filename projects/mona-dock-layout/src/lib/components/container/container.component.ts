@@ -361,12 +361,12 @@ export class ContainerComponent implements OnInit, AfterViewInit {
                 window.setTimeout(() => {
                     event.panel.position = event.newPosition;
                     event.panel.priority = event.newPriority;
-                    event.panel.index = panels.count();
+                    event.panel.index.set(panels.count());
                     this.layoutService
                         .panels()
                         .where(panel => panel.position === event.newPosition && panel.priority === event.newPriority)
-                        .orderBy(p => p.index)
-                        .forEach((p, px) => (p.index = px));
+                        .orderBy(p => p.index())
+                        .forEach((p, px) => p.index.set(px));
                     this.layoutService.panels.update(set => set.toImmutableSet());
                     if (event.wasOpenBefore) {
                         const containerPanels = this.layoutService
