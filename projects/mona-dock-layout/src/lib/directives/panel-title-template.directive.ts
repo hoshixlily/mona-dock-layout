@@ -1,8 +1,7 @@
 import { Directive } from "@angular/core";
 
 @Directive({
-    selector: "ng-template[monaPanelTitleTemplate]"
+    selector: "ng-template[monaPanelTitleTemplate]",
+    standalone: true
 })
-export class PanelTitleTemplateDirective {
-    public constructor() {}
-}
+export class PanelTitleTemplateDirective {}

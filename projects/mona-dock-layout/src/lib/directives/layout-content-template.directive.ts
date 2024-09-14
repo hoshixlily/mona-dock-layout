@@ -1,8 +1,7 @@
 import { Directive } from "@angular/core";
 
 @Directive({
-    selector: "ng-template[monaLayoutContentTemplate]"
+    selector: "ng-template[monaLayoutContentTemplate]",
+    standalone: true
 })
-export class LayoutContentTemplateDirective {
-    public constructor() {}
-}
+export class LayoutContentTemplateDirective {}

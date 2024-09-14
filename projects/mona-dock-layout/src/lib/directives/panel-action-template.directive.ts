@@ -1,8 +1,7 @@
-import { Directive, TemplateRef } from "@angular/core";
+import { Directive } from "@angular/core";
 
 @Directive({
-    selector: "ng-template[monaPanelActionTemplate]"
+    selector: "ng-template[monaPanelActionTemplate]",
+    standalone: true
 })
-export class PanelActionTemplateDirective {
-    public constructor(public readonly templateRef: TemplateRef<void>) {}
-}
+export class PanelActionTemplateDirective {}

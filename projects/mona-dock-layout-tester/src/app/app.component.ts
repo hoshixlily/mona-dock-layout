@@ -1,19 +1,49 @@
-import { Component } from "@angular/core";
-import {
-    LayoutApi,
-    LayoutPosition,
-    LayoutReadyEvent,
-    PanelCloseEvent,
-    PanelOpenEvent,
-    PanelPriority
-} from "mona-dock-layout";
+import { ChangeDetectionStrategy, Component } from "@angular/core";
+import { FontAwesomeModule } from "@fortawesome/angular-fontawesome";
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { faArrowTurnDown, faFileExport } from "@fortawesome/free-solid-svg-icons";
+import {
+    ButtonDirective,
+    GridColumnComponent,
+    GridComponent,
+    TabComponent,
+    TabContentTemplateDirective,
+    TabStripComponent,
+    TextAreaDirective
+} from "@mirei/mona-ui";
+import {
+    DockLayoutComponent,
+    DockPanelComponent,
+    LayoutApi,
+    LayoutContentTemplateDirective,
+    LayoutReadyEvent,
+    PanelCloseEvent,
+    PanelContentTemplateDirective,
+    PanelOpenEvent,
+    Position,
+    Priority
+} from "mona-dock-layout";
 
 @Component({
     selector: "app-root",
     templateUrl: "./app.component.html",
-    styleUrls: ["./app.component.scss"]
+    styleUrls: ["./app.component.scss"],
+    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        DockLayoutComponent,
+        DockPanelComponent,
+        ButtonDirective,
+        GridComponent,
+        GridColumnComponent,
+        TabStripComponent,
+        TabComponent,
+        TabContentTemplateDirective,
+        TextAreaDirective,
+        FontAwesomeModule,
+        LayoutContentTemplateDirective,
+        PanelContentTemplateDirective
+    ]
 })
 export class AppComponent {
     public readonly ArrowDownIcon: IconDefinition = faArrowTurnDown;
@@ -44,7 +74,7 @@ export class AppComponent {
         this.layoutApi.closePanel(panelId);
     }
 
-    public movePanel(panelId: string, position: LayoutPosition, priority: PanelPriority): void {
+    public movePanel(panelId: string, position: Position, priority: Priority): void {
         this.layoutApi.movePanel(panelId, position, priority);
     }
 

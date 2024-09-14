@@ -1,11 +1,14 @@
+import { EmbeddedViewRef, signal, TemplateRef } from "@angular/core";
 import { v4 } from "uuid";
+import { PanelActionTemplateContext } from "./PanelActionTemplateContext";
+import { PanelContentTemplateContext } from "./PanelContentTemplateContext";
+import { PanelTitleTemplateContext } from "./PanelTitleTemplateContext";
 import { Position } from "./Position";
 import { Priority } from "./Priority";
-import { EmbeddedViewRef, TemplateRef, ViewContainerRef } from "@angular/core";
 
 export interface PanelOptions {
-    actions?: Array<TemplateRef<void>>;
-    content: TemplateRef<void> | null;
+    actions?: ReadonlyArray<TemplateRef<PanelActionTemplateContext>>;
+    content: TemplateRef<PanelContentTemplateContext> | null;
     id: string;
     index: number;
     movable: boolean;
@@ -14,45 +17,41 @@ export interface PanelOptions {
     priority: Priority;
     startOpen?: boolean;
     title?: string;
-    titleTemplate?: TemplateRef<any> | null;
+    titleTemplate?: TemplateRef<PanelTitleTemplateContext> | null;
     visible?: boolean;
 }
 
 export class Panel {
-    public readonly Id: string = "";
-    public readonly Uid: string = v4();
-    public actions: Array<TemplateRef<any>> = [];
-    public content: TemplateRef<any> | null = null;
-    public index: number = 0;
-    public movable: boolean = true;
-    public open: boolean = false;
-    public pinned: boolean = true;
-    public position: Position = "bottom";
-    public priority: Priority = "primary";
-    public startOpen: boolean = false;
-    public title: string = "";
-    public titleTemplate: TemplateRef<void> | null = null;
-    public vcr!: ViewContainerRef; // initialized via component
-    public viewRef!: EmbeddedViewRef<void>;
-    public visible: boolean = true;
+    public readonly actions = signal<ReadonlyArray<TemplateRef<PanelActionTemplateContext>>>([]);
+    public readonly content = signal<TemplateRef<PanelContentTemplateContext> | null>(null);
+    public readonly id: string = "";
+    public readonly index = signal(0);
+    public readonly open = signal(false);
+    public readonly movable = signal(true);
+    public readonly pinned = signal(true);
+    public readonly position = signal<Position>("bottom");
+    public readonly priority = signal<Priority>("primary");
+    public readonly startOpen = signal(false);
+    public readonly title = signal("");
+    public readonly titleTemplate = signal<TemplateRef<PanelTitleTemplateContext> | null>(null);
+    public readonly uid: string = v4();
+    public readonly visible = signal(true);
+
+    public viewRef!: EmbeddedViewRef<PanelContentTemplateContext>;
     public wasOpenBeforeHidden: boolean = false;
 
     public constructor(options: Partial<PanelOptions>) {
-        this.Id = options.id ?? "";
-        this.actions = options.actions ?? [];
-        this.content = options.content ?? null;
-        this.index = options.index ?? 0;
-        this.movable = options.movable ?? true;
-        this.title = options.title ?? "";
-        this.pinned = options.pinned ?? true;
-        this.position = options.position ?? "bottom";
-        this.priority = options.priority ?? "primary";
-        this.startOpen = options.startOpen ?? false;
-        this.visible = options.visible ?? true;
-        this.titleTemplate = options.titleTemplate ?? null;
-    }
-
-    public setOptions(options: Partial<PanelOptions>): void {
-        Object.assign(this, options);
+        this.id = options.id ?? "";
+        this.actions.set(options.actions ?? []);
+        this.content.set(options.content ?? null);
+        this.index.set(options.index ?? 0);
+        this.movable.set(options.movable ?? true);
+        this.title.set(options.title ?? "");
+        this.pinned.set(options.pinned ?? true);
+        this.position.set(options.position ?? "bottom");
+        this.priority.set(options.priority ?? "primary");
+        this.startOpen.set(options.startOpen ?? false);
+        this.visible.set(options.visible ?? true);
+        this.titleTemplate.set(options.titleTemplate ?? null);
     }
 }

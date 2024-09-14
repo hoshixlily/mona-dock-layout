@@ -1,59 +1,57 @@
-<div class="wrapper mona-panel" [attr.data-pid]="panel.Uid">
-    <div class="mona-panel-header" [ngStyle]="panelHeaderStyles">
+<div class="mona-panel" [attr.data-pid]="panel().uid">
+    <div class="mona-panel-header" [ngStyle]="panelHeaderStyles()">
         <div class="mona-panel-title">
-            <span *ngIf="!panel.titleTemplate">{{panel.title}}</span>
-            <ng-container [ngTemplateOutlet]="panel.titleTemplate" *ngIf="panel.titleTemplate"></ng-container>
+            @if (panel().titleTemplate()) {
+                <ng-container [ngTemplateOutlet]="panel().titleTemplate()"
+                              [ngTemplateOutletContext]="{$implicit: panel().title()}"></ng-container>
+            } @else {
+                <span>{{panel().title()}}</span>
+            }
         </div>
         <div class="mona-panel-actions">
-            <ng-container *ngFor="let action of panel.actions">
-                <div class="mona-panel-action" [ngStyle]="panelActionStyles">
+            @for (action of panel().actions(); track $index) {
+                <div class="mona-panel-action" [ngStyle]="panelActionStyles()">
                     <ng-container [ngTemplateOutlet]="action"
-                                  [ngTemplateOutletContext]="{position: panel.position, priority: panel.priority, id: panel.Id}"></ng-container>
+                                  [ngTemplateOutletContext]="{position: panel().position(), priority: panel().priority(), id: panel().id}"></ng-container>
                 </div>
-            </ng-container>
-            <div class="mona-panel-action" [ngStyle]="panelActionStyles" #panelMenuElement>
-                <fa-icon [icon]="MenuIcon"></fa-icon>
+            }
+            <div class="mona-panel-action" [ngStyle]="panelActionStyles()" #panelMenuElement>
+                <fa-icon [icon]="menuIcon"></fa-icon>
             </div>
-            <div class="mona-panel-action" [ngStyle]="panelActionStyles" (click)="close()">
-                <fa-icon [icon]="HideIcon"></fa-icon>
+            <div class="mona-panel-action" [ngStyle]="panelActionStyles()" (click)="close()">
+                <fa-icon [icon]="hideIcon"></fa-icon>
             </div>
         </div>
     </div>
-    <div class="mona-panel-content" [ngStyle]="panelContentStyles" [attr.data-pid]="panel.Uid">
+    <div class="mona-panel-content" [ngStyle]="panelContentStyles()" [attr.data-pid]="panel().uid">
         <ng-container monaPanelContentAnchor></ng-container>
     </div>
 </div>
 
 <mona-contextmenu [target]="panelMenuElement" trigger="click">
-    <mona-menu-item [disabled]="true">
-        <ng-template monaMenuItemTextTemplate>
-            <span style="color: var(--mona-text); font-weight: bold;">Panel Options</span>
-        </ng-template>
-    </mona-menu-item>
-    <mona-menu-item [divider]="true"></mona-menu-item>
-    <mona-menu-item text="Move to" [visible]="panel.movable">
+    <mona-menu-item text="Move to" [visible]="panel().movable()">
         <mona-menu-item text="Bottom Left" (menuClick)="movePanel('bottom', 'primary')"
-                        [disabled]="panel.position==='bottom' && panel.priority==='primary'"></mona-menu-item>
+                        [disabled]="panel().position()==='bottom' && panel().priority()==='primary'"></mona-menu-item>
         <mona-menu-item text="Bottom Right" (menuClick)="movePanel('bottom', 'secondary')"
-                        [disabled]="panel.position==='bottom' && panel.priority==='secondary'"></mona-menu-item>
+                        [disabled]="panel().position()==='bottom' && panel().priority()==='secondary'"></mona-menu-item>
         <mona-menu-item text="Top Left" (menuClick)="movePanel('top', 'primary')"
-                        [disabled]="panel.position==='top' && panel.priority==='primary'"></mona-menu-item>
+                        [disabled]="panel().position()==='top' && panel().priority()==='primary'"></mona-menu-item>
         <mona-menu-item text="Top Right" (menuClick)="movePanel('top', 'secondary')"
-                        [disabled]="panel.position==='top' && panel.priority==='secondary'"></mona-menu-item>
+                        [disabled]="panel().position()==='top' && panel().priority()==='secondary'"></mona-menu-item>
         <mona-menu-item text="Left Top" (menuClick)="movePanel('left', 'primary')"
-                        [disabled]="panel.position==='left' && panel.priority==='primary'"></mona-menu-item>
+                        [disabled]="panel().position()==='left' && panel().priority()==='primary'"></mona-menu-item>
         <mona-menu-item text="Left Bottom" (menuClick)="movePanel('left', 'secondary')"
-                        [disabled]="panel.position==='left' && panel.priority==='secondary'"></mona-menu-item>
+                        [disabled]="panel().position()==='left' && panel().priority()==='secondary'"></mona-menu-item>
         <mona-menu-item text="Right Top" (menuClick)="movePanel('right', 'primary')"
-                        [disabled]="panel.position==='right' && panel.priority==='primary'"></mona-menu-item>
+                        [disabled]="panel().position()==='right' && panel().priority()==='primary'"></mona-menu-item>
         <mona-menu-item text="Right Bottom" (menuClick)="movePanel('right', 'secondary')"
-                        [disabled]="panel.position==='right' && panel.priority==='secondary'"></mona-menu-item>
+                        [disabled]="panel().position()==='right' && panel().priority()==='secondary'"></mona-menu-item>
     </mona-menu-item>
     <mona-menu-item text="View Mode">
         <mona-menu-item text="Dock Pinned" (menuClick)="setPanelPinned(true)"
-                        [disabled]="panel.pinned"></mona-menu-item>
+                        [disabled]="panel().pinned()"></mona-menu-item>
         <mona-menu-item text="Dock Unpinned" (menuClick)="setPanelPinned(false)"
-                        [disabled]="!panel.pinned"></mona-menu-item>
+                        [disabled]="!panel().pinned()"></mona-menu-item>
     </mona-menu-item>
     <mona-menu-item [divider]="true"></mona-menu-item>
     <mona-menu-item text="Hide Panel" (menuClick)="close()"></mona-menu-item>

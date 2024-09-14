@@ -8,8 +8,8 @@ describe('DockLayoutComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [DockLayoutComponent]
-    });
+    imports: [DockLayoutComponent]
+});
     fixture = TestBed.createComponent(DockLayoutComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
