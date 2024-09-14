@@ -11,12 +11,6 @@
             cdkDrag #panelHeaderElement>
             <span>{{panel.title()}}</span>
             <mona-contextmenu [target]="panelHeaderElement" trigger="contextmenu">
-                <mona-menu-item [disabled]="true">
-                    <ng-template monaMenuItemTextTemplate>
-                        <span style="color: var(--mona-text); font-weight: bold;">Panel Options</span>
-                    </ng-template>
-                </mona-menu-item>
-                <mona-menu-item [divider]="true"></mona-menu-item>
                 <mona-menu-item text="Move to" [visible]="panel.movable()">
                     <mona-menu-item text="Bottom Left" (menuClick)="movePanel(panel,'bottom', 'primary')"
                                     [disabled]="panel.position()==='bottom' && panel.priority()==='primary'"></mona-menu-item>
