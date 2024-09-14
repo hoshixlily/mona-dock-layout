@@ -67,7 +67,7 @@ export class ContainerComponent implements OnInit, AfterViewInit {
 
     public closePanel(panel: Panel): void {
         panel.open.set(false);
-        const containerPanels = this.layoutService.panels().where(panel => panel.position === this.position());
+        const containerPanels = this.layoutService.panels().where(panel => panel.position() === this.position());
         const openPanels = containerPanels.where(panel => panel.open());
         if (!openPanels.any()) {
             this.open.set(false);
@@ -113,7 +113,7 @@ export class ContainerComponent implements OnInit, AfterViewInit {
     private openPanel(panel: Panel): void {
         const openPanel = this.layoutService
             .panels()
-            .firstOrDefault(p => p.position === panel.position && p.priority === panel.priority && p.open());
+            .firstOrDefault(p => p.position() === panel.position() && p.priority === panel.priority && p.open());
         if (openPanel) {
             this.closePanel(openPanel);
         }
@@ -132,7 +132,7 @@ export class ContainerComponent implements OnInit, AfterViewInit {
         }
         const openPanels = this.layoutService
             .panels()
-            .where(panel => panel.position === this.position())
+            .where(panel => panel.position() === this.position())
             .where(panel => panel.open())
             .toArray();
         if (openPanels.length === 2 && !this.panelGroupResizerVisible()) {
@@ -338,13 +338,13 @@ export class ContainerComponent implements OnInit, AfterViewInit {
 
     private setSubscriptions(): void {
         this.layoutService.panelOpen$.pipe(takeUntilDestroyed(this.#destroyRef)).subscribe(event => {
-            if (event.panel.position === this.position()) {
+            if (event.panel.position() === this.position()) {
                 this.openPanel(event.panel);
                 this.layoutService.saveLayout();
             }
         });
         this.layoutService.panelClose$.pipe(takeUntilDestroyed(this.#destroyRef)).subscribe(event => {
-            if (event.panel.position === this.position()) {
+            if (event.panel.position() === this.position()) {
                 this.closePanel(event.panel);
                 this.layoutService.saveLayout();
             }
@@ -352,26 +352,26 @@ export class ContainerComponent implements OnInit, AfterViewInit {
         this.layoutService.panelMove$.pipe(takeUntilDestroyed(this.#destroyRef)).subscribe(event => {
             const panels = this.layoutService
                 .panels()
-                .where(panel => panel.position === event.newPosition && panel.priority === event.newPriority);
+                .where(panel => panel.position() === event.newPosition && panel.priority === event.newPriority);
             if (event.newPosition === this.position()) {
                 this.layoutService.panelClose$.next({
                     panel: event.panel,
                     viaMove: true
                 });
                 window.setTimeout(() => {
-                    event.panel.position = event.newPosition;
+                    event.panel.position.set(event.newPosition);
                     event.panel.priority = event.newPriority;
                     event.panel.index.set(panels.count());
                     this.layoutService
                         .panels()
-                        .where(panel => panel.position === event.newPosition && panel.priority === event.newPriority)
+                        .where(panel => panel.position() === event.newPosition && panel.priority === event.newPriority)
                         .orderBy(p => p.index())
                         .forEach((p, px) => p.index.set(px));
                     this.layoutService.panels.update(set => set.toImmutableSet());
                     if (event.wasOpenBefore) {
                         const containerPanels = this.layoutService
                             .panels()
-                            .where(panel => panel.position === this.position());
+                            .where(panel => panel.position() === this.position());
                         const priorityPanels = containerPanels.where(panel => panel.priority === event.newPriority);
                         const openPanels = priorityPanels.where(panel => panel.open());
                         if (!openPanels.any()) {
@@ -452,7 +452,7 @@ export class ContainerComponent implements OnInit, AfterViewInit {
     }
 
     private updatePanelSizes(): void {
-        const containerPanels = this.layoutService.panels().where(panel => panel.position === this.position());
+        const containerPanels = this.layoutService.panels().where(panel => panel.position() === this.position());
         const openPanels = containerPanels.where(panel => panel.open()).toArray();
         const isHorizontal = this.position() === "left" || this.position() === "right";
         this.updatePanelSizeStyles(openPanels, isHorizontal);

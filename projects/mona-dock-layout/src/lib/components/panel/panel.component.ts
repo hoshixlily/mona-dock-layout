@@ -54,7 +54,7 @@ export class PanelComponent implements OnInit, AfterViewInit {
         this.layoutService.detachPanelContent(this.panel());
         this.layoutService.panelMove$.next({
             panel: this.panel(),
-            oldPosition: this.panel().position,
+            oldPosition: this.panel().position(),
             newPosition: position,
             oldPriority: this.panel().priority,
             newPriority: priority,

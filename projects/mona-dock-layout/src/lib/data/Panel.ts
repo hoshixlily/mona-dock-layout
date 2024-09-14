@@ -29,13 +29,13 @@ export class Panel {
     public readonly open = signal(false);
     public readonly movable = signal(true);
     public readonly pinned = signal(true);
+    public readonly position = signal<Position>("bottom");
     public readonly startOpen = signal(false);
     public readonly title = signal("");
     public readonly titleTemplate = signal<TemplateRef<PanelTitleTemplateContext> | null>(null);
     public readonly uid: string = v4();
     public readonly visible = signal(true);
 
-    public position: Position = "bottom";
     public priority: Priority = "primary";
     public vcr!: ViewContainerRef; // initialized via component
     public viewRef!: EmbeddedViewRef<void>;
@@ -49,7 +49,7 @@ export class Panel {
         this.movable.set(options.movable ?? true);
         this.title.set(options.title ?? "");
         this.pinned.set(options.pinned ?? true);
-        this.position = options.position ?? "bottom";
+        this.position.set(options.position ?? "bottom");
         this.priority = options.priority ?? "primary";
         this.startOpen.set(options.startOpen ?? false);
         this.visible.set(options.visible ?? true);

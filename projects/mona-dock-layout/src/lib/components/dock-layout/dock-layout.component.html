@@ -46,7 +46,7 @@
             <ng-template monaPanelTemplateReference [panel]="p">
                 <div style="width: 100%; height: 100%; overflow: auto;"> <!-- This div is important. Do not delete. -->
                     <ng-container [ngTemplateOutlet]="p.content()"
-                                  [ngTemplateOutletContext]="{position: p.position, priority: p.priority}"></ng-container>
+                                  [ngTemplateOutletContext]="{position: p.position(), priority: p.priority}"></ng-container>
                 </div>
             </ng-template>
         }

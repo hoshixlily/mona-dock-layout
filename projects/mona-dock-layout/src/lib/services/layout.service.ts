@@ -189,13 +189,13 @@ export class LayoutService {
             if (panelSaveData) {
                 p.index.set(panelSaveData.index);
                 p.pinned.set(panelSaveData.pinned ?? true);
-                if (panelSaveData.position !== p.position || panelSaveData.priority !== p.priority) {
+                if (panelSaveData.position !== p.position() || panelSaveData.priority !== p.priority) {
                     this.panelClose$.next({ panel: p, viaMove: true, viaUser: false });
                     this.detachPanelContent(p);
                     window.setTimeout(() => {
                         this.panelMove$.next({
                             panel: p,
-                            oldPosition: p.position,
+                            oldPosition: p.position(),
                             newPosition: panelSaveData.position,
                             oldPriority: p.priority,
                             newPriority: panelSaveData.priority,
@@ -263,7 +263,7 @@ export class LayoutService {
                         id: panel.id,
                         index: panel.index(),
                         pinned: panel.pinned(),
-                        position: panel.position,
+                        position: panel.position(),
                         priority: panel.priority,
                         open: panel.open()
                     }))
@@ -285,7 +285,7 @@ export class LayoutService {
     public updateHeaderSizes(): void {
         const positions = ["left", "right", "top", "bottom"] as Position[];
         for (const position of positions) {
-            const panels = this.panels().where(p => p.position === position);
+            const panels = this.panels().where(p => p.position() === position);
             const styleText = position === "left" || position === "right" ? "width" : "height";
             const headerStyleText = position === "left" || position === "right" ? "headerWidth" : "headerHeight";
             this.headerStyles.update(dict => {
