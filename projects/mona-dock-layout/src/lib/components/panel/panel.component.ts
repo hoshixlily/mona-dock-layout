@@ -6,19 +6,19 @@ import {
     computed,
     DestroyRef,
     ElementRef,
+    EmbeddedViewRef,
     inject,
     input,
     NgZone,
     OnInit,
-    signal,
     viewChild
 } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FaIconComponent } from "@fortawesome/angular-fontawesome";
 import { faEllipsisV, faMinus } from "@fortawesome/free-solid-svg-icons";
-import { WindowComponent } from "@mirei/mona-ui";
-import { debounceTime, fromEvent, of, switchMap } from "rxjs";
+import { debounceTime, filter, fromEvent, of, switchMap } from "rxjs";
 import { Panel } from "../../data/Panel";
+import { PanelContentTemplateContext } from "../../data/PanelContentTemplateContext";
 import { PanelViewMode } from "../../data/PanelViewMode";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
@@ -32,14 +32,7 @@ import { PanelContextMenuComponent } from "../panel-context-menu/panel-context-m
     styleUrls: ["./panel.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
-    imports: [
-        NgStyle,
-        NgTemplateOutlet,
-        FaIconComponent,
-        PanelContentAnchorDirective,
-        WindowComponent,
-        PanelContextMenuComponent
-    ]
+    imports: [NgStyle, NgTemplateOutlet, FaIconComponent, PanelContentAnchorDirective, PanelContextMenuComponent]
 })
 export class PanelComponent implements OnInit, AfterViewInit {
     readonly #destroyRef = inject(DestroyRef);
@@ -58,7 +51,6 @@ export class PanelComponent implements OnInit, AfterViewInit {
     protected readonly panelHeaderStyles = computed<Partial<CSSStyleDeclaration>>(() => ({
         height: `${this.layoutService.layoutConfig().panelHeaderHeight()}px`
     }));
-    protected readonly undockWindowVisible = signal(false);
     public readonly panel = input.required<Panel>();
 
     public close(): void {
@@ -66,7 +58,6 @@ export class PanelComponent implements OnInit, AfterViewInit {
     }
 
     public movePanel(position: Position, priority: Priority): void {
-        this.layoutService.detachPanelContent(this.panel());
         this.layoutService.panelMove$.next({
             panel: this.panel(),
             oldPosition: this.panel().position(),
@@ -80,13 +71,45 @@ export class PanelComponent implements OnInit, AfterViewInit {
     public ngAfterViewInit(): void {
         const content = this.panel().content();
         if (content) {
-            this.panel().viewRef = this.panelContentAnchor().viewContainerRef.createEmbeddedView(content);
+            const panelContentVcr = this.layoutService.panelTemplateContentContainerRef();
+            const oldViewRef = this.layoutService.panelViewRefMap.get(this.panel().id);
+            if (oldViewRef) {
+                if (panelContentVcr) {
+                    const index = panelContentVcr.indexOf(oldViewRef);
+                    if (index !== -1) {
+                        panelContentVcr.detach(index);
+                    }
+                }
+                this.panel().viewRef = oldViewRef;
+                this.panelContentAnchor().viewContainerRef.insert(oldViewRef);
+            } else {
+                const viewRef = this.panelContentAnchor().viewContainerRef.createEmbeddedView(content);
+                this.panel().viewRef = viewRef;
+                this.panelContentAnchor().viewContainerRef.insert(viewRef);
+                this.layoutService.panelViewRefMap.add(this.panel().id, viewRef);
+            }
         }
         this.layoutService.panelContentAnchors.update(dict => dict.put(this.panel().id, this.panelContentAnchor()));
     }
 
     public ngOnInit(): void {
         this.setSubscriptions();
+        this.layoutService.panelMove$
+            .pipe(
+                takeUntilDestroyed(this.#destroyRef),
+                filter(event => event.panel.id === this.panel().id)
+            )
+            .subscribe(() => {
+                const anchor = this.panelContentAnchor();
+                if (anchor) {
+                    const viewRef = this.panel().viewRef as EmbeddedViewRef<PanelContentTemplateContext>;
+                    const panelContentVcr = this.layoutService.panelTemplateContentContainerRef();
+                    if (panelContentVcr) {
+                        panelContentVcr.insert(viewRef);
+                        this.layoutService.panelViewRefMap.put(this.panel().id, viewRef);
+                    }
+                }
+            });
     }
 
     public onPanelToggle(value: boolean): void {

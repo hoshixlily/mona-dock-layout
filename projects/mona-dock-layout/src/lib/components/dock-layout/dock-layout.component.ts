@@ -17,7 +17,8 @@ import {
     output,
     signal,
     TemplateRef,
-    viewChild
+    viewChild,
+    ViewContainerRef
 } from "@angular/core";
 import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
 import { combineLatestWith, delay, delayWhen, map, tap } from "rxjs";
@@ -51,6 +52,9 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
     #layoutResizeObserver!: ResizeObserver;
     private readonly dockPanelComponents = contentChildren(DockPanelComponent);
     private readonly layoutElementRef = viewChild.required<ElementRef<HTMLDivElement>>("layoutElementRef");
+    private readonly panelTemplateContentsContainerRef = viewChild.required("panelTemplateContentsContainerRef", {
+        read: ViewContainerRef
+    });
     protected readonly bottomHeaderStyles = computed(() => {
         return this.layoutService.headerStyles().get("bottom")?.() ?? {};
     });
@@ -90,29 +94,28 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
     }
 
     public ngAfterViewInit(): void {
+        this.layoutService.panelTemplateContentContainerRef.set(this.panelTemplateContentsContainerRef());
         this.#zone.runOutsideAngular(() => {
             this.#layoutResizeObserver = new ResizeObserver(() => {
                 this.layoutService.layoutDomRect = this.layoutElementRef().nativeElement.getBoundingClientRect();
             });
             this.#layoutResizeObserver.observe(this.layoutElementRef().nativeElement);
         });
-        window.setTimeout(() => {
-            const loaded = this.layoutService.loadLayout();
-            if (!loaded) {
-                for (const panel of this.layoutService.panels()) {
-                    if (panel.startOpen()) {
-                        this.layoutService.panelOpen$.next({
-                            panel
-                        });
-                    }
+        const loaded = this.layoutService.loadLayout();
+        if (!loaded) {
+            for (const panel of this.layoutService.panels()) {
+                if (panel.startOpen()) {
+                    this.layoutService.panelOpen$.next({
+                        panel
+                    });
                 }
-                this.layoutService.saveLayout();
             }
-            this.layoutService.layoutReady$.next();
-            this.layoutService.layoutReady$.complete();
-            this.ready.emit({
-                api: this.createLayoutApi()
-            });
+            this.layoutService.saveLayout();
+        }
+        this.layoutService.layoutReady$.next();
+        this.layoutService.layoutReady$.complete();
+        this.ready.emit({
+            api: this.createLayoutApi()
         });
         this.layoutService.updateHeaderSizes();
     }
@@ -145,7 +148,6 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
                     if (panel.position() === position && panel.priority() === priority) {
                         return;
                     }
-                    service.detachPanelContent(panel);
                     service.panelMove$.next({
                         panel: panel,
                         oldPosition: panel.position(),
