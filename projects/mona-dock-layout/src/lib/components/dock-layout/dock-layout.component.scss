@@ -64,11 +64,6 @@ div.layout-containers {
             background: var(--mona-background-light);
         }
     }
-
-    &.horizontal-priority {
-        display: flex;
-        flex-direction: column;
-    }
 }
 
 .layout-container-wrapper {

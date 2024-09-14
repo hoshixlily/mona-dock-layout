@@ -13,12 +13,10 @@ import { LayoutContentTemplateDirective } from "./directives/layout-content-temp
 import { PanelActionTemplateDirective } from "./directives/panel-action-template.directive";
 import { PanelContentAnchorDirective } from "./directives/panel-content-anchor.directive";
 import { PanelContentTemplateDirective } from "./directives/panel-content-template.directive";
-import { PanelTemplateReferenceDirective } from "./directives/panel-template-reference.directive";
 import { PanelTitleTemplateDirective } from "./directives/panel-title-template.directive";
 
 @NgModule({
     declarations: [
-        PanelTemplateReferenceDirective,
         PanelContentAnchorDirective,
         PanelContentTemplateDirective,
         LayoutContentTemplateDirective,

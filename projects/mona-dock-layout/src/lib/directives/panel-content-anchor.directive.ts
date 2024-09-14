@@ -1,4 +1,4 @@
-import { Directive, ElementRef, inject, input, viewChildren, ViewContainerRef } from "@angular/core";
+import { Directive, inject, ViewContainerRef } from "@angular/core";
 
 /**
  * Internal usage only. Do not export.

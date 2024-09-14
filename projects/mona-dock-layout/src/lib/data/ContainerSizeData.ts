@@ -1,6 +1,4 @@
 import { Priority } from "./Priority";
-import { WritableSignal } from "@angular/core";
-
 export interface ContainerSizeSaveData {
     lastPanelGroupResizerPosition: string;
     panelGroupResizerStyles: ResizerStyles;

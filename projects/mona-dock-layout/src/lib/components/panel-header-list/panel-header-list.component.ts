@@ -41,7 +41,8 @@ export class PanelHeaderListComponent {
         return this.layoutService
             .panels()
             .where(panel => panel.position() === this.position() && panel.priority() === this.priority())
-            .toArray();
+            .orderBy(panel => panel.index())
+            .toImmutableList();
     });
     protected readonly panelsInitialized = toSignal(this.layoutService.layoutReady$.pipe(map(() => true)), {
         initialValue: false
@@ -78,11 +79,9 @@ export class PanelHeaderListComponent {
             );
             const panel = headerPanels.firstOrDefault(p => p.index() === event.previousIndex);
             if (panel) {
-                const orderedPanels = headerPanels.toArray();
+                const orderedPanels = headerPanels.orderBy(p => p.index()).toArray();
                 moveItemInArray(orderedPanels, event.previousIndex, event.currentIndex);
-                orderedPanels.forEach((p, i) => {
-                    p.index.set(i);
-                });
+                orderedPanels.forEach((p, px) => p.index.set(px));
                 return otherPanels.concat(orderedPanels).toImmutableList();
             }
             return list;

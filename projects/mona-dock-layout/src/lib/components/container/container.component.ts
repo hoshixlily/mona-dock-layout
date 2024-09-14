@@ -379,8 +379,8 @@ export class ContainerComponent implements OnInit, AfterViewInit {
                         if (!openPanels.any()) {
                             this.openPanel(event.panel);
                         }
-                        this.layoutService.saveLayout();
                     }
+                    this.layoutService.saveLayout();
                     this.layoutService.updateHeaderSizes();
                     this.layoutService.reattachPanelContent(event.panel, 120); // slight delay is needed, otherwise the panel content is not rendered correctly. TODO: find a better solution
                 });
