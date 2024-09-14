@@ -9,7 +9,7 @@
                 <button monaButton (click)="openPanel('Properties')">Open Properties Panel</button>
             </ng-template>
         </mona-dock-panel>
-        <mona-dock-panel panelId="Grid" position="bottom" priority="primary" title="People">
+        <mona-dock-panel panelId="Grid" position="bottom" priority="primary" title="People" (panelOpen)="print($event)" (panelClose)="print($event)">
             <ng-template monaPanelContentTemplate>
                 <mona-grid [data]="gridData" [pageSize]="5" style="height: 100%;" [filterable]="true">
                     <mona-grid-column *ngFor="let column of gridColumns" [field]="column.field"
@@ -59,6 +59,7 @@
             </ng-template>
         </mona-dock-panel>
         <mona-dock-panel panelId="Settings" position="left" priority="primary" title="Settings"></mona-dock-panel>
+        <mona-dock-panel panelId="Structure" position="left" priority="secondary" title="Structure"></mona-dock-panel>
         <ng-template monaLayoutContentTemplate>
             <div style="color: darkblue; font-size: 36px">
                 Content Template

@@ -17,7 +17,7 @@
                     <mona-container position="top"></mona-container>
                 </div>
                 <div class="layout-content">
-                    @if (layoutContentTemplateRef()) {
+                    @if (layoutContentTemplateRef() && layoutReady()) {
                         <ng-container [ngTemplateOutlet]="layoutContentTemplateRef()??null"></ng-container>
                     }
                 </div>

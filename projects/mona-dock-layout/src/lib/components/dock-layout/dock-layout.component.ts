@@ -8,7 +8,6 @@ import {
     contentChild,
     contentChildren,
     DestroyRef,
-    effect,
     ElementRef,
     inject,
     input,
@@ -18,19 +17,17 @@ import {
     output,
     signal,
     TemplateRef,
-    viewChild,
-    viewChildren,
-    ViewContainerRef
+    viewChild
 } from "@angular/core";
 import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
 import { combineLatestWith, delay, delayWhen, map, tap } from "rxjs";
 import { LayoutApi } from "../../data/LayoutApi";
 import { LayoutReadyEvent } from "../../data/LayoutReadyEvent";
+import { LayoutSaveData } from "../../data/LayoutSaveData";
 import { Panel } from "../../data/Panel";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
 import { LayoutContentTemplateDirective } from "../../directives/layout-content-template.directive";
-import { PanelTemplateReferenceDirective } from "../../directives/panel-template-reference.directive";
 import { LayoutService } from "../../services/layout.service";
 import { DockPanelComponent } from "../dock-panel/dock-panel.component";
 
@@ -44,6 +41,7 @@ import { DockPanelComponent } from "../dock-panel/dock-panel.component";
 export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, AfterContentInit {
     readonly #cdr = inject(ChangeDetectorRef);
     readonly #destroyRef: DestroyRef = inject(DestroyRef);
+    readonly #layoutService = inject(LayoutService);
     readonly #zone = inject(NgZone);
     #layoutResizeObserver!: ResizeObserver;
     private readonly dockPanelComponents = contentChildren(DockPanelComponent);
@@ -55,7 +53,10 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
         read: TemplateRef
     });
     protected readonly layoutMiddleStyles = signal<Partial<CSSStyleDeclaration>>({});
-    protected readonly layoutService = inject(LayoutService);
+    protected readonly layoutReady = toSignal(this.#layoutService.layoutReady$.pipe(map(() => true)), {
+        initialValue: false
+    });
+    protected readonly layoutService = this.#layoutService;
     protected readonly leftHeaderStyles = computed(() => {
         return this.layoutService.headerStyles().get("left")?.() ?? {};
     });
@@ -73,16 +74,6 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
     });
     public readonly layoutId = input.required<string>();
     public readonly ready = output<LayoutReadyEvent>();
-
-    public constructor() {
-        const e = effect(() => {
-            const id = this.layoutId();
-            if (id) {
-                this.layoutService.setLayoutId(id);
-            }
-            e.destroy();
-        });
-    }
 
     public ngAfterContentInit(): void {
         const panelIds = this.dockPanelComponents().map(p => p.panelId);
@@ -112,11 +103,11 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
                 }
                 this.layoutService.saveLayout();
             }
+            this.layoutService.layoutReady$.next();
+            this.layoutService.layoutReady$.complete();
             this.ready.emit({
                 api: this.createLayoutApi()
             });
-            this.layoutService.layoutReady$.next();
-            this.layoutService.layoutReady$.complete();
         });
         this.layoutService.updateHeaderSizes();
     }
@@ -126,6 +117,10 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
     }
 
     public ngOnInit(): void {
+        const id = this.layoutId();
+        if (id) {
+            this.layoutService.setLayoutId(id);
+        }
         this.updateStyles();
         this.setSubscriptions();
     }
@@ -191,12 +186,36 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
                 secondary: 0
             }
         };
+        const layoutSaveData = this.layoutService.getStoredSaveData();
         for (const dpc of this.dockPanelComponents()) {
             const panel = new Panel(dpc.options());
-            panel.index.set(panelIndexMap[panel.position()][panel.priority()]++);
+            const loaded = this.loadSavedPanelData(layoutSaveData, panel);
+            if (loaded) {
+                if (panelIndexMap[panel.position()][panel.priority()] === panel.index()) {
+                    panelIndexMap[panel.position()][panel.priority()] = panel.index() + 1;
+                }
+            } else {
+                panel.index.set(panelIndexMap[panel.position()][panel.priority()]++);
+            }
             panels = [...panels, panel];
         }
         this.layoutService.panels.update(set => set.clear().addAll(panels));
+    }
+
+    private loadSavedPanelData(savedLayoutData: LayoutSaveData | null, panel: Panel): boolean {
+        if (!savedLayoutData) {
+            return false;
+        }
+        const savedPanelData = savedLayoutData.panelSaveData.find(p => p.id === panel.id);
+        if (savedPanelData) {
+            panel.index.set(savedPanelData.index);
+            panel.open.set(savedPanelData.open);
+            panel.pinned.set(savedPanelData.pinned);
+            panel.position.set(savedPanelData.position);
+            panel.priority.set(savedPanelData.priority);
+            return true;
+        }
+        return false;
     }
 
     private setSubscriptions(): void {

@@ -121,6 +121,14 @@ export class LayoutService {
         return position === "left" || position === "right" ? headerElement.offsetWidth : headerElement.offsetHeight;
     }
 
+    public getStoredSaveData(): LayoutSaveData | null {
+        const savedLayoutDataJson = window.localStorage.getItem(`LAYOUT_${this.layoutId}`);
+        if (savedLayoutDataJson) {
+            return JSON.parse(savedLayoutDataJson);
+        }
+        return null;
+    }
+
     private loadContainerStyles(savedLayoutData: LayoutSaveData): void {
         this.containerStyles.update(dict => {
             return dict
@@ -132,14 +140,13 @@ export class LayoutService {
     }
 
     public loadLayout(): boolean {
-        const savedLayoutDataJson = window.localStorage.getItem(`LAYOUT_${this.layoutId}`);
-        if (savedLayoutDataJson) {
-            const savedLayoutData: LayoutSaveData = JSON.parse(savedLayoutDataJson);
+        const savedLayoutData = this.getStoredSaveData();
+        if (savedLayoutData) {
             this.loadContainerStyles(savedLayoutData);
             this.loadPanelSizeStyles(savedLayoutData);
             this.loadPanelGroupResizerPositions(savedLayoutData);
             this.loadPanelGroupResizerStyles(savedLayoutData);
-            this.loadPanels(savedLayoutData);
+            // this.loadPanels(savedLayoutData);
             return true;
         }
         return false;
@@ -184,34 +191,6 @@ export class LayoutService {
                     ...dict.get("right"),
                     ...savedLayoutData.sizeData.right.panelSizeData
                 });
-        });
-    }
-
-    private loadPanels(savedLayoutData: LayoutSaveData): void {
-        this.panels().forEach(p => {
-            const panelSaveData = savedLayoutData.panelSaveData.find(p2 => p2.id === p.id);
-            if (panelSaveData) {
-                p.index.set(panelSaveData.index);
-                p.pinned.set(panelSaveData.pinned ?? true);
-                if (panelSaveData.position !== p.position() || panelSaveData.priority !== p.priority()) {
-                    this.panelClose$.next({ panel: p, viaMove: true, viaUser: false });
-                    this.detachPanelContent(p);
-                    window.setTimeout(() => {
-                        this.panelMove$.next({
-                            panel: p,
-                            oldPosition: p.position(),
-                            newPosition: panelSaveData.position,
-                            oldPriority: p.priority(),
-                            newPriority: panelSaveData.priority,
-                            wasOpenBefore: panelSaveData.open && p.visible() && p.pinned()
-                        });
-                    });
-                } else if (panelSaveData.open && p.visible()) {
-                    this.panelOpen$.next({ panel: p, viaUser: false, viaMove: false });
-                }
-            } else if (p.startOpen() && p.visible()) {
-                this.panelOpen$.next({ panel: p, viaUser: false, viaMove: false });
-            }
         });
     }
 
