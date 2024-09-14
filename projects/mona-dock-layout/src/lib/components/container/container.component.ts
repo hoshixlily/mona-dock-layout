@@ -369,7 +369,7 @@ export class ContainerComponent implements OnInit, AfterViewInit {
                         )
                         .orderBy(p => p.index())
                         .forEach((p, px) => p.index.set(px));
-                    this.layoutService.panels.update(set => set.toImmutableSet());
+                    this.layoutService.panels.update(list => list.toImmutableList());
                     if (event.wasOpenBefore) {
                         const containerPanels = this.layoutService
                             .panels()

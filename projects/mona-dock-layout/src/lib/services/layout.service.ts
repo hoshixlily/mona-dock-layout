@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, inject, Injectable, signal, ViewContainerRef, WritableSignal } from "@angular/core";
-import { ImmutableDictionary, ImmutableSet } from "@mirei/ts-collections";
+import { ImmutableDictionary, ImmutableList, ImmutableSet } from "@mirei/ts-collections";
 import { asyncScheduler, BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 import { ContainerSizeSaveData, ResizerStyles } from "../data/ContainerSizeData";
 import { LayoutConfiguration } from "../data/LayoutConfiguration";
@@ -101,7 +101,7 @@ export class LayoutService {
     public readonly panelVisibility$ = new Subject<PanelVisibilityEvent>();
     public layoutDomRect!: DOMRect;
     public panelTemplateContentsContainerRef!: ViewContainerRef;
-    public panels = signal(ImmutableSet.create<Panel>());
+    public panels = signal(ImmutableList.create<Panel>());
 
     public detachPanelContent(panel: Panel): void {
         const viewRef = panel.viewRef;

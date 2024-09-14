@@ -48,6 +48,7 @@ export class PanelHeaderListComponent {
             newPriority: priority,
             wasOpenBefore: panel.open()
         });
+        this.layoutService.saveLayout();
     }
 
     public onPanelHeaderClicked(panel: Panel): void {
@@ -59,19 +60,23 @@ export class PanelHeaderListComponent {
     }
 
     public onPanelHeadersReordered(event: CdkDragDrop<string>, position: Position, priority: Priority): void {
-        const panels = this.layoutService
-            .panels()
-            .where(p => p.position() === position && p.priority() === priority)
-            .toArray();
-        const panel = panels.find(p => p.index() === event.previousIndex);
-        if (panel) {
-            panels.splice(event.previousIndex, 1);
-            panels.splice(event.currentIndex, 0, panel);
-            panels.forEach((p, i) => {
-                p.index.set(i);
-            });
-            this.layoutService.saveLayout();
-        }
+        this.layoutService.panels.update(list => {
+            const [headerPanels, otherPanels] = list.partition(
+                p => p.position() === position && p.priority() === priority
+            );
+            const panel = headerPanels.firstOrDefault(p => p.index() === event.previousIndex);
+            if (panel) {
+                const orderedPanels = headerPanels.toList();
+                orderedPanels.removeAt(event.previousIndex);
+                orderedPanels.addAt(panel, event.currentIndex);
+                orderedPanels.forEach((p, i) => {
+                    p.index.set(i);
+                });
+                return otherPanels.concat(orderedPanels).toImmutableList();
+            }
+            return list;
+        });
+        this.layoutService.saveLayout();
     }
 
     public setPanelPinned(panel: Panel, pinned: boolean): void {

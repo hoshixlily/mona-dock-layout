@@ -219,7 +219,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
     private setSubscriptions(): void {
         this.layoutService.panelMove$.pipe(takeUntilDestroyed(this.#destroyRef), delay(100)).subscribe(() => {
             this.#cdr.detectChanges();
-            this.layoutService.panels.update(set => set.toImmutableSet());
+            this.layoutService.panels.update(list => list.toImmutableList());
         });
         this.layoutService.panelVisibility$
             .pipe(
