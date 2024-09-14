@@ -63,7 +63,11 @@ export class PanelComponent implements OnInit, AfterViewInit {
     }
 
     public ngAfterViewInit(): void {
-        this.panel().vcr = this.panelContentAnchor().viewContainerRef;
+        const content = this.panel().content();
+        if (content) {
+            this.panel().viewRef = this.panelContentAnchor().viewContainerRef.createEmbeddedView(content);
+        }
+        this.layoutService.panelContentAnchors.update(dict => dict.put(this.panel().id, this.panelContentAnchor()));
     }
 
     public ngOnInit(): void {

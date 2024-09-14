@@ -48,10 +48,6 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
     #layoutResizeObserver!: ResizeObserver;
     private readonly dockPanelComponents = contentChildren(DockPanelComponent);
     private readonly layoutElementRef = viewChild.required<ElementRef<HTMLDivElement>>("layoutElementRef");
-    private readonly panelTemplateContentsContainerRef = viewChild.required("panelTemplateContentsContainerRef", {
-        read: ViewContainerRef
-    });
-    private readonly panelTemplateReferences = viewChildren(PanelTemplateReferenceDirective);
     protected readonly bottomHeaderStyles = computed(() => {
         return this.layoutService.headerStyles().get("bottom")?.() ?? {};
     });
@@ -98,25 +94,12 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
     }
 
     public ngAfterViewInit(): void {
-        this.layoutService.panelTemplateContentsContainerRef = this.panelTemplateContentsContainerRef();
         this.#zone.runOutsideAngular(() => {
             this.#layoutResizeObserver = new ResizeObserver(() => {
                 this.layoutService.layoutDomRect = this.layoutElementRef().nativeElement.getBoundingClientRect();
             });
             this.#layoutResizeObserver.observe(this.layoutElementRef().nativeElement);
         });
-        for (const panel of this.layoutService.panels()) {
-            this.#cdr.detectChanges();
-            const panelTemplateRef = this.panelTemplateReferences().find(p => p.panel().uid === panel.uid);
-            if (panelTemplateRef) {
-                panel.viewRef = this.panelTemplateContentsContainerRef().createEmbeddedView(
-                    panelTemplateRef.templateRef
-                );
-            }
-        }
-        for (const panel of this.layoutService.panels()) {
-            this.layoutService.reattachPanelContent(panel);
-        }
         window.setTimeout(() => {
             const loaded = this.layoutService.loadLayout();
             if (!loaded) {

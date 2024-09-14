@@ -1,7 +1,9 @@
-import { CdkDrag, CdkDragDrop, CdkDropList, DropListOrientation } from "@angular/cdk/drag-drop";
-import { NgTemplateOutlet } from "@angular/common";
+import { CdkDrag, CdkDragDrop, CdkDropList, DropListOrientation, moveItemInArray } from "@angular/cdk/drag-drop";
+import { NgStyle, NgTemplateOutlet } from "@angular/common";
 import { ChangeDetectionStrategy, Component, computed, inject, input } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 import { ContextMenuComponent, MenuItemComponent, MenuItemTextTemplateDirective } from "@mirei/mona-ui";
+import { map } from "rxjs";
 import { Orientation } from "../../data/Orientation";
 import { Panel } from "../../data/Panel";
 import { Position } from "../../data/Position";
@@ -17,7 +19,8 @@ import { LayoutService } from "../../services/layout.service";
         NgTemplateOutlet,
         ContextMenuComponent,
         MenuItemComponent,
-        MenuItemTextTemplateDirective
+        MenuItemTextTemplateDirective,
+        NgStyle
     ],
     templateUrl: "./panel-header-list.component.html",
     styleUrl: "./panel-header-list.component.scss",
@@ -27,12 +30,21 @@ export class PanelHeaderListComponent {
     protected readonly dropListOrientation = computed(() => {
         return this.orientation() as DropListOrientation;
     });
+    protected readonly headerListStyles = computed<Partial<CSSStyleDeclaration>>(() => {
+        const initialized = this.panelsInitialized();
+        return {
+            visibility: initialized ? "visible" : "hidden"
+        };
+    });
     protected readonly layoutService = inject(LayoutService);
     protected readonly panels = computed(() => {
         return this.layoutService
             .panels()
             .where(panel => panel.position() === this.position() && panel.priority() === this.priority())
             .toArray();
+    });
+    protected readonly panelsInitialized = toSignal(this.layoutService.layoutReady$.pipe(map(() => true)), {
+        initialValue: false
     });
     public readonly orientation = input.required<Orientation>();
     public readonly position = input.required<Position>();
@@ -66,9 +78,8 @@ export class PanelHeaderListComponent {
             );
             const panel = headerPanels.firstOrDefault(p => p.index() === event.previousIndex);
             if (panel) {
-                const orderedPanels = headerPanels.toList();
-                orderedPanels.removeAt(event.previousIndex);
-                orderedPanels.addAt(panel, event.currentIndex);
+                const orderedPanels = headerPanels.toArray();
+                moveItemInArray(orderedPanels, event.previousIndex, event.currentIndex);
                 orderedPanels.forEach((p, i) => {
                     p.index.set(i);
                 });

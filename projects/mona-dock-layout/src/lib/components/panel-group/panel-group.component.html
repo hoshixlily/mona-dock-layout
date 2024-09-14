@@ -1,7 +1,6 @@
 <div class="wrapper mona-panel-group">
     <div class="mona-panel-group-content">
-        @for (panel of groupPanels(); track panel.uid) {
-            <mona-panel [panel]="panel" [ngStyle]="{'display': panel.open() ? 'block': 'none'}"></mona-panel>
-        }
+            <mona-panel [panel]="panel" [ngStyle]="{'display': panel.open() ? 'block': 'none'}"
+                        *ngFor="let panel of groupPanels()"></mona-panel>
     </div>
 </div>

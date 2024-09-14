@@ -1,5 +1,5 @@
-import { ChangeDetectorRef, inject, Injectable, signal, ViewContainerRef, WritableSignal } from "@angular/core";
-import { ImmutableDictionary, ImmutableList, ImmutableSet } from "@mirei/ts-collections";
+import { ChangeDetectorRef, inject, Injectable, signal, WritableSignal } from "@angular/core";
+import { ImmutableDictionary, ImmutableList } from "@mirei/ts-collections";
 import { asyncScheduler, BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 import { ContainerSizeSaveData, ResizerStyles } from "../data/ContainerSizeData";
 import { LayoutConfiguration } from "../data/LayoutConfiguration";
@@ -10,6 +10,7 @@ import { PanelMoveEvent } from "../data/PanelMoveEvent";
 import { PanelVisibilityEvent } from "../data/PanelVisibilityEvent";
 import { Position } from "../data/Position";
 import { Priority } from "../data/Priority";
+import { PanelContentAnchorDirective } from "../directives/panel-content-anchor.directive";
 
 @Injectable()
 export class LayoutService {
@@ -70,6 +71,7 @@ export class LayoutService {
     public readonly layoutConfig = this.#layoutConfig.asReadonly();
     public readonly layoutReady$ = new ReplaySubject<void>(1);
     public readonly panelClose$ = new Subject<PanelCloseInternalEvent>();
+    public readonly panelContentAnchors = signal(ImmutableDictionary.create<string, PanelContentAnchorDirective>());
     public readonly panelMove$ = new Subject<PanelMoveEvent>();
     public readonly panelMoveEnd$ = new Subject<Panel>();
     public readonly panelOpen$ = new Subject<PanelOpenInternalEvent>();
@@ -100,15 +102,17 @@ export class LayoutService {
     );
     public readonly panelVisibility$ = new Subject<PanelVisibilityEvent>();
     public layoutDomRect!: DOMRect;
-    public panelTemplateContentsContainerRef!: ViewContainerRef;
     public panels = signal(ImmutableList.create<Panel>());
 
     public detachPanelContent(panel: Panel): void {
+        const anchor = this.panelContentAnchors().get(panel.id);
+        if (!anchor) {
+            return;
+        }
         const viewRef = panel.viewRef;
-        const viewRefIndex = panel.vcr.indexOf(viewRef);
+        const viewRefIndex = anchor.viewContainerRef.indexOf(viewRef);
         if (viewRefIndex !== -1) {
-            panel.vcr.detach(viewRefIndex);
-            this.panelTemplateContentsContainerRef.insert(viewRef);
+            anchor.viewContainerRef.detach(viewRefIndex);
         }
     }
 
@@ -212,11 +216,14 @@ export class LayoutService {
     }
 
     public reattachPanelContent(panel: Panel, timeout?: number): void {
-        const viewRefIndex = this.panelTemplateContentsContainerRef.indexOf(panel.viewRef);
+        const anchor = this.panelContentAnchors().get(panel.id);
+        if (!anchor) {
+            return;
+        }
+        const viewRefIndex = anchor.viewContainerRef.indexOf(panel.viewRef);
         if (viewRefIndex !== -1) {
-            this.panelTemplateContentsContainerRef.detach(viewRefIndex);
             const reattach = (): void => {
-                panel.vcr.insert(panel.viewRef, viewRefIndex);
+                anchor.viewContainerRef.insert(panel.viewRef, viewRefIndex);
                 this.#cdr.detectChanges();
                 this.panelMoveEnd$.next(panel);
             };

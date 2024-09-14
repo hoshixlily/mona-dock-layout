@@ -1,8 +1,9 @@
 <ul class="layout-header-list {{orientation()}} {{position()}} {{priority()}}"
     cdkDropList
     [cdkDropListOrientation]="dropListOrientation()"
-    (cdkDropListDropped)="onPanelHeadersReordered($event, position(), priority())">
-
+    (cdkDropListDropped)="onPanelHeadersReordered($event, position(), priority())"
+    [ngStyle]="headerListStyles()"
+>
     @for (panel of panels(); track $index) {
         <li cdkDragPreviewClass="panel-header-drag"
             [class.opened]="panel.open()" [class.hidden]="!panel.visible()"

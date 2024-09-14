@@ -1,10 +1,10 @@
+import { EmbeddedViewRef, signal, TemplateRef } from "@angular/core";
 import { v4 } from "uuid";
 import { PanelActionTemplateContext } from "./PanelActionTemplateContext";
 import { PanelContentTemplateContext } from "./PanelContentTemplateContext";
 import { PanelTitleTemplateContext } from "./PanelTitleTemplateContext";
 import { Position } from "./Position";
 import { Priority } from "./Priority";
-import { EmbeddedViewRef, signal, TemplateRef, ViewContainerRef } from "@angular/core";
 
 export interface PanelOptions {
     actions?: ReadonlyArray<TemplateRef<PanelActionTemplateContext>>;
@@ -37,8 +37,7 @@ export class Panel {
     public readonly uid: string = v4();
     public readonly visible = signal(true);
 
-    public vcr!: ViewContainerRef; // initialized via component
-    public viewRef!: EmbeddedViewRef<void>;
+    public viewRef!: EmbeddedViewRef<PanelContentTemplateContext>;
     public wasOpenBeforeHidden: boolean = false;
 
     public constructor(options: Partial<PanelOptions>) {

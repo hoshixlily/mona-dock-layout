@@ -39,15 +39,3 @@
         <mona-panel-header-list orientation="horizontal" position="bottom" priority="secondary"></mona-panel-header-list>
     </div>
 </div>
-
-<div class="mona-panel-template-contents-container" style="display: none !important; width: 0; height: 0;">
-    <ng-container #panelTemplateContentsContainerRef></ng-container>
-        @for (p of layoutService.panels(); track $index) {
-            <ng-template monaPanelTemplateReference [panel]="p">
-                <div style="width: 100%; height: 100%; overflow: auto;"> <!-- This div is important. Do not delete. -->
-                    <ng-container [ngTemplateOutlet]="p.content()"
-                                  [ngTemplateOutletContext]="{position: p.position(), priority: p.priority()}"></ng-container>
-                </div>
-            </ng-template>
-        }
-</div>
