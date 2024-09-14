@@ -6,9 +6,11 @@ import { ContextMenuComponent, MenuItemComponent, MenuItemTextTemplateDirective 
 import { map } from "rxjs";
 import { Orientation } from "../../data/Orientation";
 import { Panel } from "../../data/Panel";
+import { PanelViewMode } from "../../data/PanelViewMode";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
 import { LayoutService } from "../../services/layout.service";
+import { PanelContextMenuComponent } from "../panel-context-menu/panel-context-menu.component";
 
 @Component({
     selector: "mona-panel-header-list",
@@ -20,7 +22,8 @@ import { LayoutService } from "../../services/layout.service";
         ContextMenuComponent,
         MenuItemComponent,
         MenuItemTextTemplateDirective,
-        NgStyle
+        NgStyle,
+        PanelContextMenuComponent
     ],
     templateUrl: "./panel-header-list.component.html",
     styleUrl: "./panel-header-list.component.scss",
@@ -89,8 +92,8 @@ export class PanelHeaderListComponent {
         this.layoutService.saveLayout();
     }
 
-    public setPanelPinned(panel: Panel, pinned: boolean): void {
-        panel.pinned.set(pinned);
+    public onViewModeChange(panel: Panel, viewMode: PanelViewMode): void {
+        panel.viewMode.set(viewMode);
         this.layoutService.saveLayout();
     }
 

@@ -258,10 +258,10 @@ export class LayoutService {
                     .select(panel => ({
                         id: panel.id,
                         index: panel.index(),
-                        pinned: panel.pinned(),
                         position: panel.position(),
                         priority: panel.priority(),
-                        open: panel.open()
+                        open: panel.open(),
+                        viewMode: panel.viewMode()
                     }))
                     .toArray() ?? []
         };

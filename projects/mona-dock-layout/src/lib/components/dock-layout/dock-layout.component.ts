@@ -220,9 +220,9 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
         if (savedPanelData) {
             panel.index.set(savedPanelData.index);
             panel.open.set(savedPanelData.open);
-            panel.pinned.set(savedPanelData.pinned);
             panel.position.set(savedPanelData.position);
             panel.priority.set(savedPanelData.priority);
+            panel.viewMode.set(savedPanelData.viewMode ?? panel.viewMode());
             return true;
         }
         return false;

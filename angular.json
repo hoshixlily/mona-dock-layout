@@ -7,7 +7,8 @@
             "projectType": "library",
             "schematics": {
                 "@schematics/angular:component": {
-                    "style": "scss"
+                    "style": "scss",
+                    "standalone": true
                 }
             },
             "root": "projects/mona-dock-layout",
