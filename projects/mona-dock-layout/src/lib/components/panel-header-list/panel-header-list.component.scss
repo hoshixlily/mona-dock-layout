@@ -7,8 +7,23 @@ ul.layout-header-list {
     &.horizontal {
         flex-direction: row;
 
+        &.primary {
+            & li {
+                border-right: 1px solid var(--mona-border-color);
+                &:first-child {
+                    border-left: 1px solid var(--mona-border-color);
+                }
+            }
+        }
+
         &.secondary {
             justify-content: flex-end;
+            & li {
+                border-left: 1px solid var(--mona-border-color);
+                &:last-child {
+                    border-right: 1px solid var(--mona-border-color);
+                }
+            }
         }
 
         & li {
@@ -19,13 +34,23 @@ ul.layout-header-list {
     &.vertical {
         flex-direction: column;
 
+        &.primary {
+            & li {
+                border-bottom: 1px solid var(--mona-border-color);
+            }
+        }
+
         &.secondary {
             justify-content: flex-end;
+            & li {
+                border-top: 1px solid var(--mona-border-color);
+            }
         }
 
         & li {
             padding: 10px 0;
             writing-mode: vertical-lr;
+
         }
 
         &.left li > span {

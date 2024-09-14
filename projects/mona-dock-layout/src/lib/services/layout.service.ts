@@ -53,16 +53,16 @@ export class LayoutService {
                 "top",
                 signal({
                     height: `${this.#layoutConfig().headerHeight()}px`,
-                    paddingLeft: `${this.#layoutConfig().headerWidth()}px`,
-                    paddingRight: `${this.#layoutConfig().headerWidth()}px`
+                    paddingLeft: `${this.#layoutConfig().headerWidth() - 1}px`,
+                    paddingRight: `${this.#layoutConfig().headerWidth() - 1}px`
                 })
             ],
             [
                 "bottom",
                 signal({
                     height: `${this.#layoutConfig().headerHeight()}px`,
-                    paddingLeft: `${this.#layoutConfig().headerWidth()}px`,
-                    paddingRight: `${this.#layoutConfig().headerWidth()}px`
+                    paddingLeft: `${this.#layoutConfig().headerWidth() - 1}px`,
+                    paddingRight: `${this.#layoutConfig().headerWidth() - 1}px`
                 })
             ]
         ])
