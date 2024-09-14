@@ -9,7 +9,7 @@
                 <button monaButton (click)="openPanel('Properties')">Open Properties Panel</button>
             </ng-template>
         </mona-dock-panel>
-        <mona-dock-panel panelId="Grid" position="bottom" priority="primary" title="People" (panelOpen)="print($event)" (panelClose)="print($event)">
+        <mona-dock-panel panelId="Grid" position="bottom" priority="primary" title="People" >
             <ng-template monaPanelContentTemplate>
                 <mona-grid [data]="gridData" [pageSize]="5" style="height: 100%;" [filterable]="true">
                     @for (column of gridColumns; track $index) {

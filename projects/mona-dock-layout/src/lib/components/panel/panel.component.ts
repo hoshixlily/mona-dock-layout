@@ -19,6 +19,7 @@ import { faEllipsisV, faMinus } from "@fortawesome/free-solid-svg-icons";
 import { WindowComponent } from "@mirei/mona-ui";
 import { debounceTime, fromEvent, of, switchMap } from "rxjs";
 import { Panel } from "../../data/Panel";
+import { PanelViewMode } from "../../data/PanelViewMode";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
 import { PanelContentAnchorDirective } from "../../directives/panel-content-anchor.directive";
@@ -94,8 +95,8 @@ export class PanelComponent implements OnInit, AfterViewInit {
         }
     }
 
-    public setPanelPinned(pinned: boolean): void {
-        this.panel().pinned.set(pinned);
+    public onViewModeChange(viewMode: PanelViewMode): void {
+        this.panel().viewMode.set(viewMode);
         this.layoutService.saveLayout();
     }
 
@@ -123,7 +124,8 @@ export class PanelComponent implements OnInit, AfterViewInit {
                             if (this.#hostElementRef.nativeElement.contains(event.target as HTMLElement)) {
                                 return;
                             }
-                            if (!this.panel().pinned()) {
+                            const viewMode = this.panel().viewMode();
+                            if (viewMode != null && viewMode !== PanelViewMode.Docked) {
                                 this.#zone.run(() => {
                                     this.layoutService.panelClose$.next({ panel: this.panel(), viaUser: true });
                                 });

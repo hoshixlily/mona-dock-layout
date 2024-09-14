@@ -6,6 +6,7 @@ import { ContextMenuComponent, MenuItemComponent, MenuItemTextTemplateDirective 
 import { map } from "rxjs";
 import { Orientation } from "../../data/Orientation";
 import { Panel } from "../../data/Panel";
+import { PanelViewMode } from "../../data/PanelViewMode";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
 import { LayoutService } from "../../services/layout.service";
@@ -91,8 +92,8 @@ export class PanelHeaderListComponent {
         this.layoutService.saveLayout();
     }
 
-    public setPanelPinned(panel: Panel, pinned: boolean): void {
-        panel.pinned.set(pinned);
+    public onViewModeChange(panel: Panel, viewMode: PanelViewMode): void {
+        panel.viewMode.set(viewMode);
         this.layoutService.saveLayout();
     }
 

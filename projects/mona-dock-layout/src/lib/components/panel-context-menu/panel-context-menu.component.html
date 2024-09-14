@@ -18,10 +18,10 @@
                         [disabled]="panel().position()==='right' && panel().priority()==='secondary'"></mona-menu-item>
     </mona-menu-item>
     <mona-menu-item text="View Mode">
-        <mona-menu-item text="Dock Pinned" (menuClick)="onPanelPin(true)"
-                        [disabled]="panel().pinned()"></mona-menu-item>
-        <mona-menu-item text="Dock Unpinned" (menuClick)="onPanelPin(false)"
-                        [disabled]="!panel().pinned()"></mona-menu-item>
+        <mona-menu-item text="Dock Pinned" (menuClick)="onViewModeChange(PanelViewMode.Docked)"
+                        [disabled]="panel().viewMode()===PanelViewMode.Docked"></mona-menu-item>
+        <mona-menu-item text="Dock Unpinned" (menuClick)="onViewModeChange(PanelViewMode.Undocked)"
+                        [disabled]="panel().viewMode()===PanelViewMode.Undocked"></mona-menu-item>
     </mona-menu-item>
     <mona-menu-item [divider]="true"></mona-menu-item>
     <mona-menu-item text="Hide Panel" [visible]="panel().open()"

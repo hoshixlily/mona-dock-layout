@@ -30,6 +30,6 @@
 
 <mona-panel-context-menu [target]="panelMenuElement" [panel]="panel()"
                          trigger="click"
-                         (toggle)="onPanelToggle($event)" (pin)="setPanelPinned($event)"
+                         (toggle)="onPanelToggle($event)" (viewModeChange)="onViewModeChange($event)"
                          (move)="movePanel($event[0],$event[1])"></mona-panel-context-menu>
 

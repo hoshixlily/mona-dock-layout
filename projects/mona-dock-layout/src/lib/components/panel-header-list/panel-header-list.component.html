@@ -13,7 +13,7 @@
         </li>
         <mona-panel-context-menu [target]="panelHeaderElement" [panel]="panel"
                                  trigger="contextmenu"
-                                 (pin)="setPanelPinned(panel, $event)"
+                                 (viewModeChange)="onViewModeChange(panel, $event)"
                                  (toggle)="togglePanel(panel, $event)"
                                  (move)="movePanel(panel, $event[0], $event[1])"></mona-panel-context-menu>
     }

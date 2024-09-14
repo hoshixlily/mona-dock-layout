@@ -19,6 +19,7 @@ import {
     LayoutReadyEvent,
     PanelCloseEvent,
     PanelContentTemplateDirective,
+    PanelActionTemplateDirective,
     PanelOpenEvent,
     Position,
     Priority
@@ -41,6 +42,7 @@ import {
         TabContentTemplateDirective,
         TextAreaDirective,
         FontAwesomeModule,
+        PanelActionTemplateDirective,
         LayoutContentTemplateDirective,
         PanelContentTemplateDirective
     ]
