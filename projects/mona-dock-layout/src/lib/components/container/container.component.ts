@@ -11,12 +11,11 @@ import {
     input,
     NgZone,
     OnInit,
-    signal,
     untracked,
     viewChild
 } from "@angular/core";
-import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { asyncScheduler, debounceTime, EMPTY, fromEvent, skipUntil, switchMap, takeUntil, tap } from "rxjs";
+import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
+import { asyncScheduler, debounceTime, EMPTY, fromEvent, map, skipUntil, switchMap, takeUntil, tap } from "rxjs";
 import { ResizerStyles } from "../../data/ContainerSizeData";
 import { Panel } from "../../data/Panel";
 import { Position } from "../../data/Position";
@@ -40,13 +39,26 @@ export class ContainerComponent implements OnInit, AfterViewInit {
     readonly #zone = inject(NgZone);
     private readonly containerResizer = viewChild.required<ElementRef<HTMLElement>>("containerResizer");
     private readonly panelGroupResizer = viewChild<ElementRef<HTMLElement>>("panelGroupResizer");
-    protected readonly anyPrimaryPanelOpen = signal(false);
-    protected readonly anySecondaryPanelOpen = signal(false);
+    protected readonly anyPrimaryPanelOpen = computed(() => {
+        const panels = this.layoutService.panels().where(panel => panel.position() === this.position());
+        return panels.where(panel => panel.priority() === "primary" && panel.open()).any();
+    });
+    protected readonly anySecondaryPanelOpen = computed(() => {
+        const panels = this.layoutService.panels().where(panel => panel.position() === this.position());
+        return panels.where(panel => panel.priority() === "secondary" && panel.open()).any();
+    });
     protected readonly containerStyles = computed<Partial<CSSStyleDeclaration>>(() => {
-        return this.layoutService.containerStyles().get(this.position()) ?? {};
+        const styles = this.layoutService.containerStyles().get(this.position()) ?? {};
+        const displayStyles: Partial<CSSStyleDeclaration> = this.open()
+            ? { display: "block", zIndex: "0" }
+            : { display: "none", zIndex: "-10" };
+        return { ...styles, ...displayStyles };
     });
     protected readonly layoutService = inject(LayoutService);
-    protected readonly open = signal(false);
+    protected readonly open = computed(() => {
+        const panels = this.layoutService.panels().where(panel => panel.position() === this.position());
+        return panels.any(panel => panel.open());
+    });
     protected readonly panelGroupResizerStyles = computed<ResizerStyles>(() => {
         const visible = this.panelGroupResizerVisible();
         return {
@@ -56,13 +68,23 @@ export class ContainerComponent implements OnInit, AfterViewInit {
             pointerEvents: visible ? "auto" : "none"
         };
     });
-    protected readonly panelGroupResizerVisible = signal(false);
+    protected readonly panelGroupResizerVisible = computed(() => {
+        const openPanels = this.layoutService
+            .panels()
+            .where(panel => panel.position() === this.position())
+            .where(panel => panel.open());
+        return openPanels.count() > 1;
+    });
     protected readonly primaryPanelStyles = computed(() => {
         const position = this.position();
         return this.layoutService.panelSizeStyles().get(position)?.primary ?? {};
     });
-    protected readonly resizing = signal(false);
-    protected readonly resizingPanel = signal(false);
+    protected readonly resizing = toSignal(
+        this.layoutService.containerResizeInProgress$.pipe(map(event => event.resizing))
+    );
+    protected readonly resizingPanel = toSignal(
+        this.layoutService.panelResizeInProgress$.pipe(map(event => event.resizing))
+    );
     protected readonly secondaryPanelStyles = computed(() => {
         const position = this.position();
         return this.layoutService.panelSizeStyles().get(position)?.secondary ?? {};
@@ -73,13 +95,7 @@ export class ContainerComponent implements OnInit, AfterViewInit {
         panel.open.set(false);
         const containerPanels = this.layoutService.panels().where(panel => panel.position() === this.position());
         const openPanels = containerPanels.where(panel => panel.open());
-        if (!openPanels.any()) {
-            this.open.set(false);
-            this.updateContainerStyles({
-                display: "none",
-                zIndex: "-10"
-            });
-        } else {
+        if (openPanels.any()) {
             this.updatePanelSizes();
         }
     }
@@ -121,11 +137,6 @@ export class ContainerComponent implements OnInit, AfterViewInit {
         if (openPanel) {
             this.closePanel(openPanel);
         }
-        this.open.set(true);
-        this.updateContainerStyles({
-            display: "block",
-            zIndex: "0"
-        });
         panel.open.set(true);
         this.updatePanelSizes();
         const oppositeContainerElement = this.getOppositeContainerElement();
@@ -260,8 +271,10 @@ export class ContainerComponent implements OnInit, AfterViewInit {
                             tap(event => {
                                 event.preventDefault();
                                 this.containerResizer().nativeElement.setPointerCapture(event.pointerId);
-                                this.layoutService.containerResizeInProgress$.next(true);
-                                this.resizing.set(true);
+                                this.layoutService.containerResizeInProgress$.next({
+                                    resizing: true,
+                                    position: this.position()
+                                });
                             })
                         )
                     ),
@@ -269,8 +282,7 @@ export class ContainerComponent implements OnInit, AfterViewInit {
                         fromEvent<PointerEvent>(this.containerResizer().nativeElement, "pointerup").pipe(
                             tap(event => {
                                 this.containerResizer().nativeElement.releasePointerCapture(event.pointerId);
-                                this.layoutService.containerResizeInProgress$.next(false);
-                                this.resizing.set(false);
+                                this.layoutService.containerResizeInProgress$.next({ resizing: false });
                                 this.setContainerResizeEvent();
                             })
                         )
@@ -314,8 +326,10 @@ export class ContainerComponent implements OnInit, AfterViewInit {
                             tap(event => {
                                 event.preventDefault();
                                 resizerElement.setPointerCapture(event.pointerId);
-                                this.layoutService.panelResizeInProgress$.next(true);
-                                this.resizingPanel.set(true);
+                                this.layoutService.panelResizeInProgress$.next({
+                                    resizing: true,
+                                    position: this.position()
+                                });
                             })
                         )
                     ),
@@ -323,8 +337,7 @@ export class ContainerComponent implements OnInit, AfterViewInit {
                         fromEvent<PointerEvent>(resizerElement, "pointerup").pipe(
                             tap(event => {
                                 resizerElement.releasePointerCapture(event.pointerId);
-                                this.layoutService.panelResizeInProgress$.next(false);
-                                this.resizingPanel.set(false);
+                                this.layoutService.panelResizeInProgress$.next({ resizing: false });
                                 this.setPanelGroupResizerEvent();
                             })
                         )
@@ -341,13 +354,13 @@ export class ContainerComponent implements OnInit, AfterViewInit {
     }
 
     private setSubscriptions(): void {
-        this.layoutService.panelOpen$.pipe(takeUntilDestroyed(this.#destroyRef)).subscribe(event => {
+        this.layoutService.panelOpenStart$.pipe(takeUntilDestroyed(this.#destroyRef)).subscribe(event => {
             if (event.panel.position() === this.position()) {
                 this.openPanel(event.panel);
                 this.layoutService.saveLayout();
             }
         });
-        this.layoutService.panelClose$.pipe(takeUntilDestroyed(this.#destroyRef)).subscribe(event => {
+        this.layoutService.panelCloseStart$.pipe(takeUntilDestroyed(this.#destroyRef)).subscribe(event => {
             if (event.panel.position() === this.position()) {
                 this.closePanel(event.panel);
                 this.layoutService.saveLayout();
@@ -358,7 +371,7 @@ export class ContainerComponent implements OnInit, AfterViewInit {
                 .panels()
                 .where(panel => panel.position() === event.newPosition && panel.priority() === event.newPriority);
             if (event.newPosition === this.position()) {
-                this.layoutService.panelClose$.next({
+                this.layoutService.panelCloseStart$.next({
                     panel: event.panel,
                     viaMove: true
                 });
@@ -461,16 +474,6 @@ export class ContainerComponent implements OnInit, AfterViewInit {
         const openPanels = containerPanels.where(panel => panel.open()).toArray();
         const isHorizontal = this.position() === "left" || this.position() === "right";
         this.updatePanelSizeStyles(openPanels, isHorizontal);
-
-        const anyPrimaryPanelOpen = containerPanels
-            .where(panel => panel.priority() === "primary" && panel.open())
-            .any();
-        const anySecondaryPanelOpen = containerPanels
-            .where(panel => panel.priority() === "secondary" && panel.open())
-            .any();
-        this.anyPrimaryPanelOpen.set(anyPrimaryPanelOpen);
-        this.anySecondaryPanelOpen.set(anySecondaryPanelOpen);
-        this.panelGroupResizerVisible.set(openPanels.length > 1);
     }
 
     private updatePanelStyles(priority: Priority, styles: Partial<CSSStyleDeclaration>): void {

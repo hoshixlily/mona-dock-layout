@@ -54,7 +54,7 @@ export class PanelComponent implements OnInit, AfterViewInit {
     public readonly panel = input.required<Panel>();
 
     public close(): void {
-        this.layoutService.panelClose$.next({ panel: this.panel(), viaUser: true });
+        this.layoutService.panelCloseStart$.next({ panel: this.panel(), viaUser: true });
     }
 
     public movePanel(position: Position, priority: Priority): void {
@@ -150,7 +150,7 @@ export class PanelComponent implements OnInit, AfterViewInit {
                             const viewMode = this.panel().viewMode();
                             if (viewMode != null && viewMode !== PanelViewMode.Docked) {
                                 this.#zone.run(() => {
-                                    this.layoutService.panelClose$.next({ panel: this.panel(), viaUser: true });
+                                    this.layoutService.panelCloseStart$.next({ panel: this.panel(), viaUser: true });
                                 });
                             }
                         });

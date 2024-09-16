@@ -68,9 +68,9 @@ export class PanelHeaderListComponent {
 
     public onPanelHeaderClicked(panel: Panel): void {
         if (panel.open()) {
-            this.layoutService.panelClose$.next({ panel, viaUser: true });
+            this.layoutService.panelCloseStart$.next({ panel, viaUser: true });
         } else {
-            this.layoutService.panelOpen$.next({ panel, viaUser: true });
+            this.layoutService.panelOpenStart$.next({ panel, viaUser: true });
         }
     }
 
@@ -98,9 +98,9 @@ export class PanelHeaderListComponent {
 
     public togglePanel(panel: Panel, open: boolean): void {
         if (open) {
-            this.layoutService.panelOpen$.next({ panel, viaUser: true });
+            this.layoutService.panelOpenStart$.next({ panel, viaUser: true });
         } else {
-            this.layoutService.panelClose$.next({ panel, viaUser: true });
+            this.layoutService.panelCloseStart$.next({ panel, viaUser: true });
         }
     }
 }

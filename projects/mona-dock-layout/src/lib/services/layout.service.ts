@@ -12,6 +12,8 @@ import { PanelVisibilityEvent } from "../data/PanelVisibilityEvent";
 import { Position } from "../data/Position";
 import { Priority } from "../data/Priority";
 import { PanelContentAnchorDirective } from "../directives/panel-content-anchor.directive";
+import { ContainerResizeProgressEvent } from "../data/ContainerResizeProgressEvent";
+import { PanelResizeProgressEvent } from "../data/PanelResizeProgressEvent";
 
 @Injectable()
 export class LayoutService {
@@ -27,13 +29,15 @@ export class LayoutService {
         panelResizeOffset: signal(60)
     });
     private layoutId: string = "";
-    public readonly containerResizeInProgress$ = new BehaviorSubject<boolean>(false);
+    public readonly containerResizeInProgress$ = new BehaviorSubject<ContainerResizeProgressEvent>({
+        resizing: false
+    });
     public readonly containerStyles = signal(
         ImmutableDictionary.create<Position, Partial<CSSStyleDeclaration>>([
-            ["left", { width: "300px", display: "none" }],
-            ["right", { width: "300px", display: "none" }],
-            ["top", { height: "300px", display: "none" }],
-            ["bottom", { height: "300px", display: "none" }]
+            ["left", { width: "300px" }],
+            ["right", { width: "300px" }],
+            ["top", { height: "300px" }],
+            ["bottom", { height: "300px" }]
         ])
     );
     public readonly headerStyles = signal(
@@ -70,12 +74,13 @@ export class LayoutService {
     );
     public readonly layoutConfig = this.#layoutConfig.asReadonly();
     public readonly layoutReady$ = new ReplaySubject<void>(1);
-    public readonly panelClose$ = new Subject<PanelCloseInternalEvent>();
+    public readonly panelCloseEnd$ = new Subject<PanelCloseInternalEvent>();
+    public readonly panelCloseStart$ = new Subject<PanelCloseInternalEvent>();
     public readonly panelContentAnchors = signal(ImmutableDictionary.create<string, PanelContentAnchorDirective>());
     public readonly panelTemplateContentContainerRef = signal<ViewContainerRef | null>(null);
     public readonly panelMove$ = new Subject<PanelMoveEvent>();
     public readonly panelMoveEnd$ = new Subject<Panel>();
-    public readonly panelOpen$ = new Subject<PanelOpenInternalEvent>();
+    public readonly panelOpenStart$ = new Subject<PanelOpenInternalEvent>();
     public readonly panelGroupResizerPositions = signal(
         ImmutableDictionary.create<Position, string>([
             ["left", "50%"],
@@ -92,7 +97,7 @@ export class LayoutService {
             ["bottom", { left: "50%" }]
         ])
     );
-    public readonly panelResizeInProgress$ = new BehaviorSubject<boolean>(false);
+    public readonly panelResizeInProgress$ = new BehaviorSubject<PanelResizeProgressEvent>({ resizing: false });
     public readonly panelSizeStyles = signal(
         ImmutableDictionary.create<Position, Record<Priority, Partial<CSSStyleDeclaration>>>([
             ["left", { primary: { bottom: "50%" }, secondary: { top: "50%" } }],

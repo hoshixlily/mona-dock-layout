@@ -78,7 +78,7 @@ export class DockPanelComponent implements OnInit {
     }
 
     private setSubscriptions(): void {
-        this.#layoutService.panelClose$
+        this.#layoutService.panelCloseStart$
             .pipe(
                 takeUntilDestroyed(this.#destroyRef),
                 skipUntil(this.#layoutService.layoutReady$),
@@ -88,7 +88,7 @@ export class DockPanelComponent implements OnInit {
                 )
             )
             .subscribe();
-        this.#layoutService.panelOpen$
+        this.#layoutService.panelOpenStart$
             .pipe(
                 takeUntilDestroyed(this.#destroyRef),
                 skipUntil(this.#layoutService.layoutReady$),
