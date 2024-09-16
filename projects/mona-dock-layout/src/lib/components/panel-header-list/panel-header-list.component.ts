@@ -11,6 +11,7 @@ import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
 import { LayoutService } from "../../services/layout.service";
 import { PanelContextMenuComponent } from "../panel-context-menu/panel-context-menu.component";
+import { ContainsPipe } from "../../pipes/contains.pipe";
 
 @Component({
     selector: "mona-panel-header-list",
@@ -23,7 +24,8 @@ import { PanelContextMenuComponent } from "../panel-context-menu/panel-context-m
         MenuItemComponent,
         MenuItemTextTemplateDirective,
         NgStyle,
-        PanelContextMenuComponent
+        PanelContextMenuComponent,
+        ContainsPipe
     ],
     templateUrl: "./panel-header-list.component.html",
     styleUrl: "./panel-header-list.component.scss",
@@ -36,7 +38,7 @@ export class PanelHeaderListComponent {
     protected readonly headerListStyles = computed<Partial<CSSStyleDeclaration>>(() => {
         const initialized = this.panelsInitialized();
         return {
-            visibility: initialized ? "visible" : "hidden"
+            visibility: initialized ? undefined : "hidden"
         };
     });
     protected readonly layoutService = inject(LayoutService);
@@ -61,16 +63,17 @@ export class PanelHeaderListComponent {
             newPosition: position,
             oldPriority: panel.priority(),
             newPriority: priority,
-            wasOpenBefore: panel.open()
+            wasOpenBefore: this.layoutService.isPanelOpen(panel)
         });
         this.layoutService.saveLayout();
     }
 
     public onPanelHeaderClicked(panel: Panel): void {
-        if (panel.open()) {
-            this.layoutService.panelClose$.next({ panel, viaUser: true });
+        const open = this.layoutService.isPanelOpen(panel);
+        if (open) {
+            this.layoutService.panelCloseStart$.next({ panel, viaUser: true });
         } else {
-            this.layoutService.panelOpen$.next({ panel, viaUser: true });
+            this.layoutService.panelOpenStart$.next({ panel, viaUser: true });
         }
     }
 
@@ -98,9 +101,9 @@ export class PanelHeaderListComponent {
 
     public togglePanel(panel: Panel, open: boolean): void {
         if (open) {
-            this.layoutService.panelOpen$.next({ panel, viaUser: true });
+            this.layoutService.panelOpenStart$.next({ panel, viaUser: true });
         } else {
-            this.layoutService.panelClose$.next({ panel, viaUser: true });
+            this.layoutService.panelCloseStart$.next({ panel, viaUser: true });
         }
     }
 }

@@ -24,8 +24,8 @@
                         [disabled]="panel().viewMode()===PanelViewMode.Undocked"></mona-menu-item>
     </mona-menu-item>
     <mona-menu-item [divider]="true"></mona-menu-item>
-    <mona-menu-item text="Hide Panel" [visible]="panel().open()"
+    <mona-menu-item text="Hide Panel" [visible]="layoutService.openPanels()|monaContains:panel()"
                     (menuClick)="onPanelToggle(false)"></mona-menu-item>
-    <mona-menu-item text="Show Panel" [visible]="!panel().open()"
+    <mona-menu-item text="Show Panel" [visible]="!(layoutService.openPanels()|monaContains:panel())"
                     (menuClick)="onPanelToggle(true)"></mona-menu-item>
 </mona-contextmenu>

@@ -54,7 +54,7 @@ export class PanelComponent implements OnInit, AfterViewInit {
     public readonly panel = input.required<Panel>();
 
     public close(): void {
-        this.layoutService.panelClose$.next({ panel: this.panel(), viaUser: true });
+        this.layoutService.panelCloseStart$.next({ panel: this.panel(), viaUser: true });
     }
 
     public movePanel(position: Position, priority: Priority): void {
@@ -64,7 +64,7 @@ export class PanelComponent implements OnInit, AfterViewInit {
             newPosition: position,
             oldPriority: this.panel().priority(),
             newPriority: priority,
-            wasOpenBefore: this.panel().open()
+            wasOpenBefore: this.layoutService.isPanelOpen(this.panel())
         });
     }
 
@@ -104,7 +104,7 @@ export class PanelComponent implements OnInit, AfterViewInit {
                 if (anchor) {
                     const viewRef = this.panel().viewRef as EmbeddedViewRef<PanelContentTemplateContext>;
                     const panelContentVcr = this.layoutService.panelTemplateContentContainerRef();
-                    if (panelContentVcr) {
+                    if (panelContentVcr && viewRef) {
                         panelContentVcr.insert(viewRef);
                         this.layoutService.panelViewRefMap.put(this.panel().id, viewRef);
                     }
@@ -150,7 +150,7 @@ export class PanelComponent implements OnInit, AfterViewInit {
                             const viewMode = this.panel().viewMode();
                             if (viewMode != null && viewMode !== PanelViewMode.Docked) {
                                 this.#zone.run(() => {
-                                    this.layoutService.panelClose$.next({ panel: this.panel(), viaUser: true });
+                                    this.layoutService.panelCloseStart$.next({ panel: this.panel(), viaUser: true });
                                 });
                             }
                         });

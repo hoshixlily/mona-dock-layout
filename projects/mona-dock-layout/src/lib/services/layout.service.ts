@@ -1,17 +1,19 @@
 import { EmbeddedViewRef, Injectable, signal, ViewContainerRef, WritableSignal } from "@angular/core";
-import { Dictionary, ImmutableDictionary, ImmutableList } from "@mirei/ts-collections";
-import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
+import { Dictionary, ImmutableDictionary, ImmutableList, ImmutableSet } from "@mirei/ts-collections";
+import { BehaviorSubject, pairwise, ReplaySubject, startWith, Subject, switchMap } from "rxjs";
 import { ContainerSizeSaveData, ResizerStyles } from "../data/ContainerSizeData";
 import { LayoutConfiguration } from "../data/LayoutConfiguration";
-import { LayoutSaveData } from "../data/LayoutSaveData";
+import { LayoutSaveData, PanelSaveData } from "../data/LayoutSaveData";
 import { Panel } from "../data/Panel";
 import { PanelContentTemplateContext } from "../data/PanelContentTemplateContext";
 import { PanelCloseInternalEvent, PanelOpenInternalEvent } from "../data/PanelEvents";
 import { PanelMoveEvent } from "../data/PanelMoveEvent";
 import { PanelVisibilityEvent } from "../data/PanelVisibilityEvent";
 import { Position } from "../data/Position";
-import { Priority } from "../data/Priority";
 import { PanelContentAnchorDirective } from "../directives/panel-content-anchor.directive";
+import { ContainerResizeProgressEvent } from "../data/ContainerResizeProgressEvent";
+import { PanelResizeProgressEvent } from "../data/PanelResizeProgressEvent";
+import { toObservable } from "@angular/core/rxjs-interop";
 
 @Injectable()
 export class LayoutService {
@@ -27,13 +29,15 @@ export class LayoutService {
         panelResizeOffset: signal(60)
     });
     private layoutId: string = "";
-    public readonly containerResizeInProgress$ = new BehaviorSubject<boolean>(false);
+    public readonly containerResizeInProgress$ = new BehaviorSubject<ContainerResizeProgressEvent>({
+        resizing: false
+    });
     public readonly containerStyles = signal(
         ImmutableDictionary.create<Position, Partial<CSSStyleDeclaration>>([
-            ["left", { width: "300px", display: "none" }],
-            ["right", { width: "300px", display: "none" }],
-            ["top", { height: "300px", display: "none" }],
-            ["bottom", { height: "300px", display: "none" }]
+            ["left", { width: "300px" }],
+            ["right", { width: "300px" }],
+            ["top", { height: "300px" }],
+            ["bottom", { height: "300px" }]
         ])
     );
     public readonly headerStyles = signal(
@@ -70,12 +74,25 @@ export class LayoutService {
     );
     public readonly layoutConfig = this.#layoutConfig.asReadonly();
     public readonly layoutReady$ = new ReplaySubject<void>(1);
-    public readonly panelClose$ = new Subject<PanelCloseInternalEvent>();
+    public readonly openPanels = signal(ImmutableSet.create<Panel>());
+    public readonly openPanelsChange$ = toObservable(this.openPanels).pipe(
+        startWith(this.openPanels()),
+        pairwise(),
+        switchMap(([previous, current]) => {
+            const closedPanels = previous.except(current);
+            const openedPanels = current.except(previous);
+            return closedPanels
+                .select(p => ({ panel: p, open: false }))
+                .concat(openedPanels.select(p => ({ panel: p, open: true })))
+                .toArray();
+        })
+    );
+    public readonly panelCloseStart$ = new Subject<PanelCloseInternalEvent>();
     public readonly panelContentAnchors = signal(ImmutableDictionary.create<string, PanelContentAnchorDirective>());
     public readonly panelTemplateContentContainerRef = signal<ViewContainerRef | null>(null);
     public readonly panelMove$ = new Subject<PanelMoveEvent>();
     public readonly panelMoveEnd$ = new Subject<Panel>();
-    public readonly panelOpen$ = new Subject<PanelOpenInternalEvent>();
+    public readonly panelOpenStart$ = new Subject<PanelOpenInternalEvent>();
     public readonly panelGroupResizerPositions = signal(
         ImmutableDictionary.create<Position, string>([
             ["left", "50%"],
@@ -92,23 +109,25 @@ export class LayoutService {
             ["bottom", { left: "50%" }]
         ])
     );
-    public readonly panelResizeInProgress$ = new BehaviorSubject<boolean>(false);
-    public readonly panelSizeStyles = signal(
-        ImmutableDictionary.create<Position, Record<Priority, Partial<CSSStyleDeclaration>>>([
-            ["left", { primary: { bottom: "50%" }, secondary: { top: "50%" } }],
-            ["right", { primary: { bottom: "50%" }, secondary: { top: "50%" } }],
-            ["top", { primary: { right: "50%" }, secondary: { left: "50%" } }],
-            ["bottom", { primary: { right: "50%" }, secondary: { left: "50%" } }]
-        ])
-    );
+    public readonly panelResizeInProgress$ = new BehaviorSubject<PanelResizeProgressEvent>({ resizing: false });
     public readonly panelViewRefMap = new Dictionary<string, EmbeddedViewRef<PanelContentTemplateContext>>();
     public readonly panelVisibility$ = new Subject<PanelVisibilityEvent>();
     public layoutDomRect!: DOMRect;
     public panels = signal(ImmutableList.create<Panel>());
 
+    public closePanel(panel: Panel): void {
+        this.openPanels.update(set => set.remove(panel));
+    }
+
     public getHeaderSize(position: Position): number {
         const headerElement = document.querySelector(`div.layout-header.${position}`) as HTMLElement;
         return position === "left" || position === "right" ? headerElement.offsetWidth : headerElement.offsetHeight;
+    }
+
+    public getOpenContainerPanels(position: Position): ImmutableList<Panel> {
+        return this.panels()
+            .where(p => p.position() === position && this.isPanelOpen(p))
+            .toImmutableList();
     }
 
     public getStoredSaveData(): LayoutSaveData | null {
@@ -119,11 +138,17 @@ export class LayoutService {
         return null;
     }
 
+    public isPanelOpen(panel: string | Panel): boolean {
+        if (typeof panel === "string") {
+            return this.openPanels().any(p => p.id === panel);
+        }
+        return this.openPanels().contains(panel);
+    }
+
     public loadLayout(): boolean {
         const savedLayoutData = this.getStoredSaveData();
         if (savedLayoutData) {
             this.loadContainerStyles(savedLayoutData);
-            this.loadPanelSizeStyles(savedLayoutData);
             this.loadPanelGroupResizerPositions(savedLayoutData);
             this.loadPanelGroupResizerStyles(savedLayoutData);
             return true;
@@ -131,46 +156,20 @@ export class LayoutService {
         return false;
     }
 
+    public openPanel(panel: Panel): void {
+        this.openPanels.update(set => set.add(panel));
+    }
+
     public saveLayout(): void {
-        const sizeData: Record<Position, ContainerSizeSaveData> = {
-            top: {
-                lastPanelGroupResizerPosition: this.panelGroupResizerPositions().get("top") ?? "50%",
-                panelGroupResizerStyles: this.panelGroupResizerStyles().get("top") ?? { top: "50%" },
-                panelSizeData: this.panelSizeStyles().get("top") ?? { primary: {}, secondary: {} },
-                styles: this.containerStyles().get("top") ?? {}
-            },
-            bottom: {
-                lastPanelGroupResizerPosition: this.panelGroupResizerPositions().get("bottom") ?? "50%",
-                panelGroupResizerStyles: this.panelGroupResizerStyles().get("bottom") ?? { top: "50%" },
-                panelSizeData: this.panelSizeStyles().get("bottom") ?? { primary: {}, secondary: {} },
-                styles: this.containerStyles().get("bottom") ?? {}
-            },
-            left: {
-                lastPanelGroupResizerPosition: this.panelGroupResizerPositions().get("left") ?? "50%",
-                panelGroupResizerStyles: this.panelGroupResizerStyles().get("left") ?? { top: "50%" },
-                panelSizeData: this.panelSizeStyles().get("left") ?? { primary: {}, secondary: {} },
-                styles: this.containerStyles().get("left") ?? {}
-            },
-            right: {
-                lastPanelGroupResizerPosition: this.panelGroupResizerPositions().get("right") ?? "50%",
-                panelGroupResizerStyles: this.panelGroupResizerStyles().get("right") ?? { top: "50%" },
-                panelSizeData: this.panelSizeStyles().get("right") ?? { primary: {}, secondary: {} },
-                styles: this.containerStyles().get("right") ?? {}
-            }
-        };
+        const sizeData = this.createSizeSaveData();
+        const panelSaveData = this.createPanelSaveData();
+        const openPanelIdList = this.openPanels()
+            .select(p => p.id)
+            .toArray();
         const layoutSaveData: LayoutSaveData = {
+            openPanelIdList,
             sizeData,
-            panelSaveData:
-                this.panels()
-                    .select(panel => ({
-                        id: panel.id,
-                        index: panel.index(),
-                        position: panel.position(),
-                        priority: panel.priority(),
-                        open: panel.open(),
-                        viewMode: panel.viewMode()
-                    }))
-                    .toArray() ?? []
+            panelSaveData
         };
         window.localStorage.setItem(`LAYOUT_${this.layoutId}`, JSON.stringify(layoutSaveData));
     }
@@ -205,6 +204,43 @@ export class LayoutService {
         }
     }
 
+    private createPanelSaveData(): PanelSaveData[] {
+        return this.panels()
+            .select(panel => ({
+                id: panel.id,
+                index: panel.index(),
+                position: panel.position(),
+                priority: panel.priority(),
+                viewMode: panel.viewMode()
+            }))
+            .toArray();
+    }
+
+    private createSizeSaveData(): Record<Position, ContainerSizeSaveData> {
+        return {
+            top: {
+                lastPanelGroupResizerPosition: this.panelGroupResizerPositions().get("top") ?? "50%",
+                panelGroupResizerStyles: this.panelGroupResizerStyles().get("top") ?? { top: "50%" },
+                styles: this.containerStyles().get("top") ?? {}
+            },
+            bottom: {
+                lastPanelGroupResizerPosition: this.panelGroupResizerPositions().get("bottom") ?? "50%",
+                panelGroupResizerStyles: this.panelGroupResizerStyles().get("bottom") ?? { top: "50%" },
+                styles: this.containerStyles().get("bottom") ?? {}
+            },
+            left: {
+                lastPanelGroupResizerPosition: this.panelGroupResizerPositions().get("left") ?? "50%",
+                panelGroupResizerStyles: this.panelGroupResizerStyles().get("left") ?? { top: "50%" },
+                styles: this.containerStyles().get("left") ?? {}
+            },
+            right: {
+                lastPanelGroupResizerPosition: this.panelGroupResizerPositions().get("right") ?? "50%",
+                panelGroupResizerStyles: this.panelGroupResizerStyles().get("right") ?? { top: "50%" },
+                styles: this.containerStyles().get("right") ?? {}
+            }
+        };
+    }
+
     private loadContainerStyles(savedLayoutData: LayoutSaveData): void {
         this.containerStyles.update(dict => {
             return dict
@@ -232,28 +268,6 @@ export class LayoutService {
                 .put("bottom", savedLayoutData.sizeData.bottom.panelGroupResizerStyles)
                 .put("left", savedLayoutData.sizeData.left.panelGroupResizerStyles)
                 .put("right", savedLayoutData.sizeData.right.panelGroupResizerStyles);
-        });
-    }
-
-    private loadPanelSizeStyles(savedLayoutData: LayoutSaveData): void {
-        this.panelSizeStyles.update(dict => {
-            return dict
-                .put("top", {
-                    ...dict.get("top"),
-                    ...savedLayoutData.sizeData.top.panelSizeData
-                })
-                .put("bottom", {
-                    ...dict.get("bottom"),
-                    ...savedLayoutData.sizeData.bottom.panelSizeData
-                })
-                .put("left", {
-                    ...dict.get("left"),
-                    ...savedLayoutData.sizeData.left.panelSizeData
-                })
-                .put("right", {
-                    ...dict.get("right"),
-                    ...savedLayoutData.sizeData.right.panelSizeData
-                });
         });
     }
 }

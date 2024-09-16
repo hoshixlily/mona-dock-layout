@@ -4,6 +4,7 @@ import { ContainerSizeSaveData } from "./ContainerSizeData";
 import { PanelViewMode } from "./PanelViewMode";
 
 export interface LayoutSaveData {
+    openPanelIdList: string[];
     panelSaveData: PanelSaveData[];
     sizeData: Record<Position, ContainerSizeSaveData>;
 }
@@ -11,7 +12,6 @@ export interface LayoutSaveData {
 export interface PanelSaveData {
     id: string;
     index: number;
-    open: boolean;
     position: Position;
     priority: Priority;
     viewMode: PanelViewMode;

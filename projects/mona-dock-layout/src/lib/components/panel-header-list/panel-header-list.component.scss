@@ -7,27 +7,16 @@ ul.layout-header-list {
     &.horizontal {
         flex-direction: row;
 
-        &.primary {
-            & li {
-                border-right: 1px solid var(--mona-border-color);
-                &:first-child {
-                    border-left: 1px solid var(--mona-border-color);
-                }
-            }
-        }
-
         &.secondary {
             justify-content: flex-end;
-            & li {
-                border-left: 1px solid var(--mona-border-color);
-                &:last-child {
-                    border-right: 1px solid var(--mona-border-color);
-                }
-            }
         }
 
         & li {
             padding: 0 10px;
+            border-right: 1px solid var(--mona-border-color);
+            &:first-child {
+                border-left: 1px solid var(--mona-border-color);
+            }
         }
     }
 

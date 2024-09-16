@@ -71,14 +71,14 @@ export class DockPanelComponent implements OnInit {
     }
 
     public ngOnInit(): void {
-        if (!this.panelId) {
+        if (!this.panelId()) {
             throw new Error("Panel id is not defined!");
         }
         this.setSubscriptions();
     }
 
     private setSubscriptions(): void {
-        this.#layoutService.panelClose$
+        this.#layoutService.panelCloseStart$
             .pipe(
                 takeUntilDestroyed(this.#destroyRef),
                 skipUntil(this.#layoutService.layoutReady$),
@@ -88,7 +88,7 @@ export class DockPanelComponent implements OnInit {
                 )
             )
             .subscribe();
-        this.#layoutService.panelOpen$
+        this.#layoutService.panelOpenStart$
             .pipe(
                 takeUntilDestroyed(this.#destroyRef),
                 skipUntil(this.#layoutService.layoutReady$),

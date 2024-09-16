@@ -6,7 +6,8 @@
 >
     @for (panel of panels(); track $index) {
         <li cdkDragPreviewClass="panel-header-drag"
-            [class.opened]="panel.open()" [class.hidden]="!panel.visible()"
+            [class.opened]="layoutService.openPanels()|monaContains:panel"
+            [class.hidden]="!panel.visible()"
             (click)="onPanelHeaderClicked(panel)"
             cdkDrag #panelHeaderElement>
             <span>{{ panel.title() }}</span>
