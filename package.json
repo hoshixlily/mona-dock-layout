@@ -1,6 +1,6 @@
 {
     "name": "@mirei/mona-dock-layout",
-    "version": "1.5.3",
+    "version": "1.5.4",
     "description": "A dock layout component for Angular",
     "main": "dist/mona-dock-layout/fesm2022/mona-dock-layout.mjs",
     "exports": {
