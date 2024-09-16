@@ -71,7 +71,7 @@ export class DockPanelComponent implements OnInit {
     }
 
     public ngOnInit(): void {
-        if (!this.panelId) {
+        if (!this.panelId()) {
             throw new Error("Panel id is not defined!");
         }
         this.setSubscriptions();

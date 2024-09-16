@@ -104,7 +104,7 @@ export class PanelComponent implements OnInit, AfterViewInit {
                 if (anchor) {
                     const viewRef = this.panel().viewRef as EmbeddedViewRef<PanelContentTemplateContext>;
                     const panelContentVcr = this.layoutService.panelTemplateContentContainerRef();
-                    if (panelContentVcr) {
+                    if (panelContentVcr && viewRef) {
                         panelContentVcr.insert(viewRef);
                         this.layoutService.panelViewRefMap.put(this.panel().id, viewRef);
                     }

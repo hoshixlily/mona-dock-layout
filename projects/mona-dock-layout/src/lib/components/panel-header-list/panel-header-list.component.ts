@@ -38,7 +38,7 @@ export class PanelHeaderListComponent {
     protected readonly headerListStyles = computed<Partial<CSSStyleDeclaration>>(() => {
         const initialized = this.panelsInitialized();
         return {
-            visibility: initialized ? "visible" : "hidden"
+            visibility: initialized ? undefined : "hidden"
         };
     });
     protected readonly layoutService = inject(LayoutService);

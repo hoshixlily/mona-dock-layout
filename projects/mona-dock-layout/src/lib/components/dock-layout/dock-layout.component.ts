@@ -240,7 +240,19 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
         return false;
     }
 
+    private setPanelCloseSubscriptions(): void {
+        this.layoutService.panelCloseStart$.pipe(takeUntilDestroyed(this.#destroyRef)).subscribe(event => {
+            this.layoutService.closePanel(event.panel);
+            this.layoutService.saveLayout();
+        });
+        this.layoutService.panelOpenStart$.pipe(takeUntilDestroyed(this.#destroyRef)).subscribe(event => {
+            this.layoutService.openPanel(event.panel);
+            this.layoutService.saveLayout();
+        });
+    }
+
     private setSubscriptions(): void {
+        this.setPanelCloseSubscriptions();
         this.layoutService.panelMove$.pipe(takeUntilDestroyed(this.#destroyRef), delay(100)).subscribe(() => {
             this.#cdr.detectChanges();
             this.layoutService.panels.update(list => list.toImmutableList());
