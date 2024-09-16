@@ -194,7 +194,6 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
             }
         };
         const layoutSaveData = this.layoutService.getStoredSaveData();
-        const openPanels: Panel[] = [];
         for (const dpc of this.dockPanelComponents()) {
             const panel = new Panel(dpc.options());
             const loaded = this.loadSavedPanelData(layoutSaveData, panel);
@@ -206,23 +205,24 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
                 panel.index.set(panelIndexMap[panel.position()][panel.priority()]++);
             }
             panels = [...panels, panel];
-            if (this.isSavedPanelOpen(layoutSaveData, panel)) {
-                openPanels.push(panel);
-            }
         }
         this.layoutService.panels.update(set => set.clear().addAll(panels));
-        this.layoutService.openPanels.update(set => set.clear().addAll(openPanels));
+        this.loadOpenPanels(layoutSaveData);
     }
 
-    private isSavedPanelOpen(savedLayoutData: LayoutSaveData | null, panel: Panel): boolean {
+    private loadOpenPanels(savedLayoutData: LayoutSaveData | null): void {
         if (!savedLayoutData) {
-            return false;
+            return;
         }
-        const savedPanelData = savedLayoutData.panelSaveData.find(p => p.id === panel.id);
-        if (savedPanelData) {
-            return savedPanelData.open;
+        const openPanelIds = savedLayoutData.openPanelIdList;
+        if (openPanelIds == null || !Array.isArray(openPanelIds)) {
+            return;
         }
-        return false;
+        const openPanels = this.layoutService
+            .panels()
+            .where(p => openPanelIds.includes(p.id))
+            .toArray();
+        this.layoutService.openPanels.update(set => set.clear().addAll(openPanels));
     }
 
     private loadSavedPanelData(savedLayoutData: LayoutSaveData | null, panel: Panel): boolean {

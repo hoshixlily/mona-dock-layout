@@ -69,11 +69,12 @@ export class ContainerComponent implements OnInit, AfterViewInit {
         };
     });
     protected readonly panelGroupResizerVisible = computed(() => {
-        const openPanels = this.layoutService
-            .panels()
-            .where(panel => panel.position() === this.position())
-            .where(panel => this.layoutService.isPanelOpen(panel));
-        return openPanels.count() > 1;
+        return (
+            this.layoutService
+                .panels()
+                .where(panel => panel.position() === this.position() && this.layoutService.isPanelOpen(panel))
+                .count() > 1
+        );
     });
     protected readonly primaryPanelStyles = computed(() => {
         const position = this.position();

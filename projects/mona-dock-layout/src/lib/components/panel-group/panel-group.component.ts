@@ -25,6 +25,6 @@ export class PanelGroupComponent {
             .toArray();
     });
     protected readonly layoutService = inject(LayoutService);
-    public position = input.required<Position>();
-    public priority = input.required<Priority>();
+    public readonly position = input.required<Position>();
+    public readonly priority = input.required<Priority>();
 }
