@@ -27,7 +27,6 @@ export class Panel {
     public readonly content = signal<TemplateRef<PanelContentTemplateContext> | null>(null);
     public readonly id: string = "";
     public readonly index = signal(0);
-    public readonly open = signal(false);
     public readonly movable = signal(true);
     public readonly position = signal<Position>("bottom");
     public readonly priority = signal<Priority>("primary");

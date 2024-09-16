@@ -5,6 +5,7 @@ import { Priority } from "../../data/Priority";
 import { LayoutService } from "../../services/layout.service";
 import { PanelComponent } from "../panel/panel.component";
 import { NgStyle } from "@angular/common";
+import { ContainsPipe } from "../../pipes/contains.pipe";
 
 @Component({
     selector: "mona-panel-group",
@@ -12,7 +13,7 @@ import { NgStyle } from "@angular/common";
     styleUrls: ["./panel-group.component.scss"],
     changeDetection: ChangeDetectionStrategy.Default,
     standalone: true,
-    imports: [PanelComponent, NgStyle]
+    imports: [PanelComponent, NgStyle, ContainsPipe]
 })
 export class PanelGroupComponent {
     protected readonly groupPanels = computed(() => {
@@ -24,7 +25,6 @@ export class PanelGroupComponent {
             .toArray();
     });
     protected readonly layoutService = inject(LayoutService);
-
     public position = input.required<Position>();
     public priority = input.required<Priority>();
 }

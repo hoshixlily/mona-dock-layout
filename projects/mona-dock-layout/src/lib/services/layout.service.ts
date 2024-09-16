@@ -1,5 +1,5 @@
 import { EmbeddedViewRef, Injectable, signal, ViewContainerRef, WritableSignal } from "@angular/core";
-import { Dictionary, ImmutableDictionary, ImmutableList } from "@mirei/ts-collections";
+import { Dictionary, ImmutableDictionary, ImmutableList, ImmutableSet } from "@mirei/ts-collections";
 import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 import { ContainerSizeSaveData, ResizerStyles } from "../data/ContainerSizeData";
 import { LayoutConfiguration } from "../data/LayoutConfiguration";
@@ -74,7 +74,7 @@ export class LayoutService {
     );
     public readonly layoutConfig = this.#layoutConfig.asReadonly();
     public readonly layoutReady$ = new ReplaySubject<void>(1);
-    public readonly panelCloseEnd$ = new Subject<PanelCloseInternalEvent>();
+    public readonly openPanels = signal(ImmutableSet.create<Panel>());
     public readonly panelCloseStart$ = new Subject<PanelCloseInternalEvent>();
     public readonly panelContentAnchors = signal(ImmutableDictionary.create<string, PanelContentAnchorDirective>());
     public readonly panelTemplateContentContainerRef = signal<ViewContainerRef | null>(null);
@@ -111,6 +111,10 @@ export class LayoutService {
     public layoutDomRect!: DOMRect;
     public panels = signal(ImmutableList.create<Panel>());
 
+    public closePanel(panel: Panel): void {
+        this.openPanels.update(set => set.remove(panel));
+    }
+
     public getHeaderSize(position: Position): number {
         const headerElement = document.querySelector(`div.layout-header.${position}`) as HTMLElement;
         return position === "left" || position === "right" ? headerElement.offsetWidth : headerElement.offsetHeight;
@@ -124,6 +128,13 @@ export class LayoutService {
         return null;
     }
 
+    public isPanelOpen(panel: string | Panel): boolean {
+        if (typeof panel === "string") {
+            return this.openPanels().any(p => p.id === panel);
+        }
+        return this.openPanels().contains(panel);
+    }
+
     public loadLayout(): boolean {
         const savedLayoutData = this.getStoredSaveData();
         if (savedLayoutData) {
@@ -134,6 +145,10 @@ export class LayoutService {
             return true;
         }
         return false;
+    }
+
+    public openPanel(panel: Panel): void {
+        this.openPanels.update(set => set.add(panel));
     }
 
     public saveLayout(): void {
@@ -172,7 +187,7 @@ export class LayoutService {
                         index: panel.index(),
                         position: panel.position(),
                         priority: panel.priority(),
-                        open: panel.open(),
+                        open: this.isPanelOpen(panel),
                         viewMode: panel.viewMode()
                     }))
                     .toArray() ?? []

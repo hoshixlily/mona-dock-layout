@@ -64,7 +64,7 @@ export class PanelComponent implements OnInit, AfterViewInit {
             newPosition: position,
             oldPriority: this.panel().priority(),
             newPriority: priority,
-            wasOpenBefore: this.panel().open()
+            wasOpenBefore: this.layoutService.isPanelOpen(this.panel())
         });
     }
 

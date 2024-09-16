@@ -154,7 +154,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
                         oldPriority: panel.priority(),
                         newPosition: position,
                         newPriority: priority,
-                        wasOpenBefore: panel.open()
+                        wasOpenBefore: service.isPanelOpen(panel)
                     });
                 }
             },
@@ -194,6 +194,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
             }
         };
         const layoutSaveData = this.layoutService.getStoredSaveData();
+        const openPanels: Panel[] = [];
         for (const dpc of this.dockPanelComponents()) {
             const panel = new Panel(dpc.options());
             const loaded = this.loadSavedPanelData(layoutSaveData, panel);
@@ -205,8 +206,23 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
                 panel.index.set(panelIndexMap[panel.position()][panel.priority()]++);
             }
             panels = [...panels, panel];
+            if (this.isSavedPanelOpen(layoutSaveData, panel)) {
+                openPanels.push(panel);
+            }
         }
         this.layoutService.panels.update(set => set.clear().addAll(panels));
+        this.layoutService.openPanels.update(set => set.clear().addAll(openPanels));
+    }
+
+    private isSavedPanelOpen(savedLayoutData: LayoutSaveData | null, panel: Panel): boolean {
+        if (!savedLayoutData) {
+            return false;
+        }
+        const savedPanelData = savedLayoutData.panelSaveData.find(p => p.id === panel.id);
+        if (savedPanelData) {
+            return savedPanelData.open;
+        }
+        return false;
     }
 
     private loadSavedPanelData(savedLayoutData: LayoutSaveData | null, panel: Panel): boolean {
@@ -216,7 +232,6 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
         const savedPanelData = savedLayoutData.panelSaveData.find(p => p.id === panel.id);
         if (savedPanelData) {
             panel.index.set(savedPanelData.index);
-            panel.open.set(savedPanelData.open);
             panel.position.set(savedPanelData.position);
             panel.priority.set(savedPanelData.priority);
             panel.viewMode.set(savedPanelData.viewMode ?? panel.viewMode());
@@ -238,7 +253,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
                     if (!event.visible) {
                         const panel = this.layoutService.panels().firstOrDefault(p => p.id === event.panelId);
                         if (panel) {
-                            panel.wasOpenBeforeHidden = panel.open();
+                            panel.wasOpenBeforeHidden = this.layoutService.isPanelOpen(panel);
                             this.layoutService.panelCloseStart$.next({ panel, viaVisibilityChange: true });
                         }
                     } else {
@@ -250,7 +265,9 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
                                 .orderBy(p => p.index())
                                 .toArray();
                             panels.forEach((p, px) => p.index.set(px));
-                            const openPanel = panels.find(p => p.open);
+                            const openPanel = this.layoutService
+                                .openPanels()
+                                .firstOrDefault(p => p.id === event.panelId);
                             if (!openPanel && panel.wasOpenBeforeHidden) {
                                 this.layoutService.panelOpenStart$.next({ panel, viaVisibilityChange: true });
                             }
