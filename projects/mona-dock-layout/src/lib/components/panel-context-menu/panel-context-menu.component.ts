@@ -9,7 +9,6 @@ import {ContainsPipe} from "../../pipes/contains.pipe";
 
 @Component({
     selector: "mona-panel-context-menu",
-    standalone: true,
     imports: [ContextMenuComponent, MenuItemComponent, ContainsPipe],
     templateUrl: "./panel-context-menu.component.html",
     styleUrl: "./panel-context-menu.component.scss",
