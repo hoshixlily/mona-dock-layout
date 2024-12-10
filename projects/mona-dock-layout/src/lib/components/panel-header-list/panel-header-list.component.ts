@@ -15,7 +15,6 @@ import { ContainsPipe } from "../../pipes/contains.pipe";
 
 @Component({
     selector: "mona-panel-header-list",
-    standalone: true,
     imports: [
         CdkDrag,
         CdkDropList,

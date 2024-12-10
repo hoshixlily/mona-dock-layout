@@ -31,7 +31,6 @@ import { PanelContextMenuComponent } from "../panel-context-menu/panel-context-m
     templateUrl: "./panel.component.html",
     styleUrls: ["./panel.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
     imports: [NgStyle, NgTemplateOutlet, FaIconComponent, PanelContentAnchorDirective, PanelContextMenuComponent]
 })
 export class PanelComponent implements OnInit, AfterViewInit {

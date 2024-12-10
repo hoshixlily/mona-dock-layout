@@ -40,7 +40,6 @@ import { PanelGroupComponent } from "../panel-group/panel-group.component";
     templateUrl: "./container.component.html",
     styleUrls: ["./container.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
     imports: [NgStyle, PanelGroupComponent]
 })
 export class ContainerComponent implements OnInit, AfterViewInit {

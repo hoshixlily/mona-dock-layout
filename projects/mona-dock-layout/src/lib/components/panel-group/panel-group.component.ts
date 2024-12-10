@@ -12,7 +12,6 @@ import { ContainsPipe } from "../../pipes/contains.pipe";
     templateUrl: "./panel-group.component.html",
     styleUrls: ["./panel-group.component.scss"],
     changeDetection: ChangeDetectionStrategy.Default,
-    standalone: true,
     imports: [PanelComponent, NgStyle, ContainsPipe]
 })
 export class PanelGroupComponent {

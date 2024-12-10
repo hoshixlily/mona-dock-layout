@@ -41,7 +41,6 @@ import { ContainerComponent } from "../container/container.component";
     styleUrls: ["./dock-layout.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [LayoutService],
-    standalone: true,
     imports: [NgStyle, PanelHeaderListComponent, ContainerComponent, NgTemplateOutlet]
 })
 export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, AfterContentInit {
