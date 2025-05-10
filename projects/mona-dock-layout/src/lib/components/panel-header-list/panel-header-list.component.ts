@@ -1,31 +1,20 @@
 import { CdkDrag, CdkDragDrop, CdkDropList, DropListOrientation, moveItemInArray } from "@angular/cdk/drag-drop";
-import { NgStyle, NgTemplateOutlet } from "@angular/common";
+import { NgStyle } from "@angular/common";
 import { ChangeDetectionStrategy, Component, computed, inject, input } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
-import { ContextMenuComponent, MenuItemComponent, MenuItemTextTemplateDirective } from "@mirei/mona-ui";
 import { map } from "rxjs";
 import { Orientation } from "../../data/Orientation";
 import { Panel } from "../../data/Panel";
 import { PanelViewMode } from "../../data/PanelViewMode";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
+import { ContainsPipe } from "../../pipes/contains.pipe";
 import { LayoutService } from "../../services/layout.service";
 import { PanelContextMenuComponent } from "../panel-context-menu/panel-context-menu.component";
-import { ContainsPipe } from "../../pipes/contains.pipe";
 
 @Component({
     selector: "mona-panel-header-list",
-    imports: [
-        CdkDrag,
-        CdkDropList,
-        NgTemplateOutlet,
-        ContextMenuComponent,
-        MenuItemComponent,
-        MenuItemTextTemplateDirective,
-        NgStyle,
-        PanelContextMenuComponent,
-        ContainsPipe
-    ],
+    imports: [CdkDrag, CdkDropList, NgStyle, PanelContextMenuComponent, ContainsPipe],
     templateUrl: "./panel-header-list.component.html",
     styleUrl: "./panel-header-list.component.scss",
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -50,6 +39,13 @@ export class PanelHeaderListComponent {
     });
     protected readonly panelsInitialized = toSignal(this.layoutService.layoutReady$.pipe(map(() => true)), {
         initialValue: false
+    });
+    protected readonly visiblePanelIdSet = computed(() => {
+        return this.layoutService
+            .panelVisibilityDict()
+            .where(p => p.value)
+            .select(p => p.key)
+            .toImmutableSet();
     });
     public readonly orientation = input.required<Orientation>();
     public readonly position = input.required<Position>();
@@ -94,7 +90,7 @@ export class PanelHeaderListComponent {
     }
 
     public onViewModeChange(panel: Panel, viewMode: PanelViewMode): void {
-        panel.viewMode.set(viewMode);
+        this.layoutService.setPanelViewMode(panel.id, viewMode);
         this.layoutService.saveLayout();
     }
 

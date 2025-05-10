@@ -1,11 +1,11 @@
-import {ChangeDetectionStrategy, Component, inject, input, output} from "@angular/core";
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from "@angular/core";
 import { ContextMenuComponent, MenuItemComponent } from "@mirei/mona-ui";
 import { Panel } from "../../data/Panel";
 import { PanelViewMode } from "../../data/PanelViewMode";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
-import {LayoutService} from "../../services/layout.service";
-import {ContainsPipe} from "../../pipes/contains.pipe";
+import { LayoutService } from "../../services/layout.service";
+import { ContainsPipe } from "../../pipes/contains.pipe";
 
 @Component({
     selector: "mona-panel-context-menu",
@@ -17,6 +17,10 @@ import {ContainsPipe} from "../../pipes/contains.pipe";
 export class PanelContextMenuComponent {
     protected readonly PanelViewMode = PanelViewMode;
     protected readonly layoutService = inject(LayoutService);
+    protected readonly viewMode = computed(() => {
+        const panel = this.panel();
+        return this.layoutService.getPanelViewMode(panel.id);
+    });
     public readonly move = output<[Position, Priority]>();
     public readonly moveMenuVisible = input(true);
     public readonly panel = input.required<Panel>();

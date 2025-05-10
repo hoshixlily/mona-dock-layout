@@ -9,7 +9,7 @@
             }
         </div>
         <div class="mona-panel-actions">
-            @for (action of panel().actions(); track $index) {
+            @for (action of actions(); track $index) {
                 <div class="mona-panel-action" [ngStyle]="panelActionStyles()">
                     <ng-container [ngTemplateOutlet]="action"
                                   [ngTemplateOutletContext]="{position: panel().position(), priority: panel().priority(), id: panel().id}"></ng-container>

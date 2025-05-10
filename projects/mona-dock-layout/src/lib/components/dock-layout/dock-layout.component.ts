@@ -159,7 +159,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
             },
             openPanel(panelId: string): void {
                 const panel = service.panels().firstOrDefault(p => p.id === panelId);
-                if (panel && panel.visible()) {
+                if (panel && service.isPanelVisible(panelId)) {
                     service.panelOpenStart$.next({ panel, viaApi: true });
                 }
             },
@@ -233,7 +233,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
             panel.index.set(savedPanelData.index);
             panel.position.set(savedPanelData.position);
             panel.priority.set(savedPanelData.priority);
-            panel.viewMode.set(savedPanelData.viewMode ?? panel.viewMode());
+            this.layoutService.setPanelViewMode(panel.id, savedPanelData.viewMode);
             return true;
         }
         return false;
@@ -289,7 +289,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
             .subscribe(event => {
                 const panel = this.layoutService.panels().firstOrDefault(p => p.id === event.panelId);
                 if (panel) {
-                    panel.visible.set(event.visible);
+                    this.layoutService.setPanelVisible(panel.id, event.visible);
                 }
             });
         this.layoutService.panelMoveEnd$

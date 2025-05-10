@@ -37,6 +37,7 @@ export class PanelComponent implements OnInit, AfterViewInit {
     readonly #destroyRef = inject(DestroyRef);
     readonly #hostElementRef = inject(ElementRef<HTMLElement>);
     readonly #zone = inject(NgZone);
+    protected readonly actions = computed(() => this.layoutService.getPanelActionTemplates(this.panel().id));
     protected readonly hideIcon = faMinus;
     protected readonly layoutService = inject(LayoutService);
     protected readonly menuIcon = faEllipsisV;
@@ -68,10 +69,10 @@ export class PanelComponent implements OnInit, AfterViewInit {
     }
 
     public ngAfterViewInit(): void {
-        const content = this.panel().content();
+        const content = this.layoutService.getPanelContentTemplate(this.panel().id);
         if (content) {
             const panelContentVcr = this.layoutService.panelTemplateContentContainerRef();
-            const oldViewRef = this.layoutService.panelViewRefMap.get(this.panel().id);
+            const oldViewRef = this.layoutService.panelViewRefDict().get(this.panel().id);
             if (oldViewRef) {
                 if (panelContentVcr) {
                     const index = panelContentVcr.indexOf(oldViewRef);
@@ -79,13 +80,15 @@ export class PanelComponent implements OnInit, AfterViewInit {
                         panelContentVcr.detach(index);
                     }
                 }
-                this.panel().viewRef = oldViewRef;
-                this.panelContentAnchor().viewContainerRef.insert(oldViewRef);
+                const newViewRef = this.panelContentAnchor().viewContainerRef.insert(
+                    oldViewRef
+                ) as EmbeddedViewRef<PanelContentTemplateContext>;
+                this.layoutService.panelViewRefDict.update(dict => dict.put(this.panel().id, newViewRef));
             } else {
-                const viewRef = this.panelContentAnchor().viewContainerRef.createEmbeddedView(content);
-                this.panel().viewRef = viewRef;
-                this.panelContentAnchor().viewContainerRef.insert(viewRef);
-                this.layoutService.panelViewRefMap.add(this.panel().id, viewRef);
+                const viewRef = this.panelContentAnchor().viewContainerRef.createEmbeddedView(
+                    content
+                ) as EmbeddedViewRef<PanelContentTemplateContext>;
+                this.layoutService.panelViewRefDict.update(dict => dict.put(this.panel().id, viewRef));
             }
         }
         this.layoutService.panelContentAnchors.update(dict => dict.put(this.panel().id, this.panelContentAnchor()));
@@ -101,11 +104,11 @@ export class PanelComponent implements OnInit, AfterViewInit {
             .subscribe(() => {
                 const anchor = this.panelContentAnchor();
                 if (anchor) {
-                    const viewRef = this.panel().viewRef as EmbeddedViewRef<PanelContentTemplateContext>;
+                    const viewRef = this.layoutService.panelViewRefDict().get(this.panel().id);
                     const panelContentVcr = this.layoutService.panelTemplateContentContainerRef();
                     if (panelContentVcr && viewRef) {
                         panelContentVcr.insert(viewRef);
-                        this.layoutService.panelViewRefMap.put(this.panel().id, viewRef);
+                        this.layoutService.panelViewRefDict.update(dict => dict.put(this.panel().id, viewRef));
                     }
                 }
             });
@@ -118,7 +121,7 @@ export class PanelComponent implements OnInit, AfterViewInit {
     }
 
     public onViewModeChange(viewMode: PanelViewMode): void {
-        this.panel().viewMode.set(viewMode);
+        this.layoutService.setPanelViewMode(this.panel().id, viewMode);
         this.layoutService.saveLayout();
     }
 
@@ -146,7 +149,7 @@ export class PanelComponent implements OnInit, AfterViewInit {
                             if (this.#hostElementRef.nativeElement.contains(event.target as HTMLElement)) {
                                 return;
                             }
-                            const viewMode = this.panel().viewMode();
+                            const viewMode = this.layoutService.getPanelViewMode(this.panel().id);
                             if (viewMode != null && viewMode !== PanelViewMode.Docked) {
                                 this.#zone.run(() => {
                                     this.layoutService.panelCloseStart$.next({ panel: this.panel(), viaUser: true });

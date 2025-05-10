@@ -1,19 +1,21 @@
-import { EmbeddedViewRef, Injectable, signal, ViewContainerRef, WritableSignal } from "@angular/core";
-import { Dictionary, ImmutableDictionary, ImmutableList, ImmutableSet } from "@mirei/ts-collections";
+import { EmbeddedViewRef, Injectable, signal, TemplateRef, ViewContainerRef, WritableSignal } from "@angular/core";
+import { toObservable } from "@angular/core/rxjs-interop";
+import { ImmutableDictionary, ImmutableList, ImmutableSet } from "@mirei/ts-collections";
 import { BehaviorSubject, pairwise, ReplaySubject, startWith, Subject, switchMap } from "rxjs";
+import { ContainerResizeProgressEvent } from "../data/ContainerResizeProgressEvent";
 import { ContainerSizeSaveData, ResizerStyles } from "../data/ContainerSizeData";
 import { LayoutConfiguration } from "../data/LayoutConfiguration";
 import { LayoutSaveData, PanelSaveData } from "../data/LayoutSaveData";
 import { Panel } from "../data/Panel";
+import { PanelActionTemplateContext } from "../data/PanelActionTemplateContext";
 import { PanelContentTemplateContext } from "../data/PanelContentTemplateContext";
 import { PanelCloseInternalEvent, PanelOpenInternalEvent } from "../data/PanelEvents";
 import { PanelMoveEvent } from "../data/PanelMoveEvent";
+import { PanelResizeProgressEvent } from "../data/PanelResizeProgressEvent";
+import { PanelViewMode } from "../data/PanelViewMode";
 import { PanelVisibilityEvent } from "../data/PanelVisibilityEvent";
 import { Position } from "../data/Position";
 import { PanelContentAnchorDirective } from "../directives/panel-content-anchor.directive";
-import { ContainerResizeProgressEvent } from "../data/ContainerResizeProgressEvent";
-import { PanelResizeProgressEvent } from "../data/PanelResizeProgressEvent";
-import { toObservable } from "@angular/core/rxjs-interop";
 
 @Injectable()
 export class LayoutService {
@@ -28,7 +30,7 @@ export class LayoutService {
         panelHeaderHeight: signal(25),
         panelResizeOffset: signal(60)
     });
-    private layoutId: string = "";
+    #layoutId: string = "";
     public readonly containerResizeInProgress$ = new BehaviorSubject<ContainerResizeProgressEvent>({
         resizing: false
     });
@@ -87,12 +89,14 @@ export class LayoutService {
                 .toArray();
         })
     );
+    public readonly panelActionTemplateDict = signal(
+        ImmutableDictionary.create<string, ImmutableSet<TemplateRef<PanelActionTemplateContext>>>()
+    );
     public readonly panelCloseStart$ = new Subject<PanelCloseInternalEvent>();
     public readonly panelContentAnchors = signal(ImmutableDictionary.create<string, PanelContentAnchorDirective>());
-    public readonly panelTemplateContentContainerRef = signal<ViewContainerRef | null>(null);
-    public readonly panelMove$ = new Subject<PanelMoveEvent>();
-    public readonly panelMoveEnd$ = new Subject<Panel>();
-    public readonly panelOpenStart$ = new Subject<PanelOpenInternalEvent>();
+    public readonly panelContentTemplateDict = signal(
+        ImmutableDictionary.create<string, TemplateRef<PanelContentTemplateContext>>()
+    );
     public readonly panelGroupResizerPositions = signal(
         ImmutableDictionary.create<Position, string>([
             ["left", "50%"],
@@ -109,9 +113,17 @@ export class LayoutService {
             ["bottom", { left: "50%" }]
         ])
     );
+    public readonly panelMove$ = new Subject<PanelMoveEvent>();
+    public readonly panelMoveEnd$ = new Subject<Panel>();
+    public readonly panelOpenStart$ = new Subject<PanelOpenInternalEvent>();
     public readonly panelResizeInProgress$ = new BehaviorSubject<PanelResizeProgressEvent>({ resizing: false });
-    public readonly panelViewRefMap = new Dictionary<string, EmbeddedViewRef<PanelContentTemplateContext>>();
+    public readonly panelTemplateContentContainerRef = signal<ViewContainerRef | null>(null);
+    public readonly panelViewModeDict = signal(ImmutableDictionary.create<string, PanelViewMode>());
+    public readonly panelViewRefDict = signal(
+        ImmutableDictionary.create<string, EmbeddedViewRef<PanelContentTemplateContext>>()
+    );
     public readonly panelVisibility$ = new Subject<PanelVisibilityEvent>();
+    public readonly panelVisibilityDict = signal(ImmutableDictionary.create<string, boolean>());
     public layoutDomRect!: DOMRect;
     public panels = signal(ImmutableList.create<Panel>());
 
@@ -130,8 +142,20 @@ export class LayoutService {
             .toImmutableList();
     }
 
+    public getPanelActionTemplates(panelId: string): ImmutableSet<TemplateRef<PanelActionTemplateContext>> {
+        return this.panelActionTemplateDict().get(panelId) ?? ImmutableSet.create();
+    }
+
+    public getPanelContentTemplate(panelId: string): TemplateRef<PanelContentTemplateContext> | null {
+        return this.panelContentTemplateDict().get(panelId) ?? null;
+    }
+
+    public getPanelViewMode(panelId: string): PanelViewMode {
+        return this.panelViewModeDict().get(panelId) ?? PanelViewMode.Docked;
+    }
+
     public getStoredSaveData(): LayoutSaveData | null {
-        const savedLayoutDataJson = window.localStorage.getItem(`LAYOUT_${this.layoutId}`);
+        const savedLayoutDataJson = window.localStorage.getItem(`LAYOUT_${this.#layoutId}`);
         if (savedLayoutDataJson) {
             return JSON.parse(savedLayoutDataJson);
         }
@@ -143,6 +167,10 @@ export class LayoutService {
             return this.openPanels().any(p => p.id === panel);
         }
         return this.openPanels().contains(panel);
+    }
+
+    public isPanelVisible(panelId: string): boolean {
+        return this.panelVisibilityDict().get(panelId) ?? true;
     }
 
     public loadLayout(): boolean {
@@ -171,17 +199,36 @@ export class LayoutService {
             sizeData,
             panelSaveData
         };
-        window.localStorage.setItem(`LAYOUT_${this.layoutId}`, JSON.stringify(layoutSaveData));
+        window.localStorage.setItem(`LAYOUT_${this.#layoutId}`, JSON.stringify(layoutSaveData));
     }
 
     public setLayoutId(layoutId: string): void {
-        if (this.layoutId) {
+        if (this.#layoutId) {
             throw new Error("Layout id already set.");
         }
         if (!layoutId) {
             throw new Error("Layout id cannot be empty.");
         }
-        this.layoutId = layoutId;
+        this.#layoutId = layoutId;
+    }
+
+    public setPanelActionTemplates(
+        panelId: string,
+        templates: Iterable<TemplateRef<PanelActionTemplateContext>>
+    ): void {
+        this.panelActionTemplateDict.update(dict => dict.put(panelId, ImmutableSet.create(templates)));
+    }
+
+    public setPanelContentTemplate(panelId: string, template: TemplateRef<PanelContentTemplateContext>): void {
+        this.panelContentTemplateDict.update(dict => dict.put(panelId, template));
+    }
+
+    public setPanelViewMode(panelId: string, viewMode: PanelViewMode): void {
+        this.panelViewModeDict.update(dict => dict.put(panelId, viewMode));
+    }
+
+    public setPanelVisible(panelId: string, visible: boolean): void {
+        this.panelVisibilityDict.update(dict => dict.put(panelId, visible));
     }
 
     public updateHeaderSizes(): void {
@@ -206,13 +253,16 @@ export class LayoutService {
 
     private createPanelSaveData(): PanelSaveData[] {
         return this.panels()
-            .select(panel => ({
-                id: panel.id,
-                index: panel.index(),
-                position: panel.position(),
-                priority: panel.priority(),
-                viewMode: panel.viewMode()
-            }))
+            .select(panel => {
+                const viewMode = this.panelViewModeDict().get(panel.id) ?? PanelViewMode.Docked;
+                return {
+                    id: panel.id,
+                    index: panel.index(),
+                    position: panel.position(),
+                    priority: panel.priority(),
+                    viewMode
+                };
+            })
             .toArray();
     }
 

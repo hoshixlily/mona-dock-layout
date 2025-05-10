@@ -15,6 +15,7 @@ import {
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { filter, skipUntil, tap } from "rxjs";
 import { PanelOptions } from "../../data/Panel";
+import { PanelActionTemplateContext } from "../../data/PanelActionTemplateContext";
 import { PanelCloseEvent, PanelOpenEvent } from "../../data/PanelEvents";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
@@ -32,10 +33,9 @@ import { LayoutService } from "../../services/layout.service";
 export class DockPanelComponent implements OnInit {
     readonly #destroyRef = inject(DestroyRef);
     readonly #layoutService = inject(LayoutService);
-
     public readonly options = computed<Partial<PanelOptions>>(() => {
         return {
-            actions: this.panelActionTemplates() ?? [],
+            // actions: this.panelActionTemplates() ?? [],
             content: this.content() ?? null,
             id: this.panelId(),
             position: this.position(),
@@ -47,7 +47,9 @@ export class DockPanelComponent implements OnInit {
             movable: this.movable() ?? true
         };
     });
-    public readonly content = contentChild(PanelContentTemplateDirective, { read: TemplateRef<void> });
+    public readonly content = contentChild(PanelContentTemplateDirective, {
+        read: TemplateRef<PanelActionTemplateContext>
+    });
     public readonly movable = input(true);
     public readonly panelActionTemplates = contentChildren(PanelActionTemplateDirective, { read: TemplateRef<void> });
     public readonly panelClose = output<PanelCloseEvent>();
@@ -66,6 +68,20 @@ export class DockPanelComponent implements OnInit {
             const panelId = this.panelId();
             untracked(() => {
                 this.#layoutService.panelVisibility$.next({ panelId, visible });
+            });
+        });
+        effect(() => {
+            const panelId = this.panelId();
+            const templates = this.panelActionTemplates();
+            untracked(() => {
+                this.#layoutService.setPanelActionTemplates(panelId, templates);
+            });
+        });
+        effect(() => {
+            const panelId = this.panelId();
+            const content = this.content() as TemplateRef<PanelActionTemplateContext>;
+            untracked(() => {
+                this.#layoutService.setPanelContentTemplate(panelId, content);
             });
         });
     }

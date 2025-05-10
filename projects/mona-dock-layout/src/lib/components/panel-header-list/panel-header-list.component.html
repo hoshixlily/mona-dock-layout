@@ -5,17 +5,19 @@
     [ngStyle]="headerListStyles()"
 >
     @for (panel of panels(); track $index) {
-        <li cdkDragPreviewClass="panel-header-drag"
-            [class.opened]="layoutService.openPanels()|monaContains:panel"
-            [class.hidden]="!panel.visible()"
-            (click)="onPanelHeaderClicked(panel)"
-            cdkDrag #panelHeaderElement>
-            <span>{{ panel.title() }}</span>
-        </li>
-        <mona-panel-context-menu [target]="panelHeaderElement" [panel]="panel"
-                                 trigger="contextmenu"
-                                 (viewModeChange)="onViewModeChange(panel, $event)"
-                                 (toggle)="togglePanel(panel, $event)"
-                                 (move)="movePanel(panel, $event[0], $event[1])"></mona-panel-context-menu>
+        @if ((visiblePanelIdSet()|monaContains:panel.id)) {
+            <li cdkDragPreviewClass="panel-header-drag"
+                [class.opened]="layoutService.openPanels()|monaContains:panel"
+                [class.hidden]="!(visiblePanelIdSet()|monaContains:panel.id)"
+                (click)="onPanelHeaderClicked(panel)"
+                cdkDrag #panelHeaderElement>
+                <span>{{ panel.title() }}</span>
+            </li>
+            <mona-panel-context-menu [target]="panelHeaderElement" [panel]="panel"
+                                     trigger="contextmenu"
+                                     (viewModeChange)="onViewModeChange(panel, $event)"
+                                     (toggle)="togglePanel(panel, $event)"
+                                     (move)="movePanel(panel, $event[0], $event[1])"></mona-panel-context-menu>
+        }
     }
 </ul>
