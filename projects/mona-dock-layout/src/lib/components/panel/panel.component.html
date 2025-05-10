@@ -1,18 +1,18 @@
 <div class="mona-panel" [attr.data-pid]="panel().uid">
     <div class="mona-panel-header" [ngStyle]="panelHeaderStyles()">
         <div class="mona-panel-title">
-            @if (panel().titleTemplate()) {
-                <ng-container [ngTemplateOutlet]="panel().titleTemplate()"
-                              [ngTemplateOutletContext]="{$implicit: panel().title()}"></ng-container>
+            @if (titleTemplate()) {
+                <ng-container [ngTemplateOutlet]="titleTemplate()"
+                              [ngTemplateOutletContext]="{$implicit: panel().title}"></ng-container>
             } @else {
-                <span>{{ panel().title() }}</span>
+                <span>{{ panel().title }}</span>
             }
         </div>
         <div class="mona-panel-actions">
             @for (action of actions(); track $index) {
                 <div class="mona-panel-action" [ngStyle]="panelActionStyles()">
                     <ng-container [ngTemplateOutlet]="action"
-                                  [ngTemplateOutletContext]="{position: panel().position(), priority: panel().priority(), id: panel().id}"></ng-container>
+                                  [ngTemplateOutletContext]="{position: panel().position, priority: panel().priority, id: panel().id}"></ng-container>
                 </div>
             }
             <div class="mona-panel-action" [ngStyle]="panelActionStyles()" #panelMenuElement>

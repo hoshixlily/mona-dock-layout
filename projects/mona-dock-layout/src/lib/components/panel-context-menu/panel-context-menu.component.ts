@@ -17,12 +17,15 @@ import { ContainsPipe } from "../../pipes/contains.pipe";
 export class PanelContextMenuComponent {
     protected readonly PanelViewMode = PanelViewMode;
     protected readonly layoutService = inject(LayoutService);
+    protected readonly movable = computed(() => {
+        const panel = this.panel();
+        return this.layoutService.isPanelMovable(panel.id);
+    });
     protected readonly viewMode = computed(() => {
         const panel = this.panel();
         return this.layoutService.getPanelViewMode(panel.id);
     });
     public readonly move = output<[Position, Priority]>();
-    public readonly moveMenuVisible = input(true);
     public readonly panel = input.required<Panel>();
     public readonly target = input.required<HTMLElement>();
     public readonly trigger = input.required<"click" | "contextmenu">();

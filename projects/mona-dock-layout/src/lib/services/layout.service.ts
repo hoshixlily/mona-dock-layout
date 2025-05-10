@@ -12,6 +12,7 @@ import { PanelContentTemplateContext } from "../data/PanelContentTemplateContext
 import { PanelCloseInternalEvent, PanelOpenInternalEvent } from "../data/PanelEvents";
 import { PanelMoveEvent } from "../data/PanelMoveEvent";
 import { PanelResizeProgressEvent } from "../data/PanelResizeProgressEvent";
+import { PanelTitleTemplateContext } from "../data/PanelTitleTemplateContext";
 import { PanelViewMode } from "../data/PanelViewMode";
 import { PanelVisibilityEvent } from "../data/PanelVisibilityEvent";
 import { Position } from "../data/Position";
@@ -76,7 +77,8 @@ export class LayoutService {
     );
     public readonly layoutConfig = this.#layoutConfig.asReadonly();
     public readonly layoutReady$ = new ReplaySubject<void>(1);
-    public readonly openPanels = signal(ImmutableSet.create<Panel>());
+    public readonly movablePanelIdSet = signal(ImmutableSet.create<string>());
+    public readonly openPanels = signal(ImmutableSet.create<string>());
     public readonly openPanelsChange$ = toObservable(this.openPanels).pipe(
         startWith(this.openPanels()),
         pairwise(),
@@ -118,6 +120,9 @@ export class LayoutService {
     public readonly panelOpenStart$ = new Subject<PanelOpenInternalEvent>();
     public readonly panelResizeInProgress$ = new BehaviorSubject<PanelResizeProgressEvent>({ resizing: false });
     public readonly panelTemplateContentContainerRef = signal<ViewContainerRef | null>(null);
+    public readonly panelTitleTemplateDict = signal(
+        ImmutableDictionary.create<string, TemplateRef<PanelTitleTemplateContext>>()
+    );
     public readonly panelViewModeDict = signal(ImmutableDictionary.create<string, PanelViewMode>());
     public readonly panelViewRefDict = signal(
         ImmutableDictionary.create<string, EmbeddedViewRef<PanelContentTemplateContext>>()
@@ -127,8 +132,8 @@ export class LayoutService {
     public layoutDomRect!: DOMRect;
     public panels = signal(ImmutableList.create<Panel>());
 
-    public closePanel(panel: Panel): void {
-        this.openPanels.update(set => set.remove(panel));
+    public closePanel(panelId: string): void {
+        this.openPanels.update(set => set.remove(panelId));
     }
 
     public getHeaderSize(position: Position): number {
@@ -138,7 +143,7 @@ export class LayoutService {
 
     public getOpenContainerPanels(position: Position): ImmutableList<Panel> {
         return this.panels()
-            .where(p => p.position() === position && this.isPanelOpen(p))
+            .where(p => p.position === position && this.isPanelOpen(p.id))
             .toImmutableList();
     }
 
@@ -148,6 +153,10 @@ export class LayoutService {
 
     public getPanelContentTemplate(panelId: string): TemplateRef<PanelContentTemplateContext> | null {
         return this.panelContentTemplateDict().get(panelId) ?? null;
+    }
+
+    public getPanelTitleTemplate(panelId: string): TemplateRef<PanelTitleTemplateContext> | null {
+        return this.panelTitleTemplateDict().get(panelId) ?? null;
     }
 
     public getPanelViewMode(panelId: string): PanelViewMode {
@@ -162,11 +171,12 @@ export class LayoutService {
         return null;
     }
 
-    public isPanelOpen(panel: string | Panel): boolean {
-        if (typeof panel === "string") {
-            return this.openPanels().any(p => p.id === panel);
-        }
-        return this.openPanels().contains(panel);
+    public isPanelMovable(panel: string): boolean {
+        return this.movablePanelIdSet().contains(panel);
+    }
+
+    public isPanelOpen(panelId: string): boolean {
+        return this.openPanels().contains(panelId);
     }
 
     public isPanelVisible(panelId: string): boolean {
@@ -184,16 +194,14 @@ export class LayoutService {
         return false;
     }
 
-    public openPanel(panel: Panel): void {
-        this.openPanels.update(set => set.add(panel));
+    public openPanel(panelId: string): void {
+        this.openPanels.update(set => set.add(panelId));
     }
 
     public saveLayout(): void {
         const sizeData = this.createSizeSaveData();
         const panelSaveData = this.createPanelSaveData();
-        const openPanelIdList = this.openPanels()
-            .select(p => p.id)
-            .toArray();
+        const openPanelIdList = this.openPanels().toArray();
         const layoutSaveData: LayoutSaveData = {
             openPanelIdList,
             sizeData,
@@ -223,6 +231,14 @@ export class LayoutService {
         this.panelContentTemplateDict.update(dict => dict.put(panelId, template));
     }
 
+    public setPanelMovable(panelId: string, movable: boolean): void {
+        this.movablePanelIdSet.update(set => (movable ? set.add(panelId) : set.remove(panelId)));
+    }
+
+    public setPanelTitleTemplate(panelId: string, template: TemplateRef<PanelTitleTemplateContext>): void {
+        this.panelTitleTemplateDict.update(dict => dict.put(panelId, template));
+    }
+
     public setPanelViewMode(panelId: string, viewMode: PanelViewMode): void {
         this.panelViewModeDict.update(dict => dict.put(panelId, viewMode));
     }
@@ -234,7 +250,7 @@ export class LayoutService {
     public updateHeaderSizes(): void {
         const positions = ["left", "right", "top", "bottom"] as Position[];
         for (const position of positions) {
-            const panels = this.panels().where(p => p.position() === position);
+            const panels = this.panels().where(p => p.position === position);
             const styleText = position === "left" || position === "right" ? "width" : "height";
             const headerStyleText = position === "left" || position === "right" ? "headerWidth" : "headerHeight";
             this.headerStyles.update(dict => {
@@ -251,15 +267,31 @@ export class LayoutService {
         }
     }
 
+    public updatePanel(panel: Partial<Panel> & Required<Pick<Panel, "id">>): void {
+        this.panels.update(list => {
+            const existingPanel = list.firstOrDefault(p => p.id === panel.id);
+            if (!existingPanel) {
+                return list;
+            }
+            const index = list.indexOf(existingPanel);
+            if (index >= 0) {
+                const updatedPanel = { ...existingPanel, ...panel };
+                return list.set(index, updatedPanel);
+            }
+            return list;
+        });
+        this.saveLayout();
+    }
+
     private createPanelSaveData(): PanelSaveData[] {
         return this.panels()
             .select(panel => {
                 const viewMode = this.panelViewModeDict().get(panel.id) ?? PanelViewMode.Docked;
                 return {
                     id: panel.id,
-                    index: panel.index(),
-                    position: panel.position(),
-                    priority: panel.priority(),
+                    index: panel.index,
+                    position: panel.position,
+                    priority: panel.priority,
                     viewMode
                 };
             })

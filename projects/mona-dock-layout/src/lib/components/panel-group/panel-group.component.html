@@ -1,7 +1,7 @@
 <div class="mona-panel-group">
     <div class="mona-panel-group-content">
         @for (panel of groupPanels(); track panel.id) {
-            <mona-panel [panel]="panel" [ngStyle]="{'display': (layoutService.openPanels()|monaContains:panel) ? 'block': 'none'}"></mona-panel>
+            <mona-panel [panel]="panel" [ngStyle]="{'display': (layoutService.openPanels()|monaContains:panel.id) ? 'block': 'none'}"></mona-panel>
         }
     </div>
 </div>

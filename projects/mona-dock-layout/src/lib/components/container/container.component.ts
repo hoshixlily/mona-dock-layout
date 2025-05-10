@@ -50,12 +50,12 @@ export class ContainerComponent implements OnInit, AfterViewInit {
     private readonly containerResizer = viewChild.required<ElementRef<HTMLElement>>("containerResizer");
     private readonly panelGroupResizer = viewChild<ElementRef<HTMLElement>>("panelGroupResizer");
     protected readonly anyPrimaryPanelOpen = computed(() => {
-        const panels = this.layoutService.panels().where(panel => panel.position() === this.position());
-        return panels.where(panel => panel.priority() === "primary" && this.layoutService.isPanelOpen(panel)).any();
+        const panels = this.layoutService.panels().where(panel => panel.position === this.position());
+        return panels.where(panel => panel.priority === "primary" && this.layoutService.isPanelOpen(panel.id)).any();
     });
     protected readonly anySecondaryPanelOpen = computed(() => {
-        const panels = this.layoutService.panels().where(panel => panel.position() === this.position());
-        return panels.where(panel => panel.priority() === "secondary" && this.layoutService.isPanelOpen(panel)).any();
+        const panels = this.layoutService.panels().where(panel => panel.position === this.position());
+        return panels.where(panel => panel.priority === "secondary" && this.layoutService.isPanelOpen(panel.id)).any();
     });
     protected readonly containerStyles = computed<Partial<CSSStyleDeclaration>>(() => {
         const styles = this.layoutService.containerStyles().get(this.position()) ?? {};
@@ -66,8 +66,8 @@ export class ContainerComponent implements OnInit, AfterViewInit {
     });
     protected readonly layoutService = inject(LayoutService);
     protected readonly open = computed(() => {
-        const panels = this.layoutService.panels().where(panel => panel.position() === this.position());
-        return panels.any(panel => this.layoutService.isPanelOpen(panel));
+        const panels = this.layoutService.panels().where(panel => panel.position === this.position());
+        return panels.any(panel => this.layoutService.isPanelOpen(panel.id));
     });
     protected readonly panelGroupResizerStyles = computed<ResizerStyles>(() => {
         const position = this.position();
@@ -86,7 +86,7 @@ export class ContainerComponent implements OnInit, AfterViewInit {
         return (
             this.layoutService
                 .panels()
-                .where(panel => panel.position() === this.position() && this.layoutService.isPanelOpen(panel))
+                .where(panel => panel.position === this.position() && this.layoutService.isPanelOpen(panel.id))
                 .count() > 1
         );
     });
@@ -140,7 +140,7 @@ export class ContainerComponent implements OnInit, AfterViewInit {
         const positionText = priority === "primary" ? (horizontal ? "bottom" : "right") : horizontal ? "top" : "left";
         const openPanels = this.layoutService.getOpenContainerPanels(position);
         if (openPanels.count() === 1) {
-            if (openPanels.first().priority() === priority) {
+            if (openPanels.first().priority === priority) {
                 return { display: "block", [positionText]: "0%" };
             }
         } else if (openPanels.count() === 2) {
@@ -152,20 +152,24 @@ export class ContainerComponent implements OnInit, AfterViewInit {
         return { display: "none" };
     }
 
-    private openPanel(panel: Panel): void {
+    private openPanel(panelId: string): void {
+        const panel = this.layoutService.panels().firstOrDefault(p => p.id === panelId);
+        if (!panel) {
+            return;
+        }
         const openedPanel = this.layoutService
             .panels()
             .firstOrDefault(
                 p =>
-                    p !== panel &&
-                    p.position() === panel.position() &&
-                    p.priority() === panel.priority() &&
-                    this.layoutService.isPanelOpen(p)
+                    p.id !== panelId &&
+                    p.position === panel.position &&
+                    p.priority === panel.priority &&
+                    this.layoutService.isPanelOpen(p.id)
             );
         if (openedPanel) {
-            this.layoutService.closePanel(openedPanel);
+            this.layoutService.closePanel(openedPanel.id);
         }
-        this.layoutService.openPanel(panel);
+        this.layoutService.openPanel(panel.id);
         const oppositeContainerElement = this.getOppositeContainerElement();
         if (oppositeContainerElement.style.display !== "none") {
             window.setTimeout(() => {
@@ -174,7 +178,7 @@ export class ContainerComponent implements OnInit, AfterViewInit {
         }
         const openPanels = this.layoutService
             .panels()
-            .where(panel => panel.position() === this.position() && this.layoutService.isPanelOpen(panel));
+            .where(panel => panel.position === this.position() && this.layoutService.isPanelOpen(panel.id));
         if (openPanels.count() === 2 && !this.panelGroupResizerVisible()) {
             this.setPanelGroupResizerEvent();
         }
@@ -380,12 +384,13 @@ export class ContainerComponent implements OnInit, AfterViewInit {
         this.layoutService.openPanelsChange$
             .pipe(
                 takeUntilDestroyed(this.#destroyRef),
-                filter(p => p.panel.position() === this.position()),
+                map(p => this.layoutService.panels().first(pn => pn.id === p.panel)),
+                filter(p => p.position === this.position()),
                 tap(p => {
-                    if (p.open) {
-                        this.openPanel(p.panel);
+                    if (this.layoutService.isPanelOpen(p.id)) {
+                        this.openPanel(p.id);
                     } else {
-                        this.layoutService.closePanel(p.panel);
+                        this.layoutService.closePanel(p.id);
                     }
                     this.layoutService.saveLayout();
                 })
@@ -395,40 +400,41 @@ export class ContainerComponent implements OnInit, AfterViewInit {
         this.layoutService.panelMove$.pipe(takeUntilDestroyed(this.#destroyRef)).subscribe(event => {
             const panels = this.layoutService
                 .panels()
-                .where(panel => panel.position() === event.newPosition && panel.priority() === event.newPriority);
+                .where(panel => panel.position === event.newPosition && panel.priority === event.newPriority);
             if (event.newPosition === this.position()) {
                 this.layoutService.panelCloseStart$.next({
                     panel: event.panel,
                     viaMove: true
                 });
-                window.setTimeout(() => {
-                    event.panel.position.set(event.newPosition);
-                    event.panel.priority.set(event.newPriority);
-                    event.panel.index.set(panels.count());
-                    this.layoutService
+                // window.setTimeout(() => {
+                this.layoutService.updatePanel({
+                    id: event.panel.id,
+                    index: panels.count(),
+                    position: event.newPosition,
+                    priority: event.newPriority
+                });
+                this.layoutService
+                    .panels()
+                    .where(panel => panel.position === event.newPosition && panel.priority === event.newPriority)
+                    .orderBy(p => p.index)
+                    .forEach((p, px) => this.layoutService.updatePanel({ id: p.id, index: px }));
+                this.layoutService.panels.update(list => list.toImmutableList());
+                if (event.wasOpenBefore) {
+                    const op = this.layoutService
                         .panels()
                         .where(
-                            panel => panel.position() === event.newPosition && panel.priority() === event.newPriority
-                        )
-                        .orderBy(p => p.index())
-                        .forEach((p, px) => p.index.set(px));
-                    this.layoutService.panels.update(list => list.toImmutableList());
-                    if (event.wasOpenBefore) {
-                        const op = this.layoutService
-                            .panels()
-                            .where(
-                                p =>
-                                    p.position() === this.position() &&
-                                    p.priority() === event.newPriority &&
-                                    this.layoutService.isPanelOpen(p)
-                            );
-                        if (!op.any()) {
-                            this.openPanel(event.panel);
-                        }
+                            p =>
+                                p.position === this.position() &&
+                                p.priority === event.newPriority &&
+                                this.layoutService.isPanelOpen(p.id)
+                        );
+                    if (!op.any()) {
+                        this.openPanel(event.panel.id);
                     }
-                    this.layoutService.saveLayout();
-                    this.layoutService.updateHeaderSizes();
-                });
+                }
+                this.layoutService.saveLayout();
+                this.layoutService.updateHeaderSizes();
+                // });
             }
         });
     }

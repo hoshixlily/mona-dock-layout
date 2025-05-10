@@ -33,8 +33,8 @@ export class PanelHeaderListComponent {
     protected readonly panels = computed(() => {
         return this.layoutService
             .panels()
-            .where(panel => panel.position() === this.position() && panel.priority() === this.priority())
-            .orderBy(panel => panel.index())
+            .where(panel => panel.position === this.position() && panel.priority === this.priority())
+            .orderBy(panel => panel.index)
             .toImmutableList();
     });
     protected readonly panelsInitialized = toSignal(this.layoutService.layoutReady$.pipe(map(() => true)), {
@@ -54,17 +54,17 @@ export class PanelHeaderListComponent {
     public movePanel(panel: Panel, position: Position, priority: Priority): void {
         this.layoutService.panelMove$.next({
             panel: panel,
-            oldPosition: panel.position(),
+            oldPosition: panel.position,
             newPosition: position,
-            oldPriority: panel.priority(),
+            oldPriority: panel.priority,
             newPriority: priority,
-            wasOpenBefore: this.layoutService.isPanelOpen(panel)
+            wasOpenBefore: this.layoutService.isPanelOpen(panel.id)
         });
         this.layoutService.saveLayout();
     }
 
     public onPanelHeaderClicked(panel: Panel): void {
-        const open = this.layoutService.isPanelOpen(panel);
+        const open = this.layoutService.isPanelOpen(panel.id);
         if (open) {
             this.layoutService.panelCloseStart$.next({ panel, viaUser: true });
         } else {
@@ -73,19 +73,13 @@ export class PanelHeaderListComponent {
     }
 
     public onPanelHeadersReordered(event: CdkDragDrop<string>, position: Position, priority: Priority): void {
-        this.layoutService.panels.update(list => {
-            const [headerPanels, otherPanels] = list.partition(
-                p => p.position() === position && p.priority() === priority
-            );
-            const panel = headerPanels.firstOrDefault(p => p.index() === event.previousIndex);
-            if (panel) {
-                const orderedPanels = headerPanels.orderBy(p => p.index()).toArray();
-                moveItemInArray(orderedPanels, event.previousIndex, event.currentIndex);
-                orderedPanels.forEach((p, px) => p.index.set(px));
-                return otherPanels.concat(orderedPanels).toImmutableList();
-            }
-            return list;
-        });
+        const headerPanels = this.layoutService
+            .panels()
+            .where(p => p.position === position && p.priority === priority)
+            .orderBy(p => p.index)
+            .toArray();
+        moveItemInArray(headerPanels, event.previousIndex, event.currentIndex);
+        headerPanels.forEach((p, px) => this.layoutService.updatePanel({ id: p.id, index: px }));
         this.layoutService.saveLayout();
     }
 

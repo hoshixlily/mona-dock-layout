@@ -51,6 +51,7 @@ export class PanelComponent implements OnInit, AfterViewInit {
     protected readonly panelHeaderStyles = computed<Partial<CSSStyleDeclaration>>(() => ({
         height: `${this.layoutService.layoutConfig().panelHeaderHeight()}px`
     }));
+    protected readonly titleTemplate = computed(() => this.layoutService.getPanelTitleTemplate(this.panel().id));
     public readonly panel = input.required<Panel>();
 
     public close(): void {
@@ -60,11 +61,11 @@ export class PanelComponent implements OnInit, AfterViewInit {
     public movePanel(position: Position, priority: Priority): void {
         this.layoutService.panelMove$.next({
             panel: this.panel(),
-            oldPosition: this.panel().position(),
+            oldPosition: this.panel().position,
             newPosition: position,
-            oldPriority: this.panel().priority(),
+            oldPriority: this.panel().priority,
             newPriority: priority,
-            wasOpenBefore: this.layoutService.isPanelOpen(this.panel())
+            wasOpenBefore: this.layoutService.isPanelOpen(this.panel().id)
         });
     }
 

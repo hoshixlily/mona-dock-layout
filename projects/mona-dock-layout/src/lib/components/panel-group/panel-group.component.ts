@@ -19,8 +19,8 @@ export class PanelGroupComponent {
         const panels = this.layoutService.panels();
         const position = this.position();
         const priority = this.priority();
-        return where(panels, p => p.position() === position && p.priority() === priority)
-            .orderBy(p => p.index())
+        return where(panels, p => p.position === position && p.priority === priority)
+            .orderBy(p => p.index)
             .toArray();
     });
     protected readonly layoutService = inject(LayoutService);

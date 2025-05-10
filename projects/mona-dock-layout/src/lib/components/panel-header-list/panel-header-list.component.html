@@ -4,14 +4,14 @@
     (cdkDropListDropped)="onPanelHeadersReordered($event, position(), priority())"
     [ngStyle]="headerListStyles()"
 >
-    @for (panel of panels(); track $index) {
+    @for (panel of panels(); track panel.index) {
         @if ((visiblePanelIdSet()|monaContains:panel.id)) {
             <li cdkDragPreviewClass="panel-header-drag"
-                [class.opened]="layoutService.openPanels()|monaContains:panel"
+                [class.opened]="layoutService.openPanels()|monaContains:panel.id"
                 [class.hidden]="!(visiblePanelIdSet()|monaContains:panel.id)"
                 (click)="onPanelHeaderClicked(panel)"
                 cdkDrag #panelHeaderElement>
-                <span>{{ panel.title() }}</span>
+                <span>{{ panel.title }}</span>
             </li>
             <mona-panel-context-menu [target]="panelHeaderElement" [panel]="panel"
                                      trigger="contextmenu"

@@ -1,4 +1,5 @@
 import {
+    ChangeDetectionStrategy,
     Component,
     computed,
     contentChild,
@@ -14,9 +15,11 @@ import {
 } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { filter, skipUntil, tap } from "rxjs";
-import { PanelOptions } from "../../data/Panel";
+import { v4 } from "uuid";
+import { Panel } from "../../data/Panel";
 import { PanelActionTemplateContext } from "../../data/PanelActionTemplateContext";
 import { PanelCloseEvent, PanelOpenEvent } from "../../data/PanelEvents";
+import { PanelTitleTemplateContext } from "../../data/PanelTitleTemplateContext";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
 import { PanelActionTemplateDirective } from "../../directives/panel-action-template.directive";
@@ -27,26 +30,22 @@ import { LayoutService } from "../../services/layout.service";
 @Component({
     selector: "mona-dock-panel",
     template: "",
-    styleUrls: [],
-    standalone: true
+    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DockPanelComponent implements OnInit {
     readonly #destroyRef = inject(DestroyRef);
     readonly #layoutService = inject(LayoutService);
-    public readonly options = computed<Partial<PanelOptions>>(() => {
-        return {
-            // actions: this.panelActionTemplates() ?? [],
-            content: this.content() ?? null,
-            id: this.panelId(),
-            position: this.position(),
-            priority: this.priority(),
-            title: this.title(),
-            titleTemplate: this.titleTemplate() ?? null,
-            visible: this.visible(),
-            startOpen: this.visible() ? this.startOpen() : false,
-            movable: this.movable() ?? true
-        };
-    });
+    public readonly options = computed<Panel>(() => ({
+        id: this.panelId(),
+        index: 0,
+        position: this.position(),
+        priority: this.priority(),
+        title: this.title(),
+        startOpen: this.visible() ? this.startOpen() : false,
+        wasOpenBeforeHidden: false,
+        uid: v4()
+    }));
     public readonly content = contentChild(PanelContentTemplateDirective, {
         read: TemplateRef<PanelActionTemplateContext>
     });
@@ -82,6 +81,20 @@ export class DockPanelComponent implements OnInit {
             const content = this.content() as TemplateRef<PanelActionTemplateContext>;
             untracked(() => {
                 this.#layoutService.setPanelContentTemplate(panelId, content);
+            });
+        });
+        effect(() => {
+            const panelId = this.panelId();
+            const titleTemplate = this.titleTemplate() as TemplateRef<PanelTitleTemplateContext>;
+            untracked(() => {
+                this.#layoutService.setPanelTitleTemplate(panelId, titleTemplate);
+            });
+        });
+        effect(() => {
+            const panelId = this.panelId();
+            const movable = this.movable();
+            untracked(() => {
+                this.#layoutService.setPanelMovable(panelId, movable);
             });
         });
     }
