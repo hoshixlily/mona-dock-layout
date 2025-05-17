@@ -127,8 +127,8 @@ export class LayoutService {
     );
     public readonly panelVisibility$ = new Subject<PanelVisibilityEvent>();
     public readonly panelVisibilityDict = signal(ImmutableDictionary.create<string, boolean>());
+    public readonly panels = signal(ImmutableList.create<Panel>());
     public layoutDomRect!: DOMRect;
-    public panels = signal(ImmutableList.create<Panel>());
 
     public closePanel(panelId: string): void {
         this.openPanels.update(set => set.remove(panelId));

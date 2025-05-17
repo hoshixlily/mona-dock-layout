@@ -79,19 +79,14 @@ export class ContainerComponent implements OnInit, AfterViewInit {
                 .count() > 1
         );
     });
-    protected readonly primaryPanelStyles = computed<Partial<CSSStyleDeclaration>>(() => {
-        return this.getPanelStylesByPriority("primary");
-    });
-
+    protected readonly primaryPanelStyles = computed(() => this.getPanelStylesByPriority("primary"));
     protected readonly resizing = toSignal(
         this.layoutService.containerResizeInProgress$.pipe(map(event => event.resizing))
     );
     protected readonly resizingPanel = toSignal(
         this.layoutService.panelResizeInProgress$.pipe(map(event => event.resizing))
     );
-    protected readonly secondaryPanelStyles = computed(() => {
-        return this.getPanelStylesByPriority("secondary");
-    });
+    protected readonly secondaryPanelStyles = computed(() => this.getPanelStylesByPriority("secondary"));
     public readonly position = input.required<Position>();
 
     public ngAfterViewInit(): void {
@@ -104,6 +99,16 @@ export class ContainerComponent implements OnInit, AfterViewInit {
 
     private getOppositeContainerElement(): HTMLElement {
         return this.getOppositeContainerWrapperElement().querySelector("div.mona-layout-container") as HTMLElement;
+    }
+
+    private getOppositeContainerSize(): number {
+        const element = this.getOppositeContainerWrapperElement();
+        if (element.style.display === "none") {
+            return 0;
+        }
+        const position = this.position();
+        const horizontal = position === "left" || position === "right";
+        return horizontal ? element.clientWidth : element.clientHeight;
     }
 
     private getOppositeContainerWrapperElement(): HTMLElement {
@@ -183,13 +188,7 @@ export class ContainerComponent implements OnInit, AfterViewInit {
 
     private resize(event: MouseEvent): void {
         if (this.resizing()) {
-            const oppositeContainerElement = this.getOppositeContainerWrapperElement();
-            const oppositeContainerSize =
-                oppositeContainerElement.style.display === "none"
-                    ? 0
-                    : this.position() === "left" || this.position() === "right"
-                      ? oppositeContainerElement.clientWidth
-                      : oppositeContainerElement.clientHeight;
+            const oppositeContainerSize = this.getOppositeContainerSize();
             if (this.position() === "left") {
                 this.resizeLeft(event, oppositeContainerSize);
             } else if (this.position() === "right") {

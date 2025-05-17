@@ -53,9 +53,7 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
     private readonly panelTemplateContentsContainerRef = viewChild.required("panelTemplateContentsContainerRef", {
         read: ViewContainerRef
     });
-    protected readonly bottomHeaderStyles = computed(() => {
-        return this.layoutService.headerStyles().get("bottom")?.() ?? {};
-    });
+    protected readonly bottomHeaderStyles = computed(() => this.layoutService.headerStyles().get("bottom")?.() ?? {});
     protected readonly layoutContentTemplateRef = contentChild(LayoutContentTemplateDirective, {
         read: TemplateRef
     });
@@ -64,21 +62,15 @@ export class DockLayoutComponent implements OnInit, OnDestroy, AfterViewInit, Af
         initialValue: false
     });
     protected readonly layoutService = this.#layoutService;
-    protected readonly leftHeaderStyles = computed(() => {
-        return this.layoutService.headerStyles().get("left")?.() ?? {};
-    });
-    protected readonly rightHeaderStyles = computed(() => {
-        return this.layoutService.headerStyles().get("right")?.() ?? {};
-    });
+    protected readonly leftHeaderStyles = computed(() => this.layoutService.headerStyles().get("left")?.() ?? {});
+    protected readonly rightHeaderStyles = computed(() => this.layoutService.headerStyles().get("right")?.() ?? {});
     protected readonly resizing = toSignal(
         this.layoutService.containerResizeInProgress$.pipe(
             combineLatestWith(this.layoutService.panelResizeInProgress$),
             map(([containerEvent, panel]) => containerEvent.resizing || panel)
         )
     );
-    protected readonly topHeaderStyles = computed(() => {
-        return this.layoutService.headerStyles().get("top")?.() ?? {};
-    });
+    protected readonly topHeaderStyles = computed(() => this.layoutService.headerStyles().get("top")?.() ?? {});
     public readonly layoutId = input.required<string>();
     public readonly ready = output<LayoutReadyEvent>();
 

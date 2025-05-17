@@ -64,37 +64,27 @@ export class DockPanelComponent implements OnInit {
         effect(() => {
             const visible = this.visible();
             const panelId = this.panelId();
-            untracked(() => {
-                this.#layoutService.panelVisibility$.next({ panelId, visible });
-            });
+            untracked(() => this.#layoutService.panelVisibility$.next({ panelId, visible }));
         });
         effect(() => {
             const panelId = this.panelId();
             const templates = this.panelActionTemplates();
-            untracked(() => {
-                this.#layoutService.setPanelActionTemplates(panelId, templates);
-            });
+            untracked(() => this.#layoutService.setPanelActionTemplates(panelId, templates));
         });
         effect(() => {
             const panelId = this.panelId();
             const content = this.content() as TemplateRef<PanelActionTemplateContext>;
-            untracked(() => {
-                this.#layoutService.setPanelContentTemplate(panelId, content);
-            });
+            untracked(() => this.#layoutService.setPanelContentTemplate(panelId, content));
         });
         effect(() => {
             const panelId = this.panelId();
             const titleTemplate = this.titleTemplate() as TemplateRef<PanelTitleTemplateContext>;
-            untracked(() => {
-                this.#layoutService.setPanelTitleTemplate(panelId, titleTemplate);
-            });
+            untracked(() => this.#layoutService.setPanelTitleTemplate(panelId, titleTemplate));
         });
         effect(() => {
             const panelId = this.panelId();
             const movable = this.movable();
-            untracked(() => {
-                this.#layoutService.setPanelMovable(panelId, movable);
-            });
+            untracked(() => this.#layoutService.setPanelMovable(panelId, movable));
         });
     }
 

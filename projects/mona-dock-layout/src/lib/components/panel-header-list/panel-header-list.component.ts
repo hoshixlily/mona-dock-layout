@@ -21,9 +21,7 @@ import { PanelContextMenuComponent } from "../panel-context-menu/panel-context-m
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PanelHeaderListComponent {
-    protected readonly dropListOrientation = computed(() => {
-        return this.orientation() as DropListOrientation;
-    });
+    protected readonly dropListOrientation = computed(() => this.orientation() as DropListOrientation);
     protected readonly headerListStyles = computed<Partial<CSSStyleDeclaration>>(() => {
         const initialized = this.panelsInitialized();
         return {
