@@ -16,9 +16,10 @@ import {
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FaIconComponent } from "@fortawesome/angular-fontawesome";
 import { faEllipsisV, faMinus } from "@fortawesome/free-solid-svg-icons";
-import { debounceTime, filter, fromEvent, of, switchMap } from "rxjs";
+import { debounceTime, filter, fromEvent, of, switchMap, take, tap } from "rxjs";
 import { Panel } from "../../data/Panel";
 import { PanelContentTemplateContext } from "../../data/PanelContentTemplateContext";
+import { MoveStage } from "../../data/PanelMoveEvent";
 import { PanelViewMode } from "../../data/PanelViewMode";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
@@ -55,7 +56,7 @@ export class PanelComponent implements OnInit, AfterViewInit {
     public readonly panel = input.required<Panel>();
 
     public close(): void {
-        this.layoutService.panelCloseStart$.next({ panel: this.panel(), viaUser: true });
+        this.layoutService.closePanel(this.panel().id);
     }
 
     public movePanel(position: Position, priority: Priority): void {
@@ -65,6 +66,7 @@ export class PanelComponent implements OnInit, AfterViewInit {
             newPosition: position,
             oldPriority: this.panel().priority,
             newPriority: priority,
+            stage: MoveStage.Close,
             wasOpenBefore: this.layoutService.isPanelOpen(this.panel().id)
         });
     }
@@ -93,6 +95,13 @@ export class PanelComponent implements OnInit, AfterViewInit {
             }
         }
         this.layoutService.panelContentAnchors.update(dict => dict.put(this.panel().id, this.panelContentAnchor()));
+        this.layoutService.panelMove$
+            .pipe(
+                take(1),
+                filter(e => e.panel.id === this.panel().id && e.stage === MoveStage.Attach),
+                tap(e => this.layoutService.panelMove$.next({ ...e, stage: MoveStage.Open }))
+            )
+            .subscribe();
     }
 
     public ngOnInit(): void {
@@ -100,19 +109,17 @@ export class PanelComponent implements OnInit, AfterViewInit {
         this.layoutService.panelMove$
             .pipe(
                 takeUntilDestroyed(this.#destroyRef),
-                filter(event => event.panel.id === this.panel().id)
-            )
-            .subscribe(() => {
-                const anchor = this.panelContentAnchor();
-                if (anchor) {
-                    const viewRef = this.layoutService.panelViewRefDict().get(this.panel().id);
-                    const panelContentVcr = this.layoutService.panelTemplateContentContainerRef();
-                    if (panelContentVcr && viewRef) {
-                        panelContentVcr.insert(viewRef);
+                filter(event => event.stage === MoveStage.Detach && event.panel.id === this.panel().id),
+                tap(e => {
+                    const viewRef =
+                        this.panelContentAnchor().viewContainerRef.detach() as EmbeddedViewRef<PanelContentTemplateContext>;
+                    if (viewRef) {
                         this.layoutService.panelViewRefDict.update(dict => dict.put(this.panel().id, viewRef));
                     }
-                }
-            });
+                    this.layoutService.panelMove$.next({ ...e, stage: MoveStage.Move });
+                })
+            )
+            .subscribe();
     }
 
     public onPanelToggle(value: boolean): void {
@@ -152,9 +159,7 @@ export class PanelComponent implements OnInit, AfterViewInit {
                             }
                             const viewMode = this.layoutService.getPanelViewMode(this.panel().id);
                             if (viewMode != null && viewMode !== PanelViewMode.Docked) {
-                                this.#zone.run(() => {
-                                    this.layoutService.panelCloseStart$.next({ panel: this.panel(), viaUser: true });
-                                });
+                                this.#zone.run(() => this.layoutService.closePanel(this.panel().id));
                             }
                         });
                         return of(event);

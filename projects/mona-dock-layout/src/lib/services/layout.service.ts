@@ -9,7 +9,7 @@ import { LayoutSaveData, PanelSaveData } from "../data/LayoutSaveData";
 import { Panel } from "../data/Panel";
 import { PanelActionTemplateContext } from "../data/PanelActionTemplateContext";
 import { PanelContentTemplateContext } from "../data/PanelContentTemplateContext";
-import { PanelCloseInternalEvent, PanelOpenInternalEvent } from "../data/PanelEvents";
+import { PanelToggleEvent } from "../data/PanelToggleEvent";
 import { PanelMoveEvent } from "../data/PanelMoveEvent";
 import { PanelResizeProgressEvent } from "../data/PanelResizeProgressEvent";
 import { PanelTitleTemplateContext } from "../data/PanelTitleTemplateContext";
@@ -94,7 +94,6 @@ export class LayoutService {
     public readonly panelActionTemplateDict = signal(
         ImmutableDictionary.create<string, ImmutableSet<TemplateRef<PanelActionTemplateContext>>>()
     );
-    public readonly panelCloseStart$ = new Subject<PanelCloseInternalEvent>();
     public readonly panelContentAnchors = signal(ImmutableDictionary.create<string, PanelContentAnchorDirective>());
     public readonly panelContentTemplateDict = signal(
         ImmutableDictionary.create<string, TemplateRef<PanelContentTemplateContext>>()
@@ -115,14 +114,13 @@ export class LayoutService {
             ["bottom", { left: "50%" }]
         ])
     );
-    public readonly panelMove$ = new Subject<PanelMoveEvent>();
-    public readonly panelMoveEnd$ = new Subject<Panel>();
-    public readonly panelOpenStart$ = new Subject<PanelOpenInternalEvent>();
+    public readonly panelMove$ = new ReplaySubject<PanelMoveEvent>(1);
     public readonly panelResizeInProgress$ = new BehaviorSubject<PanelResizeProgressEvent>({ resizing: false });
     public readonly panelTemplateContentContainerRef = signal<ViewContainerRef | null>(null);
     public readonly panelTitleTemplateDict = signal(
         ImmutableDictionary.create<string, TemplateRef<PanelTitleTemplateContext>>()
     );
+    public readonly panelToggle$ = new Subject<PanelToggleEvent>();
     public readonly panelViewModeDict = signal(ImmutableDictionary.create<string, PanelViewMode>());
     public readonly panelViewRefDict = signal(
         ImmutableDictionary.create<string, EmbeddedViewRef<PanelContentTemplateContext>>()
@@ -134,6 +132,8 @@ export class LayoutService {
 
     public closePanel(panelId: string): void {
         this.openPanels.update(set => set.remove(panelId));
+        this.saveLayout();
+        this.panelToggle$.next({ panelId, status: "closed" });
     }
 
     public getHeaderSize(position: Position): number {
@@ -196,6 +196,8 @@ export class LayoutService {
 
     public openPanel(panelId: string): void {
         this.openPanels.update(set => set.add(panelId));
+        this.saveLayout();
+        this.panelToggle$.next({ panelId, status: "opened" });
     }
 
     public saveLayout(): void {
@@ -248,7 +250,7 @@ export class LayoutService {
     }
 
     public updateHeaderSizes(): void {
-        const positions = ["left", "right", "top", "bottom"] as Position[];
+        const positions = ["left", "right", "top", "bottom"] as readonly Position[];
         for (const position of positions) {
             const panels = this.panels().where(p => p.position === position);
             const styleText = position === "left" || position === "right" ? "width" : "height";

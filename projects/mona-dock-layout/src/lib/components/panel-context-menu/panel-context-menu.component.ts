@@ -4,8 +4,8 @@ import { Panel } from "../../data/Panel";
 import { PanelViewMode } from "../../data/PanelViewMode";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
-import { LayoutService } from "../../services/layout.service";
 import { ContainsPipe } from "../../pipes/contains.pipe";
+import { LayoutService } from "../../services/layout.service";
 
 @Component({
     selector: "mona-panel-context-menu",

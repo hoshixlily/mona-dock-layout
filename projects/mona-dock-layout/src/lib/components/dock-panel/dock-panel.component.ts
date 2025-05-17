@@ -18,7 +18,7 @@ import { filter, skipUntil, tap } from "rxjs";
 import { v4 } from "uuid";
 import { Panel } from "../../data/Panel";
 import { PanelActionTemplateContext } from "../../data/PanelActionTemplateContext";
-import { PanelCloseEvent, PanelOpenEvent } from "../../data/PanelEvents";
+import { PanelToggleEvent } from "../../data/PanelToggleEvent";
 import { PanelTitleTemplateContext } from "../../data/PanelTitleTemplateContext";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
@@ -51,9 +51,8 @@ export class DockPanelComponent implements OnInit {
     });
     public readonly movable = input(true);
     public readonly panelActionTemplates = contentChildren(PanelActionTemplateDirective, { read: TemplateRef<void> });
-    public readonly panelClose = output<PanelCloseEvent>();
     public readonly panelId = input.required<string>();
-    public readonly panelOpen = output<PanelOpenEvent>();
+    public readonly panelToggle = output<PanelToggleEvent>();
     public readonly position = input<Position>("left");
     public readonly priority = input<Priority>("primary");
     public readonly startOpen = input<boolean>(false);
@@ -107,24 +106,12 @@ export class DockPanelComponent implements OnInit {
     }
 
     private setSubscriptions(): void {
-        this.#layoutService.panelCloseStart$
+        this.#layoutService.panelToggle$
             .pipe(
                 takeUntilDestroyed(this.#destroyRef),
                 skipUntil(this.#layoutService.layoutReady$),
-                filter(event => event.panel.id === this.panelId() && (!!event.viaApi || !!event.viaUser)),
-                tap(event =>
-                    this.panelClose.emit({ panelId: this.panelId(), viaApi: event.viaApi, viaUser: event.viaUser })
-                )
-            )
-            .subscribe();
-        this.#layoutService.panelOpenStart$
-            .pipe(
-                takeUntilDestroyed(this.#destroyRef),
-                skipUntil(this.#layoutService.layoutReady$),
-                filter(event => event.panel.id === this.panelId() && (!!event.viaApi || !!event.viaUser)),
-                tap(event =>
-                    this.panelOpen.emit({ panelId: this.panelId(), viaApi: event.viaApi, viaUser: event.viaUser })
-                )
+                filter(event => event.panelId === this.panelId()),
+                tap(e => this.panelToggle.emit(e))
             )
             .subscribe();
     }

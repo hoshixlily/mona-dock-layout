@@ -1,11 +1,11 @@
+import { NgStyle } from "@angular/common";
 import { ChangeDetectionStrategy, Component, computed, inject, input } from "@angular/core";
 import { where } from "@mirei/ts-collections";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
+import { ContainsPipe } from "../../pipes/contains.pipe";
 import { LayoutService } from "../../services/layout.service";
 import { PanelComponent } from "../panel/panel.component";
-import { NgStyle } from "@angular/common";
-import { ContainsPipe } from "../../pipes/contains.pipe";
 
 @Component({
     selector: "mona-panel-group",

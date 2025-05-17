@@ -5,6 +5,7 @@ import { toSignal } from "@angular/core/rxjs-interop";
 import { map } from "rxjs";
 import { Orientation } from "../../data/Orientation";
 import { Panel } from "../../data/Panel";
+import { MoveStage } from "../../data/PanelMoveEvent";
 import { PanelViewMode } from "../../data/PanelViewMode";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
@@ -58,6 +59,7 @@ export class PanelHeaderListComponent {
             newPosition: position,
             oldPriority: panel.priority,
             newPriority: priority,
+            stage: MoveStage.Close,
             wasOpenBefore: this.layoutService.isPanelOpen(panel.id)
         });
         this.layoutService.saveLayout();
@@ -65,11 +67,7 @@ export class PanelHeaderListComponent {
 
     public onPanelHeaderClicked(panel: Panel): void {
         const open = this.layoutService.isPanelOpen(panel.id);
-        if (open) {
-            this.layoutService.panelCloseStart$.next({ panel, viaUser: true });
-        } else {
-            this.layoutService.panelOpenStart$.next({ panel, viaUser: true });
-        }
+        this.togglePanel(panel, !open);
     }
 
     public onPanelHeadersReordered(event: CdkDragDrop<string>, position: Position, priority: Priority): void {
@@ -90,9 +88,9 @@ export class PanelHeaderListComponent {
 
     public togglePanel(panel: Panel, open: boolean): void {
         if (open) {
-            this.layoutService.panelOpenStart$.next({ panel, viaUser: true });
+            this.layoutService.openPanel(panel.id);
         } else {
-            this.layoutService.panelCloseStart$.next({ panel, viaUser: true });
+            this.layoutService.closePanel(panel.id);
         }
     }
 }
