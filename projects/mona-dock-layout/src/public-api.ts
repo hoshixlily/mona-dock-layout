@@ -4,7 +4,7 @@
 
 export * from "./lib/data/LayoutReadyEvent";
 export * from "./lib/data/LayoutApi";
-export { PanelCloseEvent, PanelOpenEvent } from "./lib/data/PanelEvents";
+export * from "./lib/data/PanelToggleEvent";
 export { Position } from "./lib/data/Position";
 export { Priority } from "./lib/data/Priority";
 

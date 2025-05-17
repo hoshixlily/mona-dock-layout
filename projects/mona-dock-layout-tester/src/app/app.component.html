@@ -1,7 +1,7 @@
 <div class="wrapper">
     <mona-dock-layout [layoutId]="'TEST_LAYOUT'" (ready)="onLayoutReady($event)">
-        <mona-dock-panel panelId="FileTree" position="left" priority="primary" title="Files" [startOpen]="true"
-                         [movable]="false" (panelOpen)="onPanelOpen($event)" (panelClose)="onPanelClose($event)">
+        <mona-dock-panel panelId="FileTree" position="left" priority="primary" title="Files"
+                         [movable]="panelMovable()" (panelToggle)="onPanelToggle($event)"  [visible]="panelVisibility">
             <ng-template monaPanelContentTemplate>
                 <textarea monaTextArea rows="20">File Tree Text Area</textarea>
                 <button monaButton (click)="movePanel('FileTree', 'top', 'secondary')">MOVE PANEL</button>
@@ -9,7 +9,7 @@
                 <button monaButton (click)="openPanel('Properties')">Open Properties Panel</button>
             </ng-template>
         </mona-dock-panel>
-        <mona-dock-panel panelId="Grid" position="bottom" priority="primary" title="People" >
+        <mona-dock-panel panelId="Grid" position="bottom" priority="primary" title="People" [movable]="panelMovable()">
             <ng-template monaPanelContentTemplate>
                 <mona-grid [data]="gridData" [pageSize]="5" style="height: 100%;" [filterable]="true">
                     @for (column of gridColumns; track $index) {
@@ -42,6 +42,7 @@
             </ng-template>
         </mona-dock-panel>
         <mona-dock-panel panelId="Properties" position="right" priority="primary" title="Properties"
+                         [startOpen]="true"
                          [visible]="propertiesPanelVisible">
             <ng-template monaPanelContentTemplate>
                 <mona-tab-strip [keepTabContent]="true">

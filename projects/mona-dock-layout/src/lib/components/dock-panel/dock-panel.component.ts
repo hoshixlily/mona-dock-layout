@@ -1,4 +1,5 @@
 import {
+    ChangeDetectionStrategy,
     Component,
     computed,
     contentChild,
@@ -14,8 +15,11 @@ import {
 } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { filter, skipUntil, tap } from "rxjs";
-import { PanelOptions } from "../../data/Panel";
-import { PanelCloseEvent, PanelOpenEvent } from "../../data/PanelEvents";
+import { v4 } from "uuid";
+import { Panel } from "../../data/Panel";
+import { PanelActionTemplateContext } from "../../data/PanelActionTemplateContext";
+import { PanelToggleEvent } from "../../data/PanelToggleEvent";
+import { PanelTitleTemplateContext } from "../../data/PanelTitleTemplateContext";
 import { Position } from "../../data/Position";
 import { Priority } from "../../data/Priority";
 import { PanelActionTemplateDirective } from "../../directives/panel-action-template.directive";
@@ -26,33 +30,29 @@ import { LayoutService } from "../../services/layout.service";
 @Component({
     selector: "mona-dock-panel",
     template: "",
-    styleUrls: [],
-    standalone: true
+    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DockPanelComponent implements OnInit {
     readonly #destroyRef = inject(DestroyRef);
     readonly #layoutService = inject(LayoutService);
-
-    public readonly options = computed<Partial<PanelOptions>>(() => {
-        return {
-            actions: this.panelActionTemplates() ?? [],
-            content: this.content() ?? null,
-            id: this.panelId(),
-            position: this.position(),
-            priority: this.priority(),
-            title: this.title(),
-            titleTemplate: this.titleTemplate() ?? null,
-            visible: this.visible(),
-            startOpen: this.visible() ? this.startOpen() : false,
-            movable: this.movable() ?? true
-        };
+    public readonly options = computed<Panel>(() => ({
+        id: this.panelId(),
+        index: 0,
+        position: this.position(),
+        priority: this.priority(),
+        title: this.title(),
+        startOpen: this.visible() ? this.startOpen() : false,
+        wasOpenBeforeHidden: false,
+        uid: v4()
+    }));
+    public readonly content = contentChild(PanelContentTemplateDirective, {
+        read: TemplateRef<PanelActionTemplateContext>
     });
-    public readonly content = contentChild(PanelContentTemplateDirective, { read: TemplateRef<void> });
     public readonly movable = input(true);
     public readonly panelActionTemplates = contentChildren(PanelActionTemplateDirective, { read: TemplateRef<void> });
-    public readonly panelClose = output<PanelCloseEvent>();
     public readonly panelId = input.required<string>();
-    public readonly panelOpen = output<PanelOpenEvent>();
+    public readonly panelToggle = output<PanelToggleEvent>();
     public readonly position = input<Position>("left");
     public readonly priority = input<Priority>("primary");
     public readonly startOpen = input<boolean>(false);
@@ -64,9 +64,27 @@ export class DockPanelComponent implements OnInit {
         effect(() => {
             const visible = this.visible();
             const panelId = this.panelId();
-            untracked(() => {
-                this.#layoutService.panelVisibility$.next({ panelId, visible });
-            });
+            untracked(() => this.#layoutService.panelVisibility$.next({ panelId, visible }));
+        });
+        effect(() => {
+            const panelId = this.panelId();
+            const templates = this.panelActionTemplates();
+            untracked(() => this.#layoutService.setPanelActionTemplates(panelId, templates));
+        });
+        effect(() => {
+            const panelId = this.panelId();
+            const content = this.content() as TemplateRef<PanelActionTemplateContext>;
+            untracked(() => this.#layoutService.setPanelContentTemplate(panelId, content));
+        });
+        effect(() => {
+            const panelId = this.panelId();
+            const titleTemplate = this.titleTemplate() as TemplateRef<PanelTitleTemplateContext>;
+            untracked(() => this.#layoutService.setPanelTitleTemplate(panelId, titleTemplate));
+        });
+        effect(() => {
+            const panelId = this.panelId();
+            const movable = this.movable();
+            untracked(() => this.#layoutService.setPanelMovable(panelId, movable));
         });
     }
 
@@ -78,24 +96,12 @@ export class DockPanelComponent implements OnInit {
     }
 
     private setSubscriptions(): void {
-        this.#layoutService.panelCloseStart$
+        this.#layoutService.panelToggle$
             .pipe(
                 takeUntilDestroyed(this.#destroyRef),
                 skipUntil(this.#layoutService.layoutReady$),
-                filter(event => event.panel.id === this.panelId() && (!!event.viaApi || !!event.viaUser)),
-                tap(event =>
-                    this.panelClose.emit({ panelId: this.panelId(), viaApi: event.viaApi, viaUser: event.viaUser })
-                )
-            )
-            .subscribe();
-        this.#layoutService.panelOpenStart$
-            .pipe(
-                takeUntilDestroyed(this.#destroyRef),
-                skipUntil(this.#layoutService.layoutReady$),
-                filter(event => event.panel.id === this.panelId() && (!!event.viaApi || !!event.viaUser)),
-                tap(event =>
-                    this.panelOpen.emit({ panelId: this.panelId(), viaApi: event.viaApi, viaUser: event.viaUser })
-                )
+                filter(event => event.panelId === this.panelId()),
+                tap(e => this.panelToggle.emit(e))
             )
             .subscribe();
     }

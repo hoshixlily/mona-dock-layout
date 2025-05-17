@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from "@angular/core";
+import { ChangeDetectionStrategy, Component, signal } from "@angular/core";
 import { FontAwesomeModule } from "@fortawesome/angular-fontawesome";
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { faArrowTurnDown, faFileExport } from "@fortawesome/free-solid-svg-icons";
@@ -17,10 +17,9 @@ import {
     LayoutApi,
     LayoutContentTemplateDirective,
     LayoutReadyEvent,
-    PanelCloseEvent,
     PanelContentTemplateDirective,
     PanelActionTemplateDirective,
-    PanelOpenEvent,
+    PanelToggleEvent,
     Position,
     Priority
 } from "mona-dock-layout";
@@ -68,8 +67,18 @@ export class AppComponent {
         { id: 10, name: "John", age: 30, city: "London" }
     ];
     public layoutApi!: LayoutApi;
-    public panelVisibility: boolean = false;
+    public panelMovable = signal(true);
+    public panelVisibility: boolean = true;
     public propertiesPanelVisible: boolean = true;
+
+    public constructor() {
+        // window.setInterval(() => {
+        // this.propertiesPanelVisible = !this.propertiesPanelVisible;
+        // this.panelMovable = this.panelMovable ? false : true;
+        // console.log(this.panelMovable);
+        // this.panelMovable.update(v => !v);
+        // }, 3000);
+    }
 
     public closePanel(panelId: string): void {
         this.layoutApi.closePanel(panelId);
@@ -82,17 +91,10 @@ export class AppComponent {
     public onLayoutReady(event: LayoutReadyEvent): void {
         console.log("Layout ready: ", event);
         this.layoutApi = event.api;
-        // window.setInterval(() => {
-        //     this.propertiesPanelVisible = !this.propertiesPanelVisible;
-        // }, 5000);
     }
 
-    public onPanelClose(event: PanelCloseEvent): void {
-        console.log("Panel closed: ", event);
-    }
-
-    public onPanelOpen(event: PanelOpenEvent): void {
-        console.log("Panel opened: ", event);
+    public onPanelToggle(event: PanelToggleEvent): void {
+        console.log("Panel toggled: ", event);
     }
 
     public openPanel(panelId: string): void {
